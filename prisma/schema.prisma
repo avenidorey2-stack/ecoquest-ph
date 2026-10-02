@@ -1,0 +1,564 @@
+// EcoQuest PH — database schema
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+  PATRON
+}
+
+enum SlotStatus {
+  OPEN
+  FULL
+  CLOSED
+}
+
+enum QuestStatus {
+  LOCKED
+  ACTIVE
+  PENDING_VERIFICATION
+  COMPLETED
+  REJECTED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RewardType {
+  VOUCHER
+  EWALLET_CASH
+}
+
+enum RedemptionStatus {
+  PENDING
+  FULFILLED
+  REJECTED
+}
+
+// Seedling order lifecycle: PENDING → PACKED → OUT_FOR_DELIVERY → DELIVERED (or CANCELLED).
+enum OrderStatus {
+  PENDING
+  PACKED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+// How a seedling order is paid: points up front, or pesos (cash on delivery).
+enum Currency {
+  POINTS
+  PESOS
+}
+
+enum TransactionKind {
+  SEEDLING_ORDER
+  REWARD_REDEMPTION
+  REFUND
+}
+
+// ─── Core models ────────────────────────────────────────────────────────────
+
+model User {
+  id                     String    @id @default(cuid())
+  role                   Role      @default(USER)
+  name                   String?
+  email                  String?   @unique
+  emailVerified          DateTime?
+  // ProfilePictureURL — named `image` because Auth.js adapters write to this field.
+  image                  String?   @map("profile_picture_url")
+  passwordHash           String?
+  // Location: names are display copies resolved from the PSGC city code (the geofence key).
+  region                 String?
+  province               String?
+  city                   String?
+  cityCode               String?
+  locationUpdatedAt      DateTime?
+  points                 Int       @default(0)
+  // Points earned in the week starting weeklyPointsWeekStart (Monday 00:00 Asia/Manila).
+  // A stale week start means 0 this week — the weekly reset is lazy, no cron job needed.
+  weeklyPoints           Int       @default(0)
+  weeklyPointsWeekStart  DateTime?
+  totalPlants            Int       @default(0)
+  // Short, URL-safe invite code (/r/<code>). Older accounts may have longer cuid codes.
+  referralCode           String    @unique @default(nanoid(10))
+  referredByUserId       String?
+  // Set when the referrer was paid for this user's first verified planting (pays once).
+  referralBonusAwardedAt DateTime?
+  // Set when the user finishes or skips the welcome modal.
+  onboardedAt            DateTime?
+  // Uploaded profile picture (served from /api/avatars/…); shown instead of the OAuth `image`.
+  avatarUrl              String?
+  // Gamification: XP fills the level bar and is never spent (unlike shop `points`).
+  xp                     Int       @default(0)
+  level                  Int       @default(1)
+  // Celebration bookkeeping — what the user has already been shown, so popups fire once.
+  lastLevelSeen          Int       @default(1)
+  lastRankSeen           Int?
+  lastRankWeekStart      DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  referredBy     User?                @relation("Referrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals      User[]               @relation("Referrals")
+  quests         Quest[]
+  reviews        Verification[]       @relation("VerificationReviews")
+  redemptions    RedemptionHistory[]
+  accounts       Account[]
+  sessions       Session[]
+  passwordResets PasswordResetToken[]
+  achievements   UserAchievement[]
+  plantedTrees   PlantedTree[]
+  notifications  Notification[]
+  orders         Order[]
+  transactions   Transaction[]
+  missionClaims  MissionClaim[]
+
+  // Leaderboards: national, and local (per city).
+  @@index([weeklyPointsWeekStart, weeklyPoints])
+  @@index([cityCode, weeklyPointsWeekStart, weeklyPoints])
+}
+
+model Slot {
+  id                String     @id @default(cuid())
+  latitude          Float
+  longitude         Float
+  region            String
+  province          String
+  city              String
+  cityCode          String // PSGC city/municipality code — the geofence key
+  // Barangay / locality name, auto-detected from the map pin (OpenStreetMap) and editable. Display only.
+  barangay          String?
+  status            SlotStatus @default(OPEN)
+  requiredPlantType String
+  // Catalogue species planted here (null for legacy/custom free-text species).
+  speciesId         String?
+  pointsPerPlant    Int
+  // Most planters who can work this slot at once (users with an active or pending quest here).
+  maxParticipants   Int        @default(20)
+  // Plants a planter must get approved to complete one quest here (copied onto each quest at claim).
+  questGoal         Int        @default(1)
+  // Set when an admin permanently deletes a slot that has approved plantings: the slot is gone
+  // from every list and map, but the row stays so planters' approved proofs and trees remain.
+  deletedAt         DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  quests  Quest[]
+  species TreeSpecies? @relation(fields: [speciesId], references: [id], onDelete: SetNull)
+
+  @@index([cityCode])
+  @@index([deletedAt])
+}
+
+model Quest {
+  id            String      @id @default(cuid())
+  userId        String
+  slotId        String
+  status        QuestStatus @default(ACTIVE)
+  // Progress: plants approved so far. Each approved submission adds its plant count; the quest
+  // completes automatically once plantCount reaches targetPlants.
+  plantCount    Int         @default(0)
+  // Goal for this quest (the slot's questGoal when it was claimed).
+  targetPlants  Int         @default(1)
+  // Total points awarded across this quest's approved submissions.
+  pointsAwarded Int         @default(0)
+  completedAt   DateTime?
+  // Set once the user has seen the growing-tree celebration for this quest.
+  celebratedAt  DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot          Slot           @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  verifications Verification[]
+
+  @@index([userId])
+  @@index([slotId])
+}
+
+model Verification {
+  id              String             @id @default(cuid())
+  questId         String
+  mediaUrl        String             @unique
+  mediaType       String
+  // Plants this submission is for (as claimed; set to the approved count if an admin adjusts it).
+  plantCount      Int                @default(0)
+  status          VerificationStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  quest      Quest        @relation(fields: [questId], references: [id], onDelete: Cascade)
+  reviewedBy User?        @relation("VerificationReviews", fields: [reviewedById], references: [id], onDelete: SetNull)
+  planted    PlantedTree?
+
+  @@index([questId])
+  @@index([status])
+}
+
+model Reward {
+  id         String     @id @default(cuid())
+  rewardType RewardType
+  brand      String // GCash / Maya (EWALLET_CASH), Grab / Shopee (VOUCHER) — see src/lib/rewards.ts
+  costPoints Int
+  valuePesos Int // face value shown to users, e.g. ₱50
+  // Inactive rewards are hidden from the shop. Rewards are never deleted (redemptions reference them).
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  redemptions RedemptionHistory[]
+
+  @@index([isActive])
+}
+
+model RedemptionHistory {
+  id            String           @id @default(cuid())
+  userId        String
+  rewardId      String
+  eWalletNumber String?
+  // Points charged at request time; refunded exactly if rejected (reward cost may change later).
+  pointsSpent   Int
+  status        RedemptionStatus @default(PENDING)
+  // Admin-entered GCash/Maya reference, voucher code, or rejection reason.
+  adminNote     String?
+  processedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward       Reward        @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model PatronAd {
+  id          String   @id @default(cuid())
+  companyName String
+  imageUrl    String
+  targetUrl   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Auth.js (NextAuth) models ──────────────────────────────────────────────
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ─── Email sign-up & abuse protection ───────────────────────────────────────
+
+// An email sign-up awaiting verification. No User exists until the emailed link is opened
+// and a password is chosen there, so nobody can pre-register (and pre-set a password for)
+// an address they don't control.
+model PendingRegistration {
+  id          String   @id @default(cuid())
+  email       String   @unique // normalized lowercase
+  name        String
+  tokenHash   String   @unique // sha256 of the emailed token; the raw token is never stored
+  expiresAt   DateTime
+  lastSentAt  DateTime
+  // Emails sent in the current 24h window (anti-spam cap).
+  sendCount   Int      @default(1)
+  windowStart DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt]) // pruning
+}
+
+// A "forgot password" link. Single use, short-lived, and only the newest one per user is valid.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique // sha256 of the emailed token; the raw token is never stored
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt]) // pruning
+}
+
+// Fixed-window rate-limit counters, e.g. "signup:ip:1.2.3.4" or "login:email:a@b.ph".
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart]) // pruning
+}
+
+// ─── Gamification ───────────────────────────────────────────────────────────
+
+// Badge catalogue. Rows are synced from src/lib/achievements.ts (the source of truth) by `key`.
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique // stable code identifier, e.g. "first-tree"
+  name        String
+  description String
+  icon        String // emoji shown on the badge
+  category    String
+  xpReward    Int      @default(0)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  unlocks UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  unlockedAt    DateTime  @default(now())
+  // Context captured at unlock, e.g. the city for "City Top 10".
+  detail        String?
+  // When the unlock popup was shown/dismissed; null = not yet celebrated.
+  seenAt        DateTime?
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@index([userId, seenAt])
+}
+
+// ─── Tree directory & planting stats ────────────────────────────────────────
+
+// Species catalogue (seeded from src/data/tree-species.ts by prisma/seed.ts).
+model TreeSpecies {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String   @unique
+  scientificName String
+  category       String
+  description    String
+  benefits       String[]
+  imageUrl       String
+  // Running total of verified plants of this species (kept in step with PlantedTree on approval).
+  totalPlanted   Int      @default(0)
+  plantingGoal   Int      @default(20000)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  slots    Slot[]
+  planted  PlantedTree[]
+  seedling SeedlingProduct?
+
+  @@index([category, sortOrder])
+}
+
+// One approved planting submission: who planted how many of which species, and where.
+model PlantedTree {
+  id             String   @id @default(cuid())
+  userId         String
+  // Null for custom species not in the catalogue.
+  speciesId      String?
+  // PSGC city/municipality code of the planting site — drives local vs national stats.
+  psgcCode       String
+  count          Int
+  verificationId String   @unique // one record per approved submission (idempotent)
+  plantedAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  species      TreeSpecies? @relation(fields: [speciesId], references: [id], onDelete: SetNull)
+  verification Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+
+  @@index([psgcCode])
+  @@index([speciesId, psgcCode])
+  @@index([userId])
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+// In-app alerts shown in the header bell ("Tree approved!", "New slots available", …).
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  // Optional in-app path opened when the notification is clicked, e.g. "/rewards".
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+}
+
+// ─── Seedling shop ──────────────────────────────────────────────────────────
+
+// A seedling for sale, one per catalogue species (created by prisma/seed.ts).
+model SeedlingProduct {
+  id            String   @id @default(cuid())
+  speciesId     String   @unique
+  priceInPoints Int
+  // Cash-on-delivery price in PHP; 0 = not sold for pesos.
+  priceInPesos  Float    @default(0)
+  stockQuantity Int
+  // Hidden from the shop when false. Products are never deleted (orders reference them).
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  species TreeSpecies @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@index([isActive])
+}
+
+// A seedling purchase. Stock is reserved when the order is placed; POINTS orders are paid
+// then, PESOS orders are paid cash on delivery.
+model Order {
+  id           String      @id @default(cuid())
+  userId       String
+  productId    String
+  quantity     Int
+  currencyUsed Currency    @default(POINTS)
+  // quantity × unit price at order time, in `currencyUsed` (points, or pesos to 2 decimals).
+  totalPrice   Float
+  status       OrderStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product      SeedlingProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+// Unified money/points history: one row per seedling order, reward redemption or refund.
+// Live status comes from the linked order/redemption.
+model Transaction {
+  id           String          @id @default(cuid())
+  userId       String
+  kind         TransactionKind
+  currency     Currency
+  // Always positive: spent for orders/redemptions, credited back for refunds.
+  amount       Float
+  description  String
+  orderId      String?
+  redemptionId String?
+  createdAt    DateTime        @default(now())
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order      Order?             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  redemption RedemptionHistory? @relation(fields: [redemptionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ─── Daily & side quests (missions) ─────────────────────────────────────────
+
+enum MissionKind {
+  DAILY // resets every day at 00:00 PHT
+  SIDE // one-time, within its start/end window
+}
+
+// What a mission counts — tracked automatically from existing activity.
+enum MissionObjective {
+  PLANT_TREES // approved plants (PlantedTree.count)
+  SUBMIT_PROOF // proof submissions that weren't rejected
+  BUY_SEEDLINGS // seedlings ordered (not cancelled)
+  INVITE_FRIENDS // new sign-ups through the user's invite link
+  REDEEM_REWARD // reward redemptions (not declined)
+}
+
+// An admin-defined daily or side quest. Progress = activity inside the mission's period
+// (today for DAILY; startsAt → endsAt for SIDE). The reward is claimed once per period.
+model Mission {
+  id           String           @id @default(cuid())
+  kind         MissionKind
+  title        String
+  description  String?
+  objective    MissionObjective
+  target       Int
+  rewardPoints Int
+  rewardXp     Int              @default(0)
+  isActive     Boolean          @default(true)
+  startsAt     DateTime         @default(now())
+  endsAt       DateTime?
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  claims MissionClaim[]
+
+  @@index([kind, isActive])
+}
+
+// A claimed mission reward. periodKey = PHT date ("2026-10-03") for dailies, "once" for side quests;
+// the unique constraint makes double-claiming impossible.
+model MissionClaim {
+  id            String   @id @default(cuid())
+  missionId     String
+  userId        String
+  periodKey     String
+  pointsAwarded Int
+  xpAwarded     Int
+  claimedAt     DateTime @default(now())
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, userId, periodKey])
+  @@index([userId, claimedAt])
+}

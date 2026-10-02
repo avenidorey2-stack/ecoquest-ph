@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Earthy portal palette: cream canvas alongside Tailwind's emerald + slate. */
+@theme {
+  --color-cream-50: #fbfaf6;
+  --color-cream-100: #f5f2ea;
+  --color-cream-200: #ebe5d6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ─── Growing-tree celebration ─────────────────────────────────────────── */
+
+.eq-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: eq-draw 0.8s ease-out forwards;
+}
+.eq-grow-y {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  animation: eq-grow-y 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+}
+.eq-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: eq-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+.eq-sway {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: eq-sway 3s ease-in-out 2.6s infinite;
+}
+.eq-sparkle {
+  opacity: 0;
+  animation: eq-sparkle 1.4s ease-out forwards;
+}
+.eq-fade-up {
+  opacity: 0;
+  animation: eq-fade-up 0.6s ease-out forwards;
+}
+
+@keyframes eq-draw { to { stroke-dashoffset: 0; } }
+@keyframes eq-grow-y { to { transform: scaleY(1); } }
+@keyframes eq-pop { to { transform: scale(1); } }
+@keyframes eq-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes eq-sparkle {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+}
+@keyframes eq-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-celebration * {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Planter profile modal entrance (PlanterProfileModal). */
+@keyframes profile-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog[open] {
+    animation: none !important;
+  }
+}
