@@ -216,7 +216,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
                   {slot.barangay && `${slot.barangay}, `}
                   {slot.city}, {slot.province}
                 </p>
-                {adminView && <p className="text-xs text-gray-500">{slot.region}</p>}
+                {adminView && <p className="text-xs text-slate-500">{slot.region}</p>}
                 <p>
                   {slot.pointsPerPlant} pts / plant · quest goal: {slot.questGoal} plant{slot.questGoal === 1 ? "" : "s"}
                 </p>
@@ -242,14 +242,14 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
                     type="button"
                     onClick={() => claim(slot.id)}
                     disabled={claiming !== null}
-                    className="mt-2 w-full rounded-lg bg-green-600 px-3 py-2.5 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                    className="mt-2 w-full rounded-lg bg-emerald-700 px-3 py-2.5 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
                   >
                     {claiming === slot.id ? "Claiming…" : "Claim slot"}
                   </button>
                 ) : slot.status === "OPEN" && slot.spotsLeft === 0 ? (
-                  <p className="text-gray-500">This slot is full right now.</p>
+                  <p className="text-slate-500">This slot is full right now.</p>
                 ) : (
-                  <p className="text-gray-500">Only claimable by residents of {slot.city}.</p>
+                  <p className="text-slate-500">Only claimable by residents of {slot.city}.</p>
                 )}
               </div>
             </Popup>
@@ -275,7 +275,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
           className="absolute inset-x-14 top-16 z-[1000] mx-auto flex w-fit max-w-sm items-start gap-2 rounded-lg bg-white px-4 py-2 text-sm shadow-md ring-1 ring-slate-900/10"
         >
           <span>{message}</span>
-          <button type="button" className="-my-1 -mr-2 px-2 py-1 text-gray-500" onClick={() => setMessage(null)} aria-label="Dismiss">
+          <button type="button" className="-my-1 -mr-2 px-2 py-1 text-slate-500" onClick={() => setMessage(null)} aria-label="Dismiss">
             ×
           </button>
         </div>

@@ -15,17 +15,17 @@ export default async function DevMailboxPage() {
   const emails = await readDevMailbox();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 text-gray-900">
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900">
       <div className="mx-auto max-w-3xl space-y-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">📬 Dev mailbox</h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               Emails the app would have sent. Development only — set <code>EMAIL_SERVER</code> to send real email.
             </p>
           </div>
           <div className="flex gap-2">
-            <a href="/dev/mailbox" className="rounded-lg border bg-white px-3 py-1.5 text-sm hover:bg-gray-50">
+            <a href="/dev/mailbox" className="rounded-lg border bg-white px-3 py-1.5 text-sm hover:bg-slate-50">
               Refresh
             </a>
             {emails.length > 0 && (
@@ -39,8 +39,8 @@ export default async function DevMailboxPage() {
         </header>
 
         {emails.length === 0 ? (
-          <p className="rounded-xl border bg-white p-8 text-center text-sm text-gray-500">
-            No emails yet. Sign up at <a href="/signup" className="text-green-700 underline">/signup</a> and refresh.
+          <p className="rounded-xl border bg-white p-8 text-center text-sm text-slate-500">
+            No emails yet. Sign up at <a href="/signup" className="text-emerald-700 underline">/signup</a> and refresh.
           </p>
         ) : (
           <ul className="space-y-4">
@@ -50,14 +50,14 @@ export default async function DevMailboxPage() {
                 <li key={email.id} className="overflow-hidden rounded-xl border bg-white">
                   <div className="border-b px-4 py-3 text-sm">
                     <p className="font-semibold">{email.subject}</p>
-                    <p className="text-gray-500">
+                    <p className="text-slate-500">
                       To {email.to} · {new Date(email.sentAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" })}
                     </p>
                     {links.map((link) => (
                       <a
                         key={link}
                         href={link}
-                        className="mt-2 mr-2 inline-block rounded-lg bg-green-600 px-3 py-1.5 font-medium text-white hover:bg-green-700"
+                        className="mt-2 mr-2 inline-block rounded-lg bg-emerald-700 px-3 py-1.5 font-medium text-white hover:bg-emerald-800"
                       >
                         Open link →
                       </a>

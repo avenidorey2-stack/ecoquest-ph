@@ -148,9 +148,9 @@ export default function SlotManager({
               <p className="font-semibold text-slate-900">Planting slots ({slots.length})</p>
               <p>Click the map to drop a pin and add a slot. Click a marker or “Edit” to change one.</p>
               <ul className="flex flex-wrap gap-3 pt-1 text-xs">
-                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-green-600" />Open</li>
+                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-700" />Open</li>
                 <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Full</li>
-                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-gray-500" />Closed</li>
+                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-500" />Closed</li>
               </ul>
             </div>
 

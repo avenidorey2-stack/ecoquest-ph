@@ -3,9 +3,31 @@
 /* The portal is designed for a light canvas only: keep it light even when the phone is in
    dark mode (otherwise the page edges turn black and uncoloured text turns near-white). */
 :root {
-  --background: #ffffff;
+  --background: #fbfaf6;
   --foreground: #171717;
   color-scheme: light;
+  /* Motion tokens: quick feedback, standard reveals, long ambient loops. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 150ms;
+  --dur-base: 260ms;
+  --dur-reveal: 560ms;
+}
+
+/* Tailwind v4 borders default to currentColor (black outlines on plain `border`);
+   give them the portal's soft slate instead. Explicit border-* colors still win. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-slate-200, currentColor);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-emerald-500);
+    outline-offset: 2px;
+  }
 }
 
 @theme inline {
@@ -29,8 +51,9 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Only <html> paints the canvas colour: a body background would cover the fixed
+   EcoBackground layer (z-index -10). */
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
@@ -107,5 +130,170 @@ body {
 @media (prefers-reduced-motion: reduce) {
   dialog[open] {
     animation: none !important;
+  }
+}
+
+/* ─── Portal motion ────────────────────────────────────────────────────────
+   Entrances use `backwards` fill only: once finished the transform is gone, so a
+   revealed card never becomes the containing block for a fixed overlay inside it
+   (fullscreen map, redeem dialog). */
+
+@keyframes eq-rise {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@keyframes eq-fade {
+  from { opacity: 0; }
+}
+
+/* In the components layer so per-element Tailwind utilities can still override. */
+@layer components {
+  /* Children of .eq-stagger rise in one after another. */
+  .eq-stagger > * {
+    animation: eq-rise var(--dur-reveal) var(--ease-out) backwards;
+  }
+  .eq-stagger > :nth-child(2) { animation-delay: 60ms; }
+  .eq-stagger > :nth-child(3) { animation-delay: 120ms; }
+  .eq-stagger > :nth-child(4) { animation-delay: 180ms; }
+  .eq-stagger > :nth-child(5) { animation-delay: 240ms; }
+  .eq-stagger > :nth-child(6) { animation-delay: 300ms; }
+  .eq-stagger > :nth-child(7) { animation-delay: 340ms; }
+  .eq-stagger > :nth-child(8) { animation-delay: 380ms; }
+  .eq-stagger > :nth-child(n + 9) { animation-delay: 420ms; }
+
+  .eq-rise { animation: eq-rise var(--dur-reveal) var(--ease-out) backwards; }
+  .eq-fade { animation: eq-fade var(--dur-reveal) ease-out backwards; }
+}
+
+/* ─── Eco background ───────────────────────────────────────────────────── */
+
+.eq-eco-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #fbfaf6 0%, #f6f8f0 55%, #eef5ea 100%);
+}
+.eq-eco-glow {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+}
+.eq-eco-glow--sun {
+  top: -18vmax;
+  right: -12vmax;
+  width: 52vmax;
+  height: 52vmax;
+  background: radial-gradient(closest-side, rgb(253 230 138 / 0.42), rgb(253 230 138 / 0));
+  animation: eq-drift-a 38s ease-in-out infinite alternate;
+}
+.eq-eco-glow--leaf {
+  bottom: -20vmax;
+  left: -16vmax;
+  width: 60vmax;
+  height: 60vmax;
+  background: radial-gradient(closest-side, rgb(167 243 208 / 0.4), rgb(167 243 208 / 0));
+  animation: eq-drift-b 46s ease-in-out infinite alternate;
+}
+.eq-eco-glow--moss {
+  top: 30%;
+  left: 38%;
+  width: 40vmax;
+  height: 40vmax;
+  background: radial-gradient(closest-side, rgb(217 249 157 / 0.22), rgb(217 249 157 / 0));
+  animation: eq-drift-a 54s ease-in-out -12s infinite alternate-reverse;
+}
+.eq-eco-contours {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: rgb(4 120 87 / 0.07);
+}
+.eq-eco-hills {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  width: 100%;
+  height: clamp(110px, 20vh, 220px);
+}
+.eq-eco-leaf {
+  position: absolute;
+  top: -40px;
+  left: var(--x);
+  width: var(--s, 18px);
+  height: var(--s, 18px);
+  color: var(--c, rgb(16 185 129 / 0.35));
+  animation: eq-leaf-fall var(--d, 26s) linear var(--delay, 0s) infinite;
+  will-change: transform;
+}
+.eq-eco-leaf > svg {
+  width: 100%;
+  height: 100%;
+  animation: eq-leaf-sway calc(var(--d, 26s) / 6) ease-in-out infinite alternate;
+}
+
+@keyframes eq-drift-a {
+  to { transform: translate3d(-6vmax, 5vmax, 0) scale(1.08); }
+}
+@keyframes eq-drift-b {
+  to { transform: translate3d(7vmax, -4vmax, 0) scale(1.12); }
+}
+@keyframes eq-leaf-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--drift, 80px), 110vh, 0) rotate(var(--spin, 300deg)); opacity: 0; }
+}
+@keyframes eq-leaf-sway {
+  from { transform: translateX(-14px) rotate(-18deg); }
+  to { transform: translateX(14px) rotate(18deg); }
+}
+.eq-eco-tree {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: eq-tree-sway 7s ease-in-out infinite alternate;
+}
+@keyframes eq-tree-sway {
+  from { transform: rotate(-1.6deg); }
+  to { transform: rotate(1.6deg); }
+}
+/* Fewer leaves on small screens. */
+@media (max-width: 640px) {
+  .eq-eco-leaf:nth-child(n + 5) { display: none; }
+}
+
+/* Sidebar ambience: a slow light sweep and a faint leaf watermark. */
+.eq-sidebar-glow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.eq-sidebar-glow::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -40%;
+  width: 180%;
+  height: 60%;
+  background: radial-gradient(closest-side, rgb(52 211 153 / 0.12), transparent);
+  animation: eq-drift-b 30s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-stagger > *,
+  .eq-rise,
+  .eq-fade {
+    animation: none !important;
+  }
+  .eq-eco-tree,
+  .eq-eco-glow,
+  .eq-sidebar-glow::before,
+  .eq-eco-leaf > svg {
+    animation: none !important;
+  }
+  .eq-eco-leaf {
+    display: none;
   }
 }

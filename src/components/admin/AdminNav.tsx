@@ -26,7 +26,7 @@ export default function AdminNav() {
             key={tab.href}
             href={tab.href}
             className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm ${
-              active ? "border-green-600 font-medium text-green-700" : "border-transparent text-gray-600 hover:text-gray-900"
+              active ? "border-emerald-600 font-medium text-emerald-700" : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
             {tab.label}

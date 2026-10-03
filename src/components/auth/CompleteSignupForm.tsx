@@ -43,19 +43,19 @@ export default function CompleteSignupForm({
     router.push(`/login?registered=1&email=${encodeURIComponent(email)}`);
   }
 
-  const input = "mt-1 block w-full rounded-lg border px-3 py-2 text-sm";
+  const input = "mt-1.5 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm";
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <p className="rounded-lg bg-green-50 p-3 text-sm text-green-800">
+      <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
         ✅ <strong>{email}</strong> confirmed. Choose a password to finish.
       </p>
       {/* Lets password managers save the right username. */}
       <input type="email" value={email} autoComplete="username" readOnly hidden />
-      <label className="block text-sm">
+      <label className="block text-sm font-medium text-slate-700">
         Name
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} required className={input} />
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm font-medium text-slate-700">
         Password
         <input
           type="password"
@@ -66,9 +66,9 @@ export default function CompleteSignupForm({
           required
           className={input}
         />
-        <span className="text-xs text-gray-500">At least {minPasswordLength} characters.</span>
+        <span className="text-xs text-slate-500">At least {minPasswordLength} characters.</span>
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm font-medium text-slate-700">
         Confirm password
         <input
           type="password"
@@ -86,7 +86,7 @@ export default function CompleteSignupForm({
       )}
       <button
         disabled={busy}
-        className="w-full rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+        className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
         {busy ? "Creating account…" : "Create account"}
       </button>

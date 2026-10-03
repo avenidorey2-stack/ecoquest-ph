@@ -33,9 +33,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-center text-lg font-semibold">Sign in</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
+        <p className="mt-1 text-sm text-slate-500">Sign in to continue your planting quests.</p>
+      </div>
 
-      {notice && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{notice}</p>}
+      {notice && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
       {error && (
         <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
@@ -48,8 +51,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <GoogleButton label="Continue with Google" />
           </form>
-          <div className="flex items-center gap-3 text-xs text-gray-400">
-            <span className="h-px flex-1 bg-gray-200" /> or <span className="h-px flex-1 bg-gray-200" />
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" /> or <span className="h-px flex-1 bg-slate-200" />
           </div>
         </>
       )}
@@ -57,14 +60,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <PasswordLoginForm callbackUrl={callbackUrl} email={email} />
 
       <p className="text-center text-sm">
-        <Link href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"} className="text-green-700">
+        <Link href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"} className="text-emerald-700">
           Forgot your password?
         </Link>
       </p>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-slate-600">
         New here?{" "}
-        <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-green-700">
+        <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-emerald-700">
           Create an account
         </Link>
       </p>

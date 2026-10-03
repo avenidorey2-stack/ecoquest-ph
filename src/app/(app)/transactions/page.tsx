@@ -50,7 +50,7 @@ export default async function TransactionsPage() {
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6 lg:p-8">
       <AutoRefresh seconds={30} />
 
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <ul className="eq-stagger grid grid-cols-1 gap-3 sm:grid-cols-3">
         {summary.map((s) => (
           <li key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{s.label}</p>

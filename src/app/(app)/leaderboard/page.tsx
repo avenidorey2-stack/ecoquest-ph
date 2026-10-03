@@ -37,7 +37,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
       href={`/leaderboard?scope=${value}`}
       aria-current={scope === value ? "page" : undefined}
       className={`flex-1 rounded-md px-3 py-2 text-center text-sm font-medium ${
-        scope === value ? "bg-white text-green-800 shadow" : "text-gray-600 hover:text-gray-900"
+        scope === value ? "bg-white text-emerald-800 shadow" : "text-slate-600 hover:text-slate-900"
       }`}
     >
       {label}
@@ -45,17 +45,17 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
   );
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-5 p-4 text-gray-900">
+    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-slate-900 sm:px-6 lg:py-8">
       <header>
         <h1 className="text-xl font-semibold">Weekly leaderboard</h1>
         {board && weekEnd && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {fmtDay(board.weekStart)} – {fmtDay(weekEnd)} · resets in {timeUntil(board.resetsAt)} (Monday 12:00 AM PHT)
           </p>
         )}
       </header>
 
-      <nav className="flex gap-1 rounded-lg bg-gray-100 p-1" aria-label="Leaderboard scope">
+      <nav className="flex gap-1 rounded-lg bg-slate-100 p-1" aria-label="Leaderboard scope">
         {tab("local", viewer.city ? `Local · ${viewer.city}` : "Local")}
         {tab("national", "National")}
       </nav>
@@ -71,17 +71,17 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
         board && (
           <>
             {viewer.role === "USER" && (
-              <section className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 p-4">
+              <section className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 shadow-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-green-700">Your rank</p>
-                  <p className="text-2xl font-bold text-green-800">
+                  <p className="text-xs uppercase tracking-wide text-emerald-700">Your rank</p>
+                  <p className="text-2xl font-bold text-emerald-800">
                     {board.viewer.rank ? `#${board.viewer.rank}` : "—"}
                     {board.viewer.rank && (
-                      <span className="ml-1 text-sm font-normal text-green-700">of {board.totalRanked}</span>
+                      <span className="ml-1 text-sm font-normal text-emerald-700">of {board.totalRanked}</span>
                     )}
                   </p>
                 </div>
-                <p className="text-right text-sm text-green-800">
+                <p className="text-right text-sm text-emerald-800">
                   <span className="text-2xl font-bold">{board.viewer.weeklyPoints}</span> pts
                   {!board.viewer.rank && <span className="block text-xs">Earn points this week to get ranked</span>}
                 </p>
@@ -89,33 +89,33 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
             )}
 
             {board.entries.length === 0 ? (
-              <p className="rounded-xl border bg-white p-6 text-center text-sm text-gray-500">
+              <p className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-6 text-center text-sm text-slate-500">
                 No one has earned points yet this week. Plant a tree and claim the top spot! 🌱
               </p>
             ) : (
-              <ol className="divide-y overflow-hidden rounded-xl border bg-white">
+              <ol className="eq-stagger divide-y overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
                 {board.entries.map((entry) => (
                   <li
                     key={entry.userId}
-                    className={`relative flex items-center gap-3 px-4 py-3 ${entry.isViewer ? "bg-green-50" : ""}`}
+                    className={`relative flex items-center gap-3 px-4 py-3 ${entry.isViewer ? "bg-emerald-50" : ""}`}
                     aria-current={entry.isViewer ? "true" : undefined}
                   >
                     <PlanterProfileTrigger userId={entry.userId} name={entry.name} />
-                    <span className="w-8 text-center text-lg font-semibold text-gray-500">
+                    <span className="w-8 text-center text-lg font-semibold text-slate-500">
                       {MEDALS[entry.rank - 1] ?? entry.rank}
                     </span>
                     {entry.image ? (
                       // eslint-disable-next-line @next/next/no-img-element -- uploaded avatar or OAuth photo
                       <img src={entry.image} alt="" className="h-9 w-9 rounded-full object-cover" />
                     ) : (
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-700">
                         {entry.name.slice(0, 1).toUpperCase()}
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">
                         {entry.name}
-                        {entry.isViewer && <span className="ml-1 text-xs text-green-700">(you)</span>}
+                        {entry.isViewer && <span className="ml-1 text-xs text-emerald-700">(you)</span>}
                         <span
                           className="ml-2 rounded-full bg-amber-50 px-1.5 py-0.5 align-middle text-[10px] font-bold text-amber-700 ring-1 ring-amber-200"
                           title={`Level ${entry.level}`}
@@ -125,19 +125,19 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
                         {entry.isViewer && climb && <ClimbHighlight from={climb.from} to={climb.to} />}
                       </p>
                       {scope === "national" && entry.city && (
-                        <p className="truncate text-xs text-gray-500">
+                        <p className="truncate text-xs text-slate-500">
                           {entry.city}, {entry.province}
                         </p>
                       )}
                     </div>
-                    <span className="font-semibold text-green-700">{entry.weeklyPoints} pts</span>
+                    <span className="font-semibold text-emerald-700">{entry.weeklyPoints} pts</span>
                   </li>
                 ))}
               </ol>
             )}
 
             {board.totalRanked > board.entries.length && (
-              <p className="text-center text-xs text-gray-500">
+              <p className="text-center text-xs text-slate-500">
                 Showing the top {board.entries.length} of {board.totalRanked} planters.
               </p>
             )}

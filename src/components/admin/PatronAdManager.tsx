@@ -53,7 +53,7 @@ function AdForm({ ad, onDone }: { ad?: AdminPatronAd; onDone: () => void }) {
           onChange={(e) => setValues({ ...values, companyName: e.target.value })} />
       </label>
       <label className="block">
-        Banner image URL <span className="text-xs text-gray-500">(https, wide image ~ 4:1, e.g. 1200×300)</span>
+        Banner image URL <span className="text-xs text-slate-500">(https, wide image ~ 4:1, e.g. 1200×300)</span>
         <input className={input} type="url" value={values.imageUrl} required placeholder="https://…"
           onChange={(e) => setValues({ ...values, imageUrl: e.target.value })} />
       </label>
@@ -68,11 +68,11 @@ function AdForm({ ad, onDone }: { ad?: AdminPatronAd; onDone: () => void }) {
       )}
       {error && <p className="text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <button disabled={busy} className="rounded bg-green-600 px-4 py-1.5 font-medium text-white disabled:opacity-50">
+        <button disabled={busy} className="rounded bg-emerald-700 px-4 py-1.5 font-medium text-white disabled:opacity-50">
           {ad ? "Save" : "Add banner"}
         </button>
         {ad && (
-          <button type="button" onClick={onDone} className="rounded px-4 py-1.5 text-gray-600 hover:bg-gray-100">
+          <button type="button" onClick={onDone} className="rounded px-4 py-1.5 text-slate-600 hover:bg-slate-100">
             Cancel
           </button>
         )}
@@ -107,7 +107,7 @@ function AdCard({ ad }: { ad: AdminPatronAd }) {
             <div className="min-w-0">
               <p className="font-medium">
                 {ad.companyName}{" "}
-                <span className={`ml-1 rounded px-1.5 py-0.5 text-xs ${ad.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
+                <span className={`ml-1 rounded px-1.5 py-0.5 text-xs ${ad.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>
                   {ad.isActive ? "Live" : "Paused"}
                 </span>
               </p>
@@ -116,10 +116,10 @@ function AdCard({ ad }: { ad: AdminPatronAd }) {
               </a>
             </div>
             <div className="flex gap-2">
-              <button disabled={busy} onClick={() => setEditing(true)} className="rounded border px-3 py-1 hover:bg-gray-50">
+              <button disabled={busy} onClick={() => setEditing(true)} className="rounded border px-3 py-1 hover:bg-slate-50">
                 Edit
               </button>
-              <button disabled={busy} onClick={() => act("PATCH", { isActive: !ad.isActive })} className="rounded border px-3 py-1 hover:bg-gray-50">
+              <button disabled={busy} onClick={() => act("PATCH", { isActive: !ad.isActive })} className="rounded border px-3 py-1 hover:bg-slate-50">
                 {ad.isActive ? "Pause" : "Go live"}
               </button>
               <button disabled={busy} onClick={() => act("DELETE")} className="rounded px-3 py-1 text-red-700 hover:bg-red-50">
@@ -143,12 +143,12 @@ export default function PatronAdManager({ ads }: { ads: AdminPatronAd[] }) {
           <AdForm onDone={() => setAdding(false)} />
         </div>
       ) : (
-        <button onClick={() => setAdding(true)} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white">
+        <button onClick={() => setAdding(true)} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white">
           + New banner
         </button>
       )}
       {ads.length === 0 ? (
-        <p className="text-sm text-gray-500">No patron banners yet.</p>
+        <p className="text-sm text-slate-500">No patron banners yet.</p>
       ) : (
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {ads.map((ad) => (

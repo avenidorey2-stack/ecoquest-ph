@@ -42,17 +42,17 @@ export default async function ProfilePage() {
   const initials = (user.name ?? user.email ?? "?").slice(0, 1).toUpperCase();
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 p-4 text-gray-900">
-      <section className="flex items-center gap-4 rounded-xl border bg-white p-5">
+    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-slate-900 sm:px-6 lg:py-8">
+      <section className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
         <AvatarUploader src={displayAvatar(user)} initials={initials} hasUpload={!!user.avatarUrl} />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-semibold">{user.name ?? "Unnamed planter"}</h1>
-          <p className="truncate text-sm text-gray-500">{user.email}</p>
-          <p className="text-xs text-gray-500">
+          <p className="truncate text-sm text-slate-500">{user.email}</p>
+          <p className="text-xs text-slate-500">
             {place ? `${place.city}, ${place.province}` : "No home city set"} · Member since{" "}
             {user.createdAt.toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
             {user.role !== "USER" && (
-              <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 font-medium text-green-800">{user.role}</span>
+              <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">{user.role}</span>
             )}
           </p>
           <div className="mt-3 max-w-xs">
@@ -67,20 +67,20 @@ export default async function ProfilePage() {
         </p>
       )}
 
-      <section className="grid grid-cols-3 gap-3 text-center">
+      <section className="eq-stagger grid grid-cols-3 gap-3 text-center">
         {[
           ["Total points", user.points],
           ["This week", currentWeeklyPoints(user)],
           ["Plants", user.totalPlants],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border bg-white p-3">
-            <p className="text-2xl font-bold text-green-700">{value}</p>
-            <p className="text-xs text-gray-500">{label}</p>
+          <div key={label} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-3">
+            <p className="text-2xl font-bold text-emerald-700">{value}</p>
+            <p className="text-xs text-slate-500">{label}</p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-xl border bg-white p-5">
+      <section className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
         <h2 className="mb-4 font-semibold">Edit profile</h2>
         <ProfileForm
           regions={listRegions()}
@@ -93,7 +93,7 @@ export default async function ProfilePage() {
       {publicProfile && (
         <>
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-600">Your achievements and approved plantings are permanent and public.</p>
+            <p className="text-sm text-slate-600">Your achievements and approved plantings are permanent and public.</p>
             <Link href={`/planters/${userId}`} className="shrink-0 text-sm font-medium text-emerald-700 hover:text-emerald-900">
               View as others see it →
             </Link>
@@ -109,13 +109,13 @@ export default async function ProfilePage() {
 
       <Link
         href="/referrals"
-        className="flex items-center justify-between rounded-xl border bg-white p-5 text-sm hover:border-green-500"
+        className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5 text-sm hover:border-emerald-500"
       >
         <span>
           <span className="block font-semibold">Invite friends</span>
-          Your code: <span className="font-mono text-green-700">{user.referralCode}</span>
+          Your code: <span className="font-mono text-emerald-700">{user.referralCode}</span>
         </span>
-        <span className="text-green-700">Referral Hub →</span>
+        <span className="text-emerald-700">Referral Hub →</span>
       </Link>
     </div>
   );

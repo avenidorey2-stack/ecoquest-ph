@@ -57,10 +57,10 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
       <div className="space-y-3 p-4 text-sm">
         <div>
           <p className="font-medium">{item.user.name ?? item.user.email ?? "Unknown user"}</p>
-          <p className="text-gray-600">
+          <p className="text-slate-600">
             {item.slot.requiredPlantType} · {item.slot.city}, {item.slot.province}
           </p>
-          <p className="text-xs text-gray-500">Submitted {new Date(item.submittedAt).toLocaleString("en-PH")}</p>
+          <p className="text-xs text-slate-500">Submitted {new Date(item.submittedAt).toLocaleString("en-PH")}</p>
         </div>
 
         <div className="flex items-end gap-3">
@@ -75,8 +75,8 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
               className="mt-1 block w-24 rounded border px-2 py-1"
             />
           </label>
-          <p className="pb-1 text-gray-600">
-            = <span className="font-semibold text-green-700">{points} pts</span>
+          <p className="pb-1 text-slate-600">
+            = <span className="font-semibold text-emerald-700">{points} pts</span>
             {count !== item.plantCount && <span className="ml-1 text-xs">(claimed {item.plantCount})</span>}
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
           <button
             onClick={() => review("approve")}
             disabled={busy || points === 0}
-            className="flex-1 rounded bg-green-600 py-2 font-medium text-white disabled:opacity-50"
+            className="flex-1 rounded bg-emerald-700 py-2 font-medium text-white disabled:opacity-50"
           >
             Approve
           </button>
