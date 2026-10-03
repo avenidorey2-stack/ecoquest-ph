@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EcoQuest PH",
   description: "Gamified climate action for the Philippines",
+};
+
+// Light-only design: tell browsers not to apply dark-mode form controls/scrollbars, and tint
+// the mobile browser bar to the cream canvas.
+export const viewport: Viewport = {
+  themeColor: "#fbfaf6",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

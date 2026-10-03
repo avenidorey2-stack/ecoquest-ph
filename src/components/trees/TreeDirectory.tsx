@@ -123,7 +123,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
             </ul>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-2xl bg-cream-50 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">National progress</p>
               <div className="mt-2">
@@ -193,7 +193,7 @@ export default function TreeDirectory({
               </h2>
               <span className="text-xs text-slate-400">{category.trees.length} species</span>
             </div>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {category.trees.map((tree) => (
                 <li key={tree.id}>
                   <button

@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
+/* The portal is designed for a light canvas only: keep it light even when the phone is in
+   dark mode (otherwise the page edges turn black and uncoloured text turns near-white). */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -19,11 +22,11 @@
   --color-cream-200: #ebe5d6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
+  /* Stop iOS from enlarging text after rotating to landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {

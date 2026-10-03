@@ -88,11 +88,21 @@ export async function fetchCityBoundary(
   province: string | null,
   regionHint?: string | null,
 ): Promise<Geometry | null> {
-  const withProvince = pickAdministrativeBoundary(await searchSettlements([city, province, "Philippines"].filter(Boolean).join(", ")));
-  if (withProvince || !province) return withProvince;
-
   const hints = [province, regionHint].filter((h): h is string => !!h);
-  return pickAdministrativeBoundary(await searchSettlements(`${city}, Philippines`), hints);
+  // OSM often names a city without the "City" suffix (PSGC "City of Lapu-Lapu" → OSM "Lapu-Lapu").
+  const bareName = city.endsWith(" City") ? city.slice(0, -" City".length) : null;
+
+  const attempts: { q: string; mustMention?: string[] }[] = [
+    { q: [city, province, "Philippines"].filter(Boolean).join(", ") },
+    ...(province ? [{ q: `${city}, Philippines`, mustMention: hints }] : []),
+    // Only with a province/region check, so a same-named town elsewhere can't match.
+    ...(bareName && hints.length ? [{ q: `${bareName}, Philippines`, mustMention: hints }] : []),
+  ];
+  for (const { q, mustMention } of attempts) {
+    const geometry = pickAdministrativeBoundary(await searchSettlements(q), mustMention);
+    if (geometry) return geometry;
+  }
+  return null;
 }
 
 type NominatimHit = {

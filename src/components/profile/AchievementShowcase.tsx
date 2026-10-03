@@ -24,7 +24,7 @@ export default function AchievementShowcase({
       {achievements.length === 0 ? (
         <p className="px-5 py-6 text-center text-sm text-slate-500">{emptyText}</p>
       ) : (
-        <ul className="grid gap-3 p-4 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
           {achievements.map((a) => (
             <li key={a.key} className="flex items-start gap-3 rounded-xl bg-cream-50 p-3 ring-1 ring-slate-100">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-2xl shadow-sm ring-1 ring-amber-100" aria-hidden>

@@ -28,7 +28,7 @@ export default async function AchievementsPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      <section className="grid gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:grid-cols-[auto_1fr_1fr] md:items-center">
+      <section className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:grid-cols-[auto_1fr_1fr] md:items-center">
         <div className="flex items-center gap-4">
           <div className="grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-center text-white">
             <div>

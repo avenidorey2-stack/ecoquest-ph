@@ -66,7 +66,7 @@ export default async function RewardsPage() {
           items.length > 0 && (
             <section key={title}>
               <h2 className="mb-2 font-semibold">{title}</h2>
-              <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {items.map((r) => (
                   <li key={r.id} className="flex flex-col gap-3 rounded-xl border bg-white p-4">
                     <div>

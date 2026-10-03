@@ -105,6 +105,8 @@ export async function getDashboardData(userId: string, now = new Date()) {
     pendingSubmissions,
     completedQuests,
     completedCount,
+    celebrations,
+    missions,
   ] = await Promise.all([
     getPlantingImpact(place?.cityCode ?? null),
     getLeaderboard({ scope: "national", viewerId: userId, limit: 1, now }),
@@ -200,6 +202,10 @@ export async function getDashboardData(userId: string, now = new Date()) {
       },
     }),
     prisma.quest.count({ where: { userId, status: "COMPLETED" } }),
+    // Read-only, so they run alongside the rest (after achievements, which they depend on).
+    getPendingCelebrations(userId, now),
+    // Daily quests (reset 00:00 PHT) and side quests, with progress and claim state.
+    getUserMissions(userId, now),
   ]);
 
   const weekly = currentWeeklyPoints(user, now);
@@ -399,9 +405,8 @@ export async function getDashboardData(userId: string, now = new Date()) {
     ecoTips: ecoTipsFor(place?.regionCode),
     uncelebrated,
     ads,
-    celebrations: await getPendingCelebrations(userId, now),
-    // Daily quests (reset 00:00 PHT) and side quests, with progress and claim state.
-    missions: await getUserMissions(userId, now),
+    celebrations,
+    missions,
   };
 }
 

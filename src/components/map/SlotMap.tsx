@@ -36,7 +36,7 @@ function FitToBoundary({ geometry }: { geometry: Geometry }) {
   return null;
 }
 
-/** Admin view: zoom to fit every slot (nationwide), once they've loaded. */
+/** Zoom to fit the given slots once they've loaded (admin: nationwide; city map: fallback). */
 function FitToSlots({ slots }: { slots: SlotDTO[] }) {
   const map = useMap();
   const key = slots.map((s) => s.id).join(",");
@@ -129,7 +129,8 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
             <FitToBoundary geometry={boundary} />
           </>
         )}
-        {adminView && <FitToSlots slots={slots} />}
+        {/* Admins: fit every slot. City map without an OSM outline: at least zoom to the city's slots. */}
+        {(adminView || (cityOnly && !boundary)) && <FitToSlots slots={slots} />}
 
         {slots.map((slot) => (
           <CircleMarker

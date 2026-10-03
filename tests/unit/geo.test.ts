@@ -1,5 +1,49 @@
-import { describe, expect, it } from "vitest";
-import { isInsidePhilippines, isWithinUserCity, pickAdministrativeBoundary } from "@/lib/geo";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchCityBoundary, isInsidePhilippines, isWithinUserCity, pickAdministrativeBoundary } from "@/lib/geo";
+
+describe("fetchCityBoundary", () => {
+  const polygon = { type: "Polygon", coordinates: [[[123.9, 10.3], [124.0, 10.3], [124.0, 10.4], [123.9, 10.3]]] };
+  const lapuLapu = {
+    category: "boundary",
+    type: "administrative",
+    place_rank: 12,
+    display_name: "Lapu-Lapu, Central Visayas, Philippines",
+    geojson: polygon,
+  };
+  const elsewhere = { ...lapuLapu, display_name: "Lapu-Lapu, Davao Region, Philippines" };
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  function stubNominatim(answer: (q: string) => unknown[]) {
+    const queries: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: URL) => {
+        const q = url.searchParams.get("q")!;
+        queries.push(q);
+        return new Response(JSON.stringify(answer(q)));
+      }),
+    );
+    return queries;
+  }
+
+  it("falls back to the name without 'City' when OSM files the city that way", async () => {
+    const queries = stubNominatim((q) => (q === "Lapu-Lapu, Philippines" ? [elsewhere, lapuLapu] : []));
+    await expect(fetchCityBoundary("Lapu-Lapu City", "Cebu", "Central Visayas")).resolves.toEqual(polygon);
+    expect(queries).toEqual(["Lapu-Lapu City, Cebu, Philippines", "Lapu-Lapu City, Philippines", "Lapu-Lapu, Philippines"]);
+  });
+
+  it("never accepts a same-named place in another province or region", async () => {
+    stubNominatim((q) => (q === "Lapu-Lapu, Philippines" ? [elsewhere] : []));
+    await expect(fetchCityBoundary("Lapu-Lapu City", "Cebu", "Central Visayas")).resolves.toBeNull();
+  });
+
+  it("stops at the first search that finds the boundary", async () => {
+    const queries = stubNominatim(() => [lapuLapu]);
+    await expect(fetchCityBoundary("Lapu-Lapu City", "Cebu", "Central Visayas")).resolves.toEqual(polygon);
+    expect(queries).toHaveLength(1);
+  });
+});
 
 describe("pickAdministrativeBoundary", () => {
   const polygon = { type: "Polygon" as const, coordinates: [[[123.8, 10.3], [123.9, 10.3], [123.9, 10.4], [123.8, 10.3]]] };

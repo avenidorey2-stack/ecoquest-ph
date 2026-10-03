@@ -15,14 +15,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   if (!session?.user?.id) redirect("/login");
 
   // Read from the DB (not the session) so role, points and location are always current.
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true },
-  });
+  const [user, unreadNotifications] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true },
+    }),
+    prisma.notification.count({ where: { userId: session.user.id, isRead: false } }),
+  ]);
   if (!user) redirect("/login");
 
   const place = resolveCity(user.cityCode);
-  const unreadNotifications = await prisma.notification.count({ where: { userId: session.user.id, isRead: false } });
 
   return (
     <AppShell

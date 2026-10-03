@@ -222,7 +222,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                     {profile.achievements.length === 0 ? (
                       <p className="border-t border-slate-100 px-4 py-4 text-sm text-slate-500">No badges unlocked yet.</p>
                     ) : (
-                      <ul className="grid gap-2 border-t border-slate-100 p-3 sm:grid-cols-2">
+                      <ul className="grid grid-cols-1 gap-2 border-t border-slate-100 p-3 sm:grid-cols-2">
                         {profile.achievements.map((a) => (
                           <li key={a.key} className="flex items-start gap-3 rounded-xl bg-cream-50 p-2.5 ring-1 ring-slate-100">
                             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-xl shadow-sm" aria-hidden>

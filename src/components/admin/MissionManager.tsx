@@ -118,7 +118,7 @@ function MissionForm({
       <p className="text-sm font-semibold text-slate-900">
         {mission ? "Edit" : "New"} {kind === "DAILY" ? "daily" : "side"} quest
       </p>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block text-sm sm:col-span-2">
           Title
           <input className={input} value={d.title} onChange={(e) => set("title", e.target.value)} maxLength={80} required placeholder="e.g. Seedling run" />

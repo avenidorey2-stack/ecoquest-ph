@@ -26,7 +26,7 @@ export default async function AdminVerificationsPage() {
       {pending.length === 0 ? (
         <p className="text-sm text-gray-500">All caught up — no submissions waiting for review.</p>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pending.map((v) => (
             <VerificationReviewCard
               key={v.id}

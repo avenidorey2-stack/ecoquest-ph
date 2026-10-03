@@ -24,7 +24,7 @@ export default async function AdminRedemptionsPage() {
           {pending.map((r) => {
             const isCash = r.reward.rewardType === "EWALLET_CASH";
             return (
-              <li key={r.id} className="grid gap-3 rounded-xl border bg-white p-4 text-sm shadow-sm md:grid-cols-3">
+              <li key={r.id} className="grid grid-cols-1 gap-3 rounded-xl border bg-white p-4 text-sm shadow-sm md:grid-cols-3">
                 <div>
                   <p className="font-medium">{r.user.name ?? r.user.email ?? "Unknown user"}</p>
                   <p className="text-xs text-gray-500">{r.createdAt.toLocaleString("en-PH")}</p>
