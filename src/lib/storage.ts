@@ -1,11 +1,14 @@
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { blobFolder } from "@/lib/blob-store";
 
-// Local-disk media storage for development. Swap these three functions for
-// S3 / R2 / Vercel Blob in production — callers only depend on the signatures.
+// Proof media storage: Supabase Storage in production, local disk in dev (see blob-store.ts).
+// Callers only depend on these function signatures.
 
-const ROOT = process.env.MEDIA_ROOT ?? path.join(process.cwd(), "storage", "uploads");
+const files = blobFolder(
+  () => process.env.MEDIA_ROOT ?? path.join(process.cwd(), "storage", "uploads"),
+  "uploads",
+);
 const MB = 1024 * 1024;
 
 export const MEDIA_RULES: Record<string, { ext: string; maxBytes: number }> = {
@@ -17,14 +20,6 @@ export const MEDIA_RULES: Record<string, { ext: string; maxBytes: number }> = {
 };
 
 const KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp|mp4|mov)$/;
-
-/**
- * Absolute path for a stored file. Uploads are runtime data (MEDIA_ROOT can point anywhere),
- * not source, so tell Turbopack not to trace this path into the server bundle.
- */
-function filePath(key: string) {
-  return path.join(/* turbopackIgnore: true */ ROOT, key);
-}
 
 export function mediaUrlForKey(key: string) {
   return `/api/media/${key}`;
@@ -39,21 +34,16 @@ export async function saveMedia(file: File) {
   }
 
   const key = `${randomUUID()}.${rule.ext}`;
-  await mkdir(ROOT, { recursive: true });
-  await writeFile(filePath(key), Buffer.from(await file.arrayBuffer()));
+  await files.put(key, new Uint8Array(await file.arrayBuffer()), file.type);
   return { key, url: mediaUrlForKey(key), type: file.type };
 }
 
 export async function readMedia(key: string) {
   if (!KEY_PATTERN.test(key)) return null;
-  try {
-    return await readFile(filePath(key));
-  } catch {
-    return null;
-  }
+  return files.get(key);
 }
 
 export async function deleteMedia(key: string) {
   if (!KEY_PATTERN.test(key)) return;
-  await unlink(filePath(key)).catch(() => {});
+  await files.remove(key);
 }

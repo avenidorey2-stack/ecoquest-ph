@@ -1,8 +1,8 @@
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { avatarUrlForKey, isAvatarKey, keyFromAvatarUrl } from "@/lib/avatar-url";
+import { blobFolder } from "@/lib/blob-store";
 
 export { avatarUrlForKey, displayAvatar, keyFromAvatarUrl } from "@/lib/avatar-url";
 
@@ -10,15 +10,14 @@ export { avatarUrlForKey, displayAvatar, keyFromAvatarUrl } from "@/lib/avatar-u
 // EXIF metadata (phone photos can carry GPS coordinates), and neutralises anything that
 // merely pretends to be an image. Stored outside `public/` because Next.js only serves
 // public files that existed at build time; served by /api/avatars/[key] instead.
+// Stored in Supabase Storage in production, local disk in dev (see blob-store.ts).
 
-const ROOT = process.env.AVATAR_ROOT ?? path.join(process.cwd(), "storage", "avatars");
+const files = blobFolder(
+  () => process.env.AVATAR_ROOT ?? path.join(process.cwd(), "storage", "avatars"),
+  "avatars",
+);
 export const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 export const AVATAR_SIZE = 256;
-
-function filePath(key: string) {
-  // Runtime data, not source — keep Turbopack from tracing it into the server bundle.
-  return path.join(/* turbopackIgnore: true */ ROOT, key);
-}
 
 /** JPEG, PNG or WebP by magic bytes — the declared Content-Type can't be trusted. */
 export function sniffImageType(bytes: Uint8Array): "jpeg" | "png" | "webp" | null {
@@ -55,22 +54,17 @@ export async function saveAvatar(file: File) {
   }
 
   const key = `${randomUUID()}.webp`;
-  await mkdir(ROOT, { recursive: true });
-  await writeFile(filePath(key), webp);
+  await files.put(key, webp, "image/webp");
   return { key, url: avatarUrlForKey(key) };
 }
 
 export async function readAvatar(key: string) {
   if (!isAvatarKey(key)) return null;
-  try {
-    return await readFile(filePath(key));
-  } catch {
-    return null;
-  }
+  return files.get(key);
 }
 
 export async function deleteAvatar(url: string | null | undefined) {
   const key = keyFromAvatarUrl(url);
-  if (key) await unlink(filePath(key)).catch(() => {});
+  if (key) await files.remove(key);
 }
 

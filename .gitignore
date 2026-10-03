@@ -48,3 +48,5 @@ next-env.d.ts
 # uploaded media (local dev storage)
 /storage
 !.env.example
+.vercel
+.env*
