@@ -61,6 +61,44 @@ describe("POST /api/quests/:id/verifications", () => {
     expect((await submit(quest.id)).status).toBe(404);
   });
 
+  it("notifies every admin that there's proof to review", async () => {
+    const { user, admin, quest } = await setup();
+    const admin2 = await createUser({ role: "ADMIN" });
+    await prisma.user.update({ where: { id: user.id }, data: { name: "Maria" } });
+    signInAs(user);
+    expect((await submit(quest.id, jpeg(), 3)).status).toBe(201);
+
+    for (const a of [admin, admin2]) {
+      expect(await prisma.notification.findMany({ where: { userId: a.id }, select: { message: true, link: true, isRead: true } })).toEqual([
+        { message: "New proof to review: Maria submitted 3 Narra in Quezon City.", link: "/admin/verifications", isRead: false },
+      ]);
+    }
+    expect(await prisma.notification.count({ where: { userId: user.id } })).toBe(0); // the planter isn't told
+
+    // A refused submission (one is already pending) sends nothing more.
+    expect((await submit(quest.id)).status).toBe(409);
+    expect(await prisma.notification.count({ where: { userId: admin.id } })).toBe(1);
+  });
+
+  it("an admin planting themselves notifies the other admins, not themselves", async () => {
+    const { admin } = await setup();
+    const other = await createUser({ role: "ADMIN" });
+    const quest = await prisma.quest.create({ data: { userId: admin.id, slotId: (await createSlot()).id } });
+    signInAs({ id: admin.id, role: "ADMIN" });
+    expect((await submit(quest.id)).status).toBe(201);
+    expect(await prisma.notification.count({ where: { userId: admin.id } })).toBe(0);
+    expect(await prisma.notification.count({ where: { userId: other.id } })).toBe(1);
+  });
+
+  it("falls back to a generic name when the planter has none", async () => {
+    const { user, admin, quest } = await setup();
+    await prisma.user.update({ where: { id: user.id }, data: { name: null } });
+    signInAs(user);
+    await submit(quest.id, jpeg(), 1);
+    const [n] = await prisma.notification.findMany({ where: { userId: admin.id } });
+    expect(n.message).toBe("New proof to review: A planter submitted 1 Narra in Quezon City.");
+  });
+
   it("blocks a second submission while one is pending", async () => {
     const { user, quest } = await setup();
     signInAs(user);

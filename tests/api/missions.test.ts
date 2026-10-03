@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { POST as claimRoute } from "@/app/api/missions/[id]/claim/route";
+import { POST as submitProofRoute } from "@/app/api/quests/[id]/verifications/route";
+import { POST as reviewRoute } from "@/app/api/admin/verifications/[id]/review/route";
 import { POST as createMissionRoute } from "@/app/api/admin/missions/route";
 import { DELETE as deleteMissionRoute, PATCH as updateMissionRoute } from "@/app/api/admin/missions/[id]/route";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +10,7 @@ import { dayStart, manilaDateKey, nextDayStart } from "@/lib/week";
 import { syncTreeSpecies } from "@/lib/species";
 import { seedSeedlingProducts } from "@/lib/seedlings";
 import type { Prisma } from "@/generated/prisma/client";
-import { createSlot, createUser, ctx, jsonRequest, resetDb, signInAs } from "../helpers";
+import { createSlot, createUser, ctx, jpeg, jsonRequest, resetDb, signInAs, uploadRequest } from "../helpers";
 
 beforeEach(resetDb);
 
@@ -31,10 +33,24 @@ const mission = (data: Partial<Prisma.MissionUncheckedCreateInput> = {}) =>
     },
   });
 
-async function proofAt(userId: string, at: Date, status: "PENDING" | "APPROVED" | "REJECTED" = "PENDING") {
+/** A proof submitted at `submittedAt` and (unless PENDING) reviewed at `reviewedAt`. */
+async function proofAt(
+  userId: string,
+  reviewedAt: Date,
+  status: "PENDING" | "APPROVED" | "REJECTED" = "APPROVED",
+  submittedAt: Date = reviewedAt,
+) {
   const quest = await prisma.quest.create({ data: { userId, slotId: (await createSlot()).id } });
   return prisma.verification.create({
-    data: { questId: quest.id, mediaUrl: `/api/media/${crypto.randomUUID()}.jpg`, mediaType: "image/jpeg", plantCount: 1, status, createdAt: at },
+    data: {
+      questId: quest.id,
+      mediaUrl: `/api/media/${crypto.randomUUID()}.jpg`,
+      mediaType: "image/jpeg",
+      plantCount: 1,
+      status,
+      createdAt: submittedAt,
+      reviewedAt: status === "PENDING" ? null : reviewedAt,
+    },
   });
 }
 
@@ -76,6 +92,7 @@ describe("progress and claiming", () => {
     await proofAt(user.id, YESTERDAY); // doesn't count today
     await proofAt(user.id, NOW);
     await proofAt(user.id, NOW, "REJECTED"); // rejected proof doesn't count
+    await proofAt(user.id, NOW, "PENDING"); // nor does proof an admin hasn't approved yet
 
     let { daily } = await getUserMissions(user.id, NOW);
     expect(daily[0]).toMatchObject({ id: m.id, progress: 1, target: 2, status: "active" });
@@ -98,6 +115,53 @@ describe("progress and claiming", () => {
     expect(daily[0]).toMatchObject({ progress: 0, status: "active" });
     const claims = await prisma.missionClaim.findMany({ where: { userId: user.id } });
     expect(claims).toMatchObject([{ periodKey: "2026-10-03", pointsAwarded: 20, xpAwarded: 10 }]);
+  });
+
+  it("proof quests pay only after an admin approves, on the day of approval", async () => {
+    const user = await createUser({ points: 0 });
+    const m = await mission({ target: 1 });
+
+    // Uploaded today but still pending: nothing to claim, no points or XP.
+    const pending = await proofAt(user.id, NOW, "PENDING");
+    expect((await getUserMissions(user.id, NOW)).daily[0]).toMatchObject({ progress: 0, status: "active" });
+    await expect(claimMission(user.id, m.id, NOW)).rejects.toThrow("Not done yet: 0/1");
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).toMatchObject({ points: 0, xp: 0 });
+
+    // Approved tomorrow: counts for tomorrow's daily quest, not today's.
+    await prisma.verification.update({ where: { id: pending.id }, data: { status: "APPROVED", reviewedAt: TOMORROW } });
+    expect((await getUserMissions(user.id, NOW)).daily[0]).toMatchObject({ progress: 0, status: "active" });
+    expect((await getUserMissions(user.id, TOMORROW)).daily[0]).toMatchObject({ progress: 1, status: "ready" });
+    await claimMission(user.id, m.id, TOMORROW);
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).toMatchObject({ points: 20, xp: 10 });
+
+    // Submitted yesterday, approved today: counts today.
+    const other = await createUser();
+    await proofAt(other.id, NOW, "APPROVED", YESTERDAY);
+    expect((await getUserMissions(other.id, NOW)).daily[0]).toMatchObject({ progress: 1, status: "ready" });
+  });
+
+  it("through the real flow: upload earns nothing until the admin approves", async () => {
+    const user = await createUser({ points: 0, xp: 0 });
+    const admin = await createUser({ role: "ADMIN" });
+    const m = await mission({ target: 1, startsAt: new Date("2020-01-01T00:00:00Z") });
+    const quest = await prisma.quest.create({ data: { userId: user.id, slotId: (await createSlot({ pointsPerPlant: 10 })).id } });
+
+    signInAs(user);
+    const submitted = await submitProofRoute(uploadRequest(jpeg(), 2), ctx({ id: quest.id }));
+    expect(submitted.status).toBe(201);
+    const { verification } = await submitted.json();
+
+    expect((await claimRoute(new Request("http://test.local", { method: "POST" }), ctx({ id: m.id }))).status).toBe(409);
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).toMatchObject({ points: 0, xp: 0 });
+
+    signInAs(admin);
+    expect((await reviewRoute(jsonRequest({ action: "approve" }), ctx({ id: verification.id }))).status).toBe(200);
+    const approved = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(approved.points).toBe(20); // 2 plants × 10 pts, from the approval itself
+
+    signInAs(user);
+    expect((await claimRoute(new Request("http://test.local", { method: "POST" }), ctx({ id: m.id }))).status).toBe(201);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).points).toBe(40); // + the quest's 20
   });
 
   it("a daily quest created mid-day still counts that whole day", async () => {

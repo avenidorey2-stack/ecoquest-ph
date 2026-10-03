@@ -516,7 +516,7 @@ enum MissionKind {
 // What a mission counts — tracked automatically from existing activity.
 enum MissionObjective {
   PLANT_TREES // approved plants (PlantedTree.count)
-  SUBMIT_PROOF // proof submissions that weren't rejected
+  SUBMIT_PROOF // proofs approved by an admin (counted on the day of approval)
   BUY_SEEDLINGS // seedlings ordered (not cancelled)
   INVITE_FRIENDS // new sign-ups through the user's invite link
   REDEEM_REWARD // reward redemptions (not declined)

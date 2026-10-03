@@ -86,6 +86,7 @@ describe("direct uploads to Supabase Storage", () => {
   });
 
   it("issues a signed storage URL, then records the proof from what storage holds", async () => {
+    const admin = await createUser({ role: "ADMIN" });
     const { quest } = await setup();
     const upload = await uploadDirect(quest.id, { type: "image/jpeg", size: 6 * MB }); // > Vercel's 4.5 MB
 
@@ -98,6 +99,7 @@ describe("direct uploads to Supabase Storage", () => {
     const { verification } = await res.json();
     expect(verification).toMatchObject({ mediaUrl: `/api/media/${upload.key}`, mediaType: "image/jpeg", plantCount: 3 });
     expect((await prisma.quest.findUniqueOrThrow({ where: { id: quest.id } })).status).toBe("PENDING_VERIFICATION");
+    expect(await prisma.notification.count({ where: { userId: admin.id, link: "/admin/verifications" } })).toBe(1);
   });
 
   it("accepts a 50 MB video", async () => {

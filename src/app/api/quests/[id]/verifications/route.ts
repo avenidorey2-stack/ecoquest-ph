@@ -10,6 +10,7 @@ import {
   type StoredMedia,
 } from "@/lib/storage";
 import { MAX_PLANTS_PER_SUBMISSION } from "@/lib/quests";
+import { notifyAdmins } from "@/lib/notifications";
 
 function plantCountError(plantCount: number) {
   if (Number.isInteger(plantCount) && plantCount >= 1 && plantCount <= MAX_PLANTS_PER_SUBMISSION) return null;
@@ -40,9 +41,22 @@ async function createVerification(questId: string, media: StoredMedia, plantCoun
         data: { status: "PENDING_VERIFICATION" },
       });
       if (count === 0) return null;
-      return tx.verification.create({
+      const created = await tx.verification.create({
         data: { questId, mediaUrl: media.url, mediaType: media.type, plantCount },
       });
+
+      // Tell the admins there's proof to review (same transaction: no notice without the proof).
+      const { userId, user, slot } = await tx.quest.findUniqueOrThrow({
+        where: { id: questId },
+        select: { userId: true, user: { select: { name: true } }, slot: { select: { requiredPlantType: true, city: true } } },
+      });
+      await notifyAdmins(
+        tx,
+        `New proof to review: ${user.name?.trim() || "A planter"} submitted ${plantCount} ${slot.requiredPlantType} in ${slot.city}.`,
+        "/admin/verifications",
+        userId,
+      );
+      return created;
     });
 
     if (!verification) {
