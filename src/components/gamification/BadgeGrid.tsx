@@ -1,6 +1,6 @@
 "use client";
 
-import { MotionConfig, motion } from "framer-motion";
+import { MotionConfig, motion } from "motion/react";
 
 export type BadgeView = {
   key: string;
@@ -73,7 +73,7 @@ export default function BadgeGrid({ badges }: { badges: BadgeView[] }) {
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-emerald-400" style={{ width: `${pct}%` }} />
+                      <div className="eq-fill h-full rounded-full bg-emerald-400" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 ) : (

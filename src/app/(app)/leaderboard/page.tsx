@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ActivePill from "@/components/ui/ActivePill";
 import { requirePageUserId } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboard, type LeaderboardScope } from "@/lib/leaderboard";
@@ -36,11 +37,12 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
     <Link
       href={`/leaderboard?scope=${value}`}
       aria-current={scope === value ? "page" : undefined}
-      className={`flex-1 rounded-md px-3 py-2 text-center text-sm font-medium ${
-        scope === value ? "bg-white text-emerald-800 shadow" : "text-slate-600 hover:text-slate-900"
+      className={`relative flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-colors ${
+        scope === value ? "text-emerald-800" : "text-slate-600 hover:text-slate-900"
       }`}
     >
-      {label}
+      {scope === value && <ActivePill id="leaderboard-scope" className="inset-0 rounded-md bg-white shadow" />}
+      <span className="relative">{label}</span>
     </Link>
   );
 

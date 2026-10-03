@@ -174,7 +174,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (up to 1000) from escaping above page overlays.
-    <div className={expanded ? "fixed inset-0 isolate z-[1400] bg-white" : "relative isolate h-full w-full"}>
+    <div className={expanded ? "fixed inset-0 isolate z-[1400] m-0 bg-white" : "relative isolate h-full w-full"}>
       <MapContainer
         center={PH_CENTER}
         zoom={6}

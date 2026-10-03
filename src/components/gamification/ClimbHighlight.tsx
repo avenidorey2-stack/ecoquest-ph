@@ -1,6 +1,6 @@
 "use client";
 
-import { MotionConfig, motion } from "framer-motion";
+import { MotionConfig, motion } from "motion/react";
 
 /**
  * Leaderboard highlight for the viewer's row after a climb: a glowing pulse around the row

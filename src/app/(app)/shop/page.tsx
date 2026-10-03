@@ -59,7 +59,7 @@ export default async function SeedlingShopPage() {
           No seedlings are in stock right now. Check back soon!
         </p>
       ) : (
-        <ul className="eq-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {products.map((p) => {
             const soldOut = p.stockQuantity < 1;
             return (

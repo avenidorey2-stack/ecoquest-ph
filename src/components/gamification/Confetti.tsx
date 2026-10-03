@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const COLORS = ["#10b981", "#34d399", "#fbbf24", "#f59e0b", "#a3e635", "#38bdf8", "#f472b6"];
 const GOLDEN_ANGLE = 137.508;

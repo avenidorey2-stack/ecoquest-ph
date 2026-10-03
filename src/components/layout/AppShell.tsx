@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
 import EcoBackground from "./EcoBackground";
+import ActivePill from "@/components/ui/ActivePill";
 
 export type ShellUser = {
   name: string | null;
@@ -82,11 +83,14 @@ function Avatar({ user, size = "h-10 w-10" }: { user: ShellUser; size?: string }
 }
 
 function SidebarContent({
+  navId,
   user,
   status,
   pathname,
   onNavigate,
 }: {
+  /** Unique per rendered sidebar so the desktop and drawer highlights animate independently. */
+  navId: string;
   user: ShellUser;
   status: ShellStatus;
   pathname: string;
@@ -118,18 +122,19 @@ function SidebarContent({
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${
-                    active
-                      ? "bg-emerald-500/15 text-white ring-1 ring-emerald-400/25"
-                      : "text-emerald-100/75 hover:bg-white/5 hover:text-white"
+                    active ? "text-white" : "text-emerald-100/75 hover:bg-white/5 hover:text-white"
                   }`}
                 >
                   {active && (
-                    <span className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-emerald-300 eq-fade" aria-hidden />
+                    <>
+                      <ActivePill id={`${navId}-bg`} className="inset-0 rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/25" />
+                      <ActivePill id={`${navId}-bar`} className="inset-y-2 left-0 w-[3px] rounded-r-full bg-emerald-300" />
+                    </>
                   )}
                   <Icon
-                    className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-0.5 ${active ? "text-emerald-300" : "text-emerald-200/60 group-hover:text-emerald-200"}`}
+                    className={`relative h-[18px] w-[18px] shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-0.5 ${active ? "text-emerald-300" : "text-emerald-200/60 group-hover:text-emerald-200"}`}
                   />
-                  <span className="leading-tight">
+                  <span className="relative leading-tight">
                     <span className="block font-medium">{label}</span>
                     {hint && <span className="block text-[11px] text-emerald-200/50">{hint}</span>}
                   </span>
@@ -231,7 +236,7 @@ export default function AppShell({
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 bg-gradient-to-b from-emerald-950 to-[#04291f] lg:block">
         <SidebarAmbience />
-        <SidebarContent user={user} status={status} pathname={pathname} />
+        <SidebarContent navId="nav-desktop" user={user} status={status} pathname={pathname} />
       </aside>
 
       {/* Mobile drawer */}
@@ -249,7 +254,7 @@ export default function AppShell({
         >
           <CloseIcon />
         </button>
-        <SidebarContent user={user} status={status} pathname={pathname} onNavigate={() => setOpen(false)} />
+        <SidebarContent navId="nav-drawer" user={user} status={status} pathname={pathname} onNavigate={() => setOpen(false)} />
       </aside>
 
       <div className="flex min-h-screen flex-col lg:pl-64">
