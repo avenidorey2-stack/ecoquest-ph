@@ -269,7 +269,8 @@ export default async function DashboardPage() {
           action={isAdmin ? { href: "/admin/slots", label: "Manage slots" } : city ? undefined : { href: "/profile", label: "Set city" }}
           bodyClassName="flex flex-col"
         >
-          <div className="relative h-[340px] w-full">
+          {/* Taller on phones (full-width card); the map's Expand button goes full screen. */}
+          <div className="relative h-[380px] w-full md:h-[340px]">
             {isAdmin ? <SlotMap adminView /> : <SlotMap cityOnly />}
             {!city && !isAdmin && (
               <div className="absolute inset-0 z-[500] grid place-items-center bg-white/70 p-6 text-center backdrop-blur-[2px]">

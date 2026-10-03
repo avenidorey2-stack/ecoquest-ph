@@ -84,6 +84,24 @@ export const CameraIcon = (p: IconProps) => (
     <circle cx="12" cy="13" r="3.5" />
   </Svg>
 );
+export const VideoIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="6" width="13" height="12" rx="2" />
+    <path d="m16 10.5 5-3v9l-5-3" />
+  </Svg>
+);
+export const ImageIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8.5" cy="9.5" r="1.5" />
+    <path d="m21 16-5-5-9 9" />
+  </Svg>
+);
+export const UploadIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+  </Svg>
+);
 export const WalletIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1V7Zm0 0 11-3v3" />
@@ -132,6 +150,11 @@ export const ClockIcon = (p: IconProps) => (
 export const LogoutIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" />
+  </Svg>
+);
+export const ExpandIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
   </Svg>
 );
 export const MenuIcon = (p: IconProps) => (
