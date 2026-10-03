@@ -62,7 +62,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
           {q ? `No users match “${query.trim()}”.` : "No users have signed up yet."}
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="eq-stagger space-y-3">
           {visible.map((g) => {
             const key = groupKey(g);
             // Searching always shows the matches, whatever was collapsed before.

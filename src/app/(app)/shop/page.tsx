@@ -136,7 +136,7 @@ export default async function SeedlingShopPage() {
         {orders.length === 0 ? (
           <p className="px-5 py-6 text-sm text-slate-500">No orders yet — pick a seedling above to get started.</p>
         ) : (
-          <ul className="divide-y divide-slate-100 text-sm">
+          <ul className="eq-stagger divide-y divide-slate-100 text-sm">
             {orders.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                 <div className="min-w-0">

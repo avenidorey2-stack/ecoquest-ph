@@ -99,7 +99,7 @@ export default async function RewardsPage() {
         {history.length === 0 ? (
           <p className="text-sm text-slate-500">Nothing redeemed yet.</p>
         ) : (
-          <ul className="divide-y rounded-2xl border border-slate-200/80 bg-white shadow-sm text-sm">
+          <ul className="eq-stagger divide-y rounded-2xl border border-slate-200/80 bg-white shadow-sm text-sm">
             {history.map((h) => (
               <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">

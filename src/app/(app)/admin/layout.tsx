@@ -5,7 +5,10 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="flex flex-1 flex-col text-slate-900">
       <AdminNav />
-      <div className="flex flex-1 flex-col">{children}</div>
+      {/* The admin page's own sections scroll-reveal (ScrollReveal), not this whole wrapper. */}
+      <div className="flex flex-1 flex-col" data-reveal-root>
+        {children}
+      </div>
     </div>
   );
 }

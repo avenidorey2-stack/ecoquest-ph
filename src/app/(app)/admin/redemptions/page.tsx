@@ -20,7 +20,7 @@ export default async function AdminRedemptionsPage() {
       {pending.length === 0 ? (
         <p className="text-sm text-slate-500">No redemption requests waiting.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="eq-stagger space-y-3">
           {pending.map((r) => {
             const isCash = r.reward.rewardType === "EWALLET_CASH";
             return (

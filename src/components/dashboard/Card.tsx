@@ -7,6 +7,7 @@ export default function Card({
   action,
   className = "",
   bodyClassName = "p-5",
+  tour,
   children,
 }: {
   title: string;
@@ -14,11 +15,14 @@ export default function Card({
   action?: { href: string; label: string };
   className?: string;
   bodyClassName?: string;
+  /** `data-tour` key: the guided tour spotlights this card. */
+  tour?: string;
   children: React.ReactNode;
 }) {
   return (
     <section
       aria-label={title}
+      data-tour={tour}
       className={`flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_8px_24px_-12px_rgba(15,23,42,.08)] ${className}`}
     >
       <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">

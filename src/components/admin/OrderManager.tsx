@@ -58,7 +58,7 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
   }
 
   return (
-    <ul className="space-y-3">
+    <ul className="eq-stagger space-y-3">
       {orders.map((o) => {
         const next = NEXT_ACTION[o.status];
         const cancellable = CANCELLABLE.includes(o.status);

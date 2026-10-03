@@ -190,6 +190,31 @@ body {
   .eq-fade { animation: eq-fade var(--dur-reveal) ease-out backwards; }
 }
 
+/* Scroll reveal (ScrollReveal.tsx): below-the-fold blocks wait hidden, then spring in from
+   script, so their CSS entrance is switched off. Bars and rings inside replay on reveal. */
+[data-eq-reveal] {
+  animation: none;
+}
+[data-eq-reveal="hidden"] {
+  opacity: 0;
+}
+[data-eq-reveal="hidden"] .eq-fill,
+[data-eq-reveal="hidden"] .eq-ring {
+  animation: none;
+}
+
+/* Guided tour: the spotlight outline breathes gently. */
+@keyframes eq-tour-ring {
+  from { stroke-opacity: 1; }
+  to { stroke-opacity: 0.35; }
+}
+.eq-tour-ring {
+  animation: eq-tour-ring 1.4s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eq-tour-ring { animation: none; }
+}
+
 /* ─── Eco background ───────────────────────────────────────────────────── */
 
 .eq-eco-bg {

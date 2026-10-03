@@ -6,7 +6,7 @@ import { getAppOrigin } from "@/lib/url";
 import SlotMap from "@/components/map/SlotMapLoader";
 import CelebrationGate from "@/components/quests/CelebrationGate";
 import PatronBanner from "@/components/patrons/PatronBanner";
-import WelcomeModal from "@/components/onboarding/WelcomeModal";
+import ProductTour from "@/components/onboarding/ProductTour";
 import Card, { ProgressBar } from "@/components/dashboard/Card";
 import CopyField from "@/components/dashboard/CopyField";
 import QuestBoard from "@/components/dashboard/QuestBoard";
@@ -41,10 +41,12 @@ const NOTICE_STYLES: Record<DashboardNotice["kind"], string> = {
   declined: "bg-amber-500",
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const userId = await requirePageUserId();
   const now = requestTime();
-  const [d, origin, viewer] = await Promise.all([getDashboardData(userId, now), getAppOrigin(), getCurrentUser()]);
+  const [d, origin, viewer, query] = await Promise.all([getDashboardData(userId, now), getAppOrigin(), getCurrentUser(), searchParams]);
+  // "Take the tour" in the menu replays the guided tour for anyone.
+  const replayTour = query.tour === "1";
   // Admins see every slot nationwide on the dashboard map (not just their home city).
   const isAdmin = viewer?.role === "ADMIN";
 
@@ -64,7 +66,7 @@ export default async function DashboardPage() {
       {/* ── Main grid: 3 columns on desktop, 2 on tablets, stacked on phones ── */}
       <div className="eq-stagger eq-spring grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {/* 1 · Eco-impact score */}
-        <Card title="Eco-impact score" icon={<SproutIcon className="h-4 w-4" />}>
+        <Card title="Eco-impact score" tour="impact" icon={<SproutIcon className="h-4 w-4" />}>
           <div className="flex items-center gap-5">
             <div className="relative grid h-28 w-28 shrink-0 place-items-center">
               <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
@@ -180,7 +182,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* 2 · Active quests */}
-        <Card title="Quests" icon={<FlagIcon className="h-4 w-4" />}>
+        <Card title="Quests" tour="quests" icon={<FlagIcon className="h-4 w-4" />}>
           <QuestBoard missions={d.missions} quests={d.quests} completed={d.completedTasks} completedTotal={d.completedTotal} />
         </Card>
 
@@ -230,7 +232,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* 4 · Reward wallet */}
-        <Card title="Reward wallet" icon={<WalletIcon className="h-4 w-4" />} action={{ href: "/rewards", label: "Rewards" }}>
+        <Card title="Reward wallet" tour="wallet" icon={<WalletIcon className="h-4 w-4" />} action={{ href: "/rewards", label: "Rewards" }}>
           <div className="rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-4 text-white">
             <p className="flex items-center gap-1.5 text-xs text-emerald-200">
               <CoinIcon className="h-4 w-4" /> Points balance
@@ -266,6 +268,7 @@ export default async function DashboardPage() {
         {/* 5 · Geofenced action map */}
         <Card
           title={isAdmin ? "All planting slots · admin view" : "Geofenced action map"}
+          tour="map"
           icon={<MapIcon className="h-4 w-4" />}
           action={isAdmin ? { href: "/admin/slots", label: "Manage slots" } : city ? undefined : { href: "/profile", label: "Set city" }}
           bodyClassName="flex flex-col"
@@ -306,6 +309,7 @@ export default async function DashboardPage() {
         {/* 6 · Local leaderboard */}
         <Card
           title="Local leaderboard"
+          tour="leaderboard"
           icon={<TrophyIcon className="h-4 w-4" />}
           action={{ href: city ? "/leaderboard?scope=local" : "/leaderboard?scope=national", label: "Full board" }}
         >
@@ -387,7 +391,7 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div data-tour="referral" className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
               <LinkIcon className="h-4 w-4 text-emerald-600" /> Your referral link
             </h3>
@@ -423,9 +427,9 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* One celebration surface at a time: welcome → growing tree → level-up / badges (+ rank toast). */}
-      {!d.user.onboarded ? (
-        <WelcomeModal hasCity={!!d.place} invitedBy={d.user.invitedBy} />
+      {/* One celebration surface at a time: guided tour → growing tree → level-up / badges (+ rank toast). */}
+      {!d.user.onboarded || replayTour ? (
+        <ProductTour key={replayTour ? "replay" : "first"} hasCity={!!d.place} invitedBy={d.user.invitedBy} replay={replayTour} />
       ) : d.uncelebrated.length === 0 ? (
         <CelebrationCenter pending={d.celebrations} />
       ) : (

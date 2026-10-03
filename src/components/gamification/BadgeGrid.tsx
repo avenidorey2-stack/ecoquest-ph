@@ -17,7 +17,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-PH", { timeZon
 export default function BadgeGrid({ badges }: { badges: BadgeView[] }) {
   return (
     <MotionConfig reducedMotion="user">
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {badges.map((b, i) => {
           const unlocked = !!b.unlockedAt;
           const pct = b.progress ? Math.round((b.progress.current / b.progress.target) * 100) : 0;

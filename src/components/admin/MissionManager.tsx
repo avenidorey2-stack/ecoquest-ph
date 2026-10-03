@@ -226,7 +226,7 @@ export default function MissionManager({ kind, missions }: { kind: MissionKind; 
       {missions.length === 0 ? (
         <p className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">No {kind === "DAILY" ? "daily" : "side"} quests yet.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="eq-stagger space-y-3">
           {missions.map((m) =>
             editing === m.id ? (
               <li key={m.id}>
