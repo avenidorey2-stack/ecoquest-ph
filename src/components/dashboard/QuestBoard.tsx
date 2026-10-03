@@ -81,7 +81,7 @@ function MissionRow({ m }: { m: MissionView }) {
           <span className="text-xs font-medium text-emerald-700">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & claimed"}</span>
         ) : (
           <Link href={meta.href} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800">
-            {meta.action} →
+            {meta.action}
           </Link>
         )}
         {message && (

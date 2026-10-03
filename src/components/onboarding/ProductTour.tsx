@@ -8,13 +8,13 @@ import {
   useMotionValue,
   useReducedMotion,
   useTransform,
-  type MotionValue,
   type Variants,
 } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { TOUR_OPEN_EVENT } from "@/components/layout/ScrollReveal";
 import { GAP, MARGIN, placeCard, spotlightBox, type Box, type Side } from "@/lib/tour-placement";
 import {
   BellIcon,
@@ -166,6 +166,8 @@ function tourSteps(hasCity: boolean): Step[] {
 }
 
 const SPRING = { type: "spring", bounce: 0.18, visualDuration: 0.5 } as const;
+/** Page scroll: same timing as the spotlight, but no overshoot. */
+const SCROLL = { type: "spring", bounce: 0, visualDuration: 0.5, restDelta: 0.5 } as const;
 const CARD_MAX_W = 360;
 /** Page targets scroll clear of the sticky header (h-16). */
 const SAFE_TOP = 72;
@@ -205,25 +207,65 @@ function isPinned(el: HTMLElement) {
   return false;
 }
 
-/** Scroll a page target (and room for the card) into view, only when it's needed. */
-function bringIntoView(el: HTMLElement, cardH: number, prefer: Side[] | undefined, reduce: boolean) {
-  if (isPinned(el)) return;
+/** How far to scroll so a page target (and room for the card) is in view; 0 when it already is. */
+function scrollNeeded(el: HTMLElement, r: Box, cardW: number, cardH: number, prefer: Side[] | undefined) {
+  if (isPinned(el)) return 0;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const r = el.getBoundingClientRect();
-  const w = Math.min(CARD_MAX_W, vw - 2 * MARGIN);
   const spot = spotlightBox(r, vw, vh);
-  const fullyVisible = r.top >= SAFE_TOP && r.bottom <= vh - MARGIN;
-  if (fullyVisible && spot && placeCard(spot, w, cardH, vw, vh, prefer).arrow) return;
+  const fullyVisible = r.y >= SAFE_TOP && r.y + r.height <= vh - MARGIN;
+  if (fullyVisible && spot && placeCard(spot, cardW, cardH, vw, vh, prefer).arrow) return 0;
 
   const room = vh - MARGIN - SAFE_TOP;
   const pair = r.height + GAP + cardH;
   const top = pair <= room ? SAFE_TOP + (room - pair) / 2 : r.height <= room ? SAFE_TOP + (room - r.height) / 2 : SAFE_TOP;
-  const delta = r.top - top;
-  if (Math.abs(delta) > 4) window.scrollBy({ top: delta, behavior: reduce ? "auto" : "smooth" });
+  // Only as far as the page can actually scroll, so the planned spotlight matches where the target lands.
+  const maxScroll = document.documentElement.scrollHeight - vh;
+  const delta = Math.min(Math.max(window.scrollY + r.y - top, 0), maxScroll) - window.scrollY;
+  return Math.abs(delta) > 4 ? delta : 0;
 }
 
-type Geo = { rect: Box | null; vw: number; vh: number; fallback: boolean };
+const toBox = (r: DOMRect): Box => ({ x: r.x, y: r.y, width: r.width, height: r.height });
+
+/** Spotlight + card placement for a target rect (null = centered card, no spotlight). */
+function computeLayout(rect: Box | null, contentH: number, footerH: number, prefer: Side[] | undefined) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const w = Math.min(CARD_MAX_W, vw - 2 * MARGIN);
+  const spot = rect ? spotlightBox(rect, vw, vh) : null;
+  return { w, spot, place: placeCard(spot, w, contentH + footerH, vw, vh, prefer), vw, vh, contentH };
+}
+type Layout = ReturnType<typeof computeLayout>;
+type View = { w: number; arrow: Side | null; fallback: boolean };
+
+function useGeometry() {
+  const sx = useMotionValue(0);
+  const sy = useMotionValue(0);
+  const sw = useMotionValue(0);
+  const sh = useMotionValue(0);
+  const ring = useMotionValue(0);
+  const cx = useMotionValue(0);
+  const cy = useMotionValue(0);
+  const ch = useMotionValue(0);
+  const arrowAt = useMotionValue(0);
+  return useMemo(() => ({ sx, sy, sw, sh, ring, cx, cy, ch, arrowAt }), [sx, sy, sw, sh, ring, cx, cy, ch, arrowAt]);
+}
+type Geometry = ReturnType<typeof useGeometry>;
+
+/** Target values in Geometry key order (index 7 = content height). */
+function layoutTargets({ spot, place, vw, vh, contentH }: Layout) {
+  // No target: the spotlight closes to a point at the center (the whole screen dims).
+  const s = spot ?? { x: vw / 2, y: vh / 2, width: 0, height: 0 };
+  return [s.x, s.y, s.width, s.height, spot ? 1 : 0, place.x, place.y, contentH, place.arrowOffset];
+}
+
+function applyLayout(g: Geometry, layout: Layout, smooth: boolean) {
+  const targets = layoutTargets(layout);
+  Object.values(g).forEach((mv, i) => (smooth ? animate(mv, targets[i], SPRING) : mv.jump(targets[i])));
+  return targets;
+}
+
+const isAnimating = (g: Geometry) => Object.values(g).some((mv) => mv.isAnimating());
 
 function TourLayer({
   steps,
@@ -241,9 +283,9 @@ function TourLayer({
   const titleId = useId();
   const maskId = useId();
   const [[index, dir], setNav] = useState<[number, number]>([0, 1]);
-  const [geo, setGeo] = useState<Geo | null>(null);
-  const [size, setSize] = useState({ content: 0, footer: 0 });
-  const sizeRef = useRef(size);
+  const [view, setView] = useState<View | null>(null);
+  const viewRef = useRef(view);
+  const sizeRef = useRef({ content: 0, footer: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -254,108 +296,155 @@ function TourLayer({
   const last = index === total - 1;
   const go = (delta: number) => setNav(([i]) => [Math.min(Math.max(i + delta, 0), total - 1), delta]);
 
-  // Spotlight + card geometry as motion values: the first placement jumps, every later one
+  // Spotlight + card geometry as motion values: the first placement jumps, every step change
   // springs from wherever it is — so the spotlight and card morph from step to step.
-  const sx = useMotionValue(0);
-  const sy = useMotionValue(0);
-  const sw = useMotionValue(0);
-  const sh = useMotionValue(0);
-  const ring = useMotionValue(0);
-  const cx = useMotionValue(0);
-  const cy = useMotionValue(0);
-  const ch = useMotionValue(0);
-  const arrowAt = useMotionValue(0);
+  const g = useGeometry();
   const shown = useMotionValue(0);
   const cardScale = useTransform(shown, [0, 1], [0.94, 1]);
   const placed = useRef(false);
+  /** Targets the motion values were last sent to. */
+  const applied = useRef<number[] | null>(null);
+  /** Page scroll the tour is driving (in step with the spotlight). */
+  const scrollAnim = useRef<{ stop: () => void } | null>(null);
+  const scrolling = useRef(false);
 
-  // Follow the target every frame (page scroll, the card reveal settling, rotation, resize).
+  const show = (next: View) => {
+    const prev = viewRef.current;
+    if (prev && prev.w === next.w && prev.arrow === next.arrow && prev.fallback === next.fallback) return;
+    viewRef.current = next;
+    setView(next);
+  };
+
+  // Step change: measure the new card, work out where the target WILL be once the page has
+  // scrolled, then start the spotlight, the card and the page scroll together in this frame.
+  // Nothing waits a frame and nothing gets re-aimed mid-flight, so there's no hitch.
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    const content = contentRef.current;
+    const footer = footerRef.current;
+    if (!card || !content || !footer) return;
+    const current = steps[index];
+    card.style.width = `${Math.min(CARD_MAX_W, window.innerWidth - 2 * MARGIN)}px`;
+    const size = { content: content.offsetHeight, footer: footer.offsetHeight };
+    sizeRef.current = size;
+
+    const { el, fallback } = resolveTarget(current);
+    let rect = el ? toBox(el.getBoundingClientRect()) : null;
+    const w = Math.min(CARD_MAX_W, window.innerWidth - 2 * MARGIN);
+    const delta = el && rect ? scrollNeeded(el, rect, w, size.content + size.footer, current.prefer) : 0;
+    if (rect) rect = { ...rect, y: rect.y - delta };
+    const layout = computeLayout(rect, size.content, size.footer, current.prefer);
+
+    const smooth = placed.current && !reduce;
+    show({ w: layout.w, arrow: layout.place.arrow, fallback });
+    applied.current = applyLayout(g, layout, smooth);
+
+    scrollAnim.current?.stop();
+    scrolling.current = false;
+    if (delta) {
+      const from = window.scrollY;
+      if (smooth) {
+        scrolling.current = true;
+        scrollAnim.current = animate(from, from + delta, {
+          ...SCROLL,
+          onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
+          onComplete: () => (scrolling.current = false),
+        });
+      } else {
+        window.scrollTo({ top: from + delta, behavior: "instant" });
+      }
+    }
+
+    if (!placed.current) {
+      placed.current = true;
+      animate(shown, 1, reduce ? { duration: 0 } : { ...SPRING, bounce: 0.25 });
+    }
+  }, [index, steps, reduce, g, shown]);
+
+  // A wheel or swipe takes the page back from the tour's scroll.
+  useEffect(() => {
+    const release = () => {
+      scrollAnim.current?.stop();
+      scrolling.current = false;
+    };
+    window.addEventListener("wheel", release, { passive: true });
+    window.addEventListener("touchstart", release, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", release);
+      window.removeEventListener("touchstart", release);
+      scrollAnim.current?.stop();
+    };
+  }, []);
+
+  // Between step changes, stay glued to the target (the user scrolling, rotation, resize, the
+  // card's text reflowing). Pure movement follows 1:1; a new card side or size springs.
   useEffect(() => {
     const current = steps[index];
+    let el: HTMLElement | null = null;
+    let fallback = false;
+    let vw = 0;
+    let vh = 0;
+    let settling = false;
     let raf = 0;
-    let prev = "";
     const tick = () => {
-      const { el, fallback } = resolveTarget(current);
-      const r = el?.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const sig = r ? `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)},${vw},${vh},${fallback}` : `-,${vw},${vh}`;
-      if (sig !== prev) {
-        prev = sig;
-        setGeo({ rect: r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null, vw, vh, fallback });
-      }
       raf = requestAnimationFrame(tick);
+      if (scrolling.current || isAnimating(g)) {
+        settling = true;
+        return;
+      }
+      if (!el || !el.isConnected || vw !== window.innerWidth || vh !== window.innerHeight) {
+        ({ el, fallback } = resolveTarget(current));
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+      }
+      const r = el?.getBoundingClientRect();
+      const { content, footer } = sizeRef.current;
+      const layout = computeLayout(r ? toBox(r) : null, content, footer, current.prefer);
+      const targets = layoutTargets(layout);
+      const prev = applied.current;
+      if (prev && targets.every((v, i) => Math.abs(v - prev[i]) < 0.5)) {
+        settling = false;
+        return;
+      }
+      const v = viewRef.current;
+      const reshaped = !v || v.arrow !== layout.place.arrow || v.w !== layout.w || !prev || prev[7] !== layout.contentH;
+      show({ w: layout.w, arrow: layout.place.arrow, fallback });
+      applied.current = applyLayout(g, layout, !reduce && (settling || reshaped));
+      settling = false;
     };
     raf = requestAnimationFrame(tick);
-    // Two frames in, the new step's card has been measured — scroll if the target needs it.
-    let scroll = requestAnimationFrame(() => {
-      scroll = requestAnimationFrame(() => {
-        const { el } = resolveTarget(current);
-        if (el) bringIntoView(el, sizeRef.current.content + sizeRef.current.footer, current.prefer, reduce);
-      });
-    });
-    return () => {
-      cancelAnimationFrame(raf);
-      cancelAnimationFrame(scroll);
-    };
-  }, [index, steps, reduce]);
+    return () => cancelAnimationFrame(raf);
+  }, [index, steps, reduce, g]);
 
-  // Natural height of the step content and footer (the card animates to it).
+  // Natural height of the step content and footer; the follow loop picks up changes.
   useEffect(() => {
     const content = contentRef.current;
     const footer = footerRef.current;
     if (!content || !footer) return;
     const ro = new ResizeObserver(() => {
-      const next = { content: content.offsetHeight, footer: footer.offsetHeight };
-      sizeRef.current = next;
-      setSize((s) => (s.content === next.content && s.footer === next.footer ? s : next));
+      sizeRef.current = { content: content.offsetHeight, footer: footer.offsetHeight };
     });
     ro.observe(content);
     ro.observe(footer);
     return () => ro.disconnect();
   }, []);
 
-  const layout = useMemo(() => {
-    if (!geo || !size.content) return null;
-    const w = Math.min(CARD_MAX_W, geo.vw - 2 * MARGIN);
-    const spot = geo.rect ? spotlightBox(geo.rect, geo.vw, geo.vh) : null;
-    const place = placeCard(spot, w, size.content + size.footer, geo.vw, geo.vh, step.prefer);
-    return { w, spot, place, vw: geo.vw, vh: geo.vh };
-  }, [geo, size, step.prefer]);
-
-  useLayoutEffect(() => {
-    if (!layout) return;
-    const { spot, place, vw, vh } = layout;
-    // No target: the spotlight closes to a point at the center (the whole screen dims).
-    const s = spot ?? { x: vw / 2, y: vh / 2, width: 0, height: 0 };
-    const pairs: [MotionValue<number>, number][] = [
-      [sx, s.x],
-      [sy, s.y],
-      [sw, s.width],
-      [sh, s.height],
-      [ring, spot ? 1 : 0],
-      [cx, place.x],
-      [cy, place.y],
-      [ch, size.content],
-      [arrowAt, place.arrowOffset],
-    ];
-    if (!placed.current || reduce) {
-      for (const [mv, v] of pairs) mv.jump(v);
-    } else {
-      for (const [mv, v] of pairs) animate(mv, v, SPRING);
-    }
-    if (!placed.current) {
-      placed.current = true;
-      animate(shown, 1, reduce ? { duration: 0 } : { ...SPRING, bounce: 0.25 });
-      // The card was `visibility: hidden` until now, so it couldn't take focus earlier.
-      primaryRef.current?.focus({ preventScroll: true });
-    }
-  }, [layout, reduce, size.content, sx, sy, sw, sh, ring, cx, cy, ch, arrowAt, shown]);
-
-  // Keep keyboard focus on the card's main button as steps change.
+  // Below-the-fold sections normally wait to spring in on scroll; during the tour they'd move
+  // under the spotlight, so show them all now.
   useEffect(() => {
-    if (!cardRef.current?.contains(document.activeElement)) primaryRef.current?.focus({ preventScroll: true });
-  }, [index]);
+    document.documentElement.dataset.eqTour = "";
+    window.dispatchEvent(new Event(TOUR_OPEN_EVENT));
+    return () => {
+      delete document.documentElement.dataset.eqTour;
+    };
+  }, []);
+
+  // Keep keyboard focus on the card's main button as steps change. The card is
+  // `visibility: hidden` until first placed, so it can't take focus before `ready`.
+  const ready = view !== null;
+  useEffect(() => {
+    if (ready && !cardRef.current?.contains(document.activeElement)) primaryRef.current?.focus({ preventScroll: true });
+  }, [index, ready]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -380,7 +469,8 @@ function TourLayer({
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const arrow = layout?.place.arrow ?? null;
+  const { sx, sy, sw, sh, ring, cx, cy, ch, arrowAt } = g;
+  const arrow = view?.arrow ?? null;
   const arrowStyle =
     arrow === "top"
       ? { top: -6, left: arrowAt, marginLeft: -7 }
@@ -425,7 +515,7 @@ function TourLayer({
         aria-modal="true"
         aria-labelledby={titleId}
         className="absolute left-0 top-0 rounded-2xl bg-white text-slate-900 shadow-[0_24px_60px_-20px_rgba(2,44,34,.55)] ring-1 ring-emerald-900/10"
-        style={{ x: cx, y: cy, width: layout?.w ?? CARD_MAX_W, opacity: shown, scale: cardScale, visibility: layout ? "visible" : "hidden" }}
+        style={{ x: cx, y: cy, width: view?.w ?? CARD_MAX_W, opacity: shown, scale: cardScale, visibility: view ? "visible" : "hidden" }}
       >
         <AnimatePresence initial={false}>
           {arrow && (
@@ -490,7 +580,7 @@ function TourLayer({
                     ))}
                   </ul>
                 )}
-                {geo?.fallback && (
+                {view?.fallback && (
                   <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-100">
                     On this screen, find it in the menu (☰) at the top left.
                   </p>

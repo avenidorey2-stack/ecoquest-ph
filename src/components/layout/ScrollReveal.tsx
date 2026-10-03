@@ -14,6 +14,10 @@ const SPRING = { type: "spring", bounce: 0.25, visualDuration: 0.5 } as const;
 const STAGGER = 0.06;
 const MAX_DELAY = 0.3;
 
+/** Fired by the guided tour: it spotlights sections, so they must already be in place. */
+export const TOUR_OPEN_EVENT = "eq:tour-open";
+const tourOpen = () => "eqTour" in document.documentElement.dataset;
+
 /**
  * Scroll reveal for every portal page. Elements that start below the fold are held hidden
  * (`data-eq-reveal="hidden"`) and spring in, staggered, as they scroll into view; anything on
@@ -73,13 +77,23 @@ export default function ScrollReveal() {
         seen.add(node);
         if (node.closest("[data-reveal-skip]")) continue;
         const rect = node.getBoundingClientRect();
-        if (rect.height === 0 || rect.top < fold) continue;
+        if (rect.height === 0 || rect.top < fold || tourOpen()) continue;
         if (getComputedStyle(node).position === "fixed") continue;
         node.dataset.eqReveal = "hidden";
         hidden.add(node);
         io.observe(node);
       }
     };
+
+    // The tour is starting: show everything that's still waiting, without animating it.
+    const showAll = () => {
+      for (const el of hidden) {
+        io.unobserve(el);
+        el.dataset.eqReveal = "shown"; // visible, CSS entrance stays off
+      }
+      hidden.clear();
+    };
+    window.addEventListener(TOUR_OPEN_EVENT, showAll);
 
     scan();
     // Streamed sections and client-rendered lists arrive after the first scan.
@@ -90,6 +104,7 @@ export default function ScrollReveal() {
     mo.observe(main, { childList: true, subtree: true });
 
     return () => {
+      window.removeEventListener(TOUR_OPEN_EVENT, showAll);
       mo.disconnect();
       io.disconnect();
       cancelAnimationFrame(queued);

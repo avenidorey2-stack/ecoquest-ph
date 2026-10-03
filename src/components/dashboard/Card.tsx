@@ -32,7 +32,7 @@ export default function Card({
         </h2>
         {action && (
           <Link href={action.href} className="text-xs font-medium text-emerald-700 hover:text-emerald-900">
-            {action.label} →
+            {action.label}
           </Link>
         )}
       </header>

@@ -268,6 +268,12 @@ body {
   width: 100%;
   height: clamp(110px, 20vh, 220px);
 }
+.eq-leaves {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 .eq-eco-leaf {
   position: absolute;
   top: -40px;
@@ -296,6 +302,16 @@ body {
   85% { opacity: 1; }
   100% { transform: translate3d(var(--drift, 80px), 110vh, 0) rotate(var(--spin, 300deg)); opacity: 0; }
 }
+/* Some leaves slowly turn over as they fall (squash to edge-on and back). */
+.eq-leaf-flip {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eq-leaf-flip var(--flip, 4s) ease-in-out infinite alternate;
+}
+@keyframes eq-leaf-flip {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.4); }
+}
 @keyframes eq-leaf-sway {
   from { transform: translateX(-14px) rotate(-18deg); }
   to { transform: translateX(14px) rotate(18deg); }
@@ -309,9 +325,10 @@ body {
   from { transform: rotate(-1.6deg); }
   to { transform: rotate(1.6deg); }
 }
-/* Fewer leaves on small screens. */
+/* Fewer leaves on small screens (the sign-in pages keep a fuller fall). */
 @media (max-width: 640px) {
   .eq-eco-leaf:nth-child(n + 5) { display: none; }
+  .eq-leaves--lush > .eq-eco-leaf:nth-child(-n + 14) { display: block; }
 }
 
 /* Sidebar ambience: a slow light sweep and a faint leaf watermark. */
@@ -343,7 +360,8 @@ body {
   .eq-eco-tree,
   .eq-eco-glow,
   .eq-sidebar-glow::before,
-  .eq-eco-leaf > svg {
+  .eq-eco-leaf > svg,
+  .eq-leaf-flip {
     animation: none !important;
   }
   .eq-eco-leaf {

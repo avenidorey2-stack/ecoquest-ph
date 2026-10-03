@@ -1,5 +1,6 @@
 import Link from "next/link";
 import EcoBackground from "@/components/layout/EcoBackground";
+import FallingLeaves, { makeLeaves } from "@/components/layout/FallingLeaves";
 import { CameraIcon, GiftIcon, LogoMark, PinIcon } from "@/components/ui/icons";
 
 const STEPS = [
@@ -7,6 +8,14 @@ const STEPS = [
   { Icon: CameraIcon, title: "Plant & upload proof", text: "Snap a photo or video. Our team verifies every tree." },
   { Icon: GiftIcon, title: "Earn real rewards", text: "Trade points for GCash, Maya, vouchers or seedlings." },
 ];
+
+// Light leaves drifting down the dark sidebar.
+const SIDEBAR_LEAVES = makeLeaves(
+  14,
+  21,
+  ["rgb(110 231 183 / 0.55)", "rgb(190 242 100 / 0.5)", "rgb(253 224 71 / 0.45)", "rgb(52 211 153 / 0.5)", "rgb(251 191 36 / 0.4)"],
+  { size: [14, 26], duration: [14, 26] },
+);
 
 /** A sapling growing on a hillside at sunrise (reuses the celebration draw/grow keyframes). */
 function SaplingScene() {
@@ -46,10 +55,11 @@ function SaplingScene() {
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-dvh text-slate-900">
-      <EcoBackground />
+      <EcoBackground lush />
 
       <aside className="relative hidden w-[44%] max-w-xl shrink-0 flex-col overflow-hidden bg-gradient-to-b from-emerald-900 via-emerald-950 to-[#04291f] text-white lg:flex">
         <div className="eq-sidebar-glow" aria-hidden />
+        <FallingLeaves leaves={SIDEBAR_LEAVES} />
         <div className="relative flex flex-1 flex-col px-10 pt-10 xl:px-14 xl:pt-12">
           <Link href="/" className="flex w-fit items-center gap-3">
             <LogoMark className="h-10 w-10" />

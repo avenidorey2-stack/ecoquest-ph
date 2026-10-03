@@ -162,7 +162,7 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
             )}
           </p>
           <Link href={`/leaderboard?scope=${data.scope}`} onClick={onClose} className="mt-1 inline-block text-xs font-semibold text-emerald-700">
-            See leaderboard →
+            See leaderboard
           </Link>
         </div>
         <button onClick={onClose} aria-label="Dismiss" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">

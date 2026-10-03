@@ -1,14 +1,14 @@
-import type { CSSProperties } from "react";
+import FallingLeaves, { makeLeaves, type Leaf } from "./FallingLeaves";
 
 // Decorative, fixed backdrop behind every portal and sign-in page: a soft sky, drifting
-// sunlight, faint terrain contours, rolling hills with a tree line, and a few falling
-// leaves. Pure SVG + CSS (see globals.css "Eco background"); motion stops under
-// prefers-reduced-motion.
+// sunlight, faint terrain contours, rolling hills with a tree line, and falling leaves —
+// a few in the portal, many more (`lush`) on the sign-in pages. Pure SVG + CSS (see
+// globals.css "Eco background"); motion stops under prefers-reduced-motion.
 
 const BLOB = "M0-60C34-62 66-38 64-4 62 30 38 58 2 60-34 62-64 36-62 0-60-34-34-58 0-60Z";
 const RINGS = [1, 1.6, 2.25, 2.95, 3.7, 4.5];
 
-const LEAVES: { x: string; s: number; d: number; delay: number; drift: number; spin: number; c: string }[] = [
+const LEAVES: Leaf[] = [
   { x: "8%", s: 18, d: 28, delay: -4, drift: 90, spin: 320, c: "rgb(16 185 129 / 0.32)" },
   { x: "27%", s: 14, d: 34, delay: -19, drift: -70, spin: -260, c: "rgb(132 204 22 / 0.3)" },
   { x: "52%", s: 20, d: 31, delay: -11, drift: 110, spin: 380, c: "rgb(5 150 105 / 0.26)" },
@@ -41,7 +41,16 @@ function Pine({ x, y, s, tone }: { x: number; y: number; s: number; tone: string
   );
 }
 
-export default function EcoBackground() {
+const LUSH_LEAVES = makeLeaves(26, 7, [
+  "rgb(16 185 129 / 0.5)",
+  "rgb(132 204 22 / 0.48)",
+  "rgb(5 150 105 / 0.42)",
+  "rgb(234 179 8 / 0.48)",
+  "rgb(101 163 13 / 0.45)",
+  "rgb(202 138 4 / 0.4)",
+]);
+
+export default function EcoBackground({ lush = false }: { lush?: boolean }) {
   return (
     <div className="eq-eco-bg" aria-hidden>
       <div className="eq-eco-glow eq-eco-glow--sun" />
@@ -66,30 +75,7 @@ export default function EcoBackground() {
         </g>
       </svg>
 
-      <div>
-        {LEAVES.map((l) => (
-          <span
-            key={l.x}
-            className="eq-eco-leaf"
-            style={
-              {
-                "--x": l.x,
-                "--s": `${l.s}px`,
-                "--d": `${l.d}s`,
-                "--delay": `${l.delay}s`,
-                "--drift": `${l.drift}px`,
-                "--spin": `${l.spin}deg`,
-                "--c": l.c,
-              } as CSSProperties
-            }
-          >
-            <svg viewBox="0 0 24 24">
-              <path fill="currentColor" d="M4 20C4 10.5 10.5 4 20 4c0 9.5-6.5 16-16 16Z" />
-              <path d="M4 20 14.5 9.5" stroke="white" strokeOpacity=".55" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-          </span>
-        ))}
-      </div>
+      <FallingLeaves leaves={lush ? LUSH_LEAVES : LEAVES} className={lush ? "eq-leaves--lush" : ""} />
 
       <svg className="eq-eco-hills" viewBox="0 0 1440 220" preserveAspectRatio="xMidYMax slice">
         <path fill="#e3efdc" d="M0 120C180 70 330 64 520 98s370 40 560-6 260-44 360-30V220H0Z" />

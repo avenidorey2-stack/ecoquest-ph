@@ -95,7 +95,7 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-slate-600">Your achievements and approved plantings are permanent and public.</p>
             <Link href={`/planters/${userId}`} className="shrink-0 text-sm font-medium text-emerald-700 hover:text-emerald-900">
-              View as others see it →
+              View as others see it
             </Link>
           </div>
           <AchievementShowcase achievements={publicProfile.achievements} emptyText="Plant your first tree to earn your first badge." />
@@ -115,7 +115,7 @@ export default async function ProfilePage() {
           <span className="block font-semibold">Invite friends</span>
           Your code: <span className="font-mono text-emerald-700">{user.referralCode}</span>
         </span>
-        <span className="text-emerald-700">Referral Hub →</span>
+        <span className="text-emerald-700">Referral Hub</span>
       </Link>
     </div>
   );
