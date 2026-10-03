@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { mediaRuleError } from "@/lib/media-rules";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { createDirectUpload } from "@/lib/storage";
+import { isSlotOpen, SLOT_CLOSED } from "@/lib/quests";
 
 const UPLOADS_PER_HOUR = 30;
 
@@ -26,8 +27,12 @@ export async function POST(req: Request, { params }: RouteContext<"/api/quests/[
   const problem = mediaRuleError({ type, size });
   if (problem) return NextResponse.json({ error: problem }, { status: 400 });
 
-  const quest = await prisma.quest.findUnique({ where: { id: questId }, select: { userId: true, status: true } });
+  const quest = await prisma.quest.findUnique({
+    where: { id: questId },
+    select: { userId: true, status: true, slot: { select: { status: true, deletedAt: true } } },
+  });
   if (!quest || quest.userId !== user.id) return NextResponse.json({ error: "Quest not found." }, { status: 404 });
+  if (!isSlotOpen(quest.slot)) return NextResponse.json({ error: SLOT_CLOSED }, { status: 409 });
   if (quest.status !== "ACTIVE") return NextResponse.json({ error: "This quest is not awaiting proof." }, { status: 409 });
 
   // Each signed URL lets the browser store up to 50 MB: cap how many one account can request.

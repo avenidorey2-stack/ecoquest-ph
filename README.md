@@ -76,9 +76,12 @@ Set `AUTH_URL` to the public URL in production — links in emails are built fro
 - **Slots** (admin → Slots): admins click the map to drop a pin; the region, province, city/municipality (PSGC) and
   barangay are filled in automatically from OpenStreetMap and can be corrected. Each slot sets the tree species, points
   per plant, **plants per quest** (goal) and **max participants**. New slots notify residents of that city. Slots can be
-  edited, closed (hidden, history kept), deleted (only without quests) or **deleted permanently** — slots with approved
-  plantings are then soft-deleted (`deletedAt`) so planters keep their approved proofs and trees; in-progress quests are
-  cancelled and their planters notified.
+  edited, **closed**, deleted (only without quests) or **deleted permanently** — slots with approved plantings are then
+  soft-deleted (`deletedAt`) so planters keep their approved proofs and trees.
+- **Closing a slot** hides it from the map and stops claims and proof. Its active quests end (`CANCELLED`) and those
+  planters are notified; proof already awaiting review can still be approved, and the review then ends the quest
+  instead of reopening it. Quests are never deleted when a slot closes or is removed, so approved plants, points and
+  proof always stay. Closing, proof submission and review lock the slot row first, so they can't race.
 - **Claiming** (`POST /api/slots/:id/claim`): only slots in the user's PSGC city, while open and below max participants.
   The quest copies the slot's goal (`targetPlants`).
 - **Proof**: the Submit Proof modal uploads a photo/video (images ≤ 10 MB, video ≤ 50 MB) with a plant quantity; each
@@ -202,6 +205,8 @@ then run `npm test` (or `npm run test:watch`).
 | `tests/api/password-reset` | Reset emails, silent unknown-email handling, caps, single-use links, lockout lift |
 | `tests/api/verified-gating` | Unverified accounts can't claim, submit proof, redeem, or use invite codes |
 | `tests/api/quest-goals` | Plants-per-quest goals: batch progress, auto-complete + chaining, admin-corrected counts, rejections |
+| `tests/api/slot-closing` | Closing a slot ends active quests + notifies, refuses new proof, reviews end (not reopen) quests, history kept; permanent delete cancels part-done quests |
+| `tests/api/direct-upload` | Signed direct uploads to Supabase: tokens, stored-file checks, replay/rate limits, signed media links, local fallback |
 | `tests/api/missions` | Daily/side quests: PHT day boundaries, objective tracking, claims once per period, admin CRUD, starter seed |
 | `tests/api/seedling-shop-notifications` | Seedling orders (stock/points guards), notifications API and triggers |
 | `tests/api/admin-shop-transactions-profiles` | Dual-currency orders, order status flow + refunds, inventory edits, ledger, slot capacity, barangay, permanent delete keeping approved history, public profiles, proof visibility |

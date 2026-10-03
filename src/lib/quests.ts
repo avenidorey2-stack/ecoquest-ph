@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { awardPoints } from "@/lib/points";
 import { awardReferralBonusIfDue } from "@/lib/referrals";
@@ -19,7 +20,8 @@ export class QuestError extends Error {
  * count): awards N × pointsPerPlant shop points and N × XP_PER_PLANT experience, and adds N to the
  * quest's progress. When progress reaches the quest's goal (targetPlants) the quest completes
  * automatically and the next quest on the same slot unlocks; otherwise it goes back to ACTIVE for
- * more proof. Then (after commit) unlocks any achievements the planter now qualifies for.
+ * more proof — or ends (CANCELLED) if the slot was closed while the proof awaited review. Then
+ * (after commit) unlocks any achievements the planter now qualifies for.
  */
 export async function approveVerification(
   verificationId: string,
@@ -36,6 +38,7 @@ export async function approveVerification(
 
 function approveInTransaction(verificationId: string, reviewerId: string, plantCountOverride?: number) {
   return prisma.$transaction(async (tx) => {
+    await lockQuestSlot(tx, verificationId);
     // Guarded update so a verification can only be approved once.
     const { count } = await tx.verification.updateMany({
       where: { id: verificationId, status: "PENDING" },
@@ -48,6 +51,7 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
       include: { quest: { include: { slot: true } } },
     });
     const { quest } = verification;
+    const slotOpen = isSlotOpen(quest.slot);
 
     const plantCount = plantCountOverride ?? verification.plantCount;
     if (plantCount < 1) throw new QuestError("Plant count must be at least 1.", 400);
@@ -63,9 +67,10 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
       data: { plantCount: { increment: plantCount }, pointsAwarded: { increment: points } },
     });
     const goalReached = progressed.plantCount >= progressed.targetPlants;
+    // Short of the goal it reopens for more proof — unless the slot was closed meanwhile.
     const updatedQuest = await tx.quest.update({
       where: { id: quest.id },
-      data: goalReached ? { status: "COMPLETED", completedAt: new Date() } : { status: "ACTIVE" },
+      data: goalReached ? { status: "COMPLETED", completedAt: new Date() } : { status: slotOpen ? "ACTIVE" : "CANCELLED" },
     });
 
     await awardPoints(tx, quest.userId, points, plantCount);
@@ -85,7 +90,9 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
       quest.userId,
       goalReached
         ? `Quest complete! You planted ${updatedQuest.plantCount} ${quest.slot.requiredPlantType} — +${points.toLocaleString("en-PH")} pts for this proof.`
-        : `Tree approved! +${points.toLocaleString("en-PH")} pts for ${plantCount} ${quest.slot.requiredPlantType} — ${progress} planted. Submit proof for the rest.`,
+        : slotOpen
+          ? `Tree approved! +${points.toLocaleString("en-PH")} pts for ${plantCount} ${quest.slot.requiredPlantType} — ${progress} planted. Submit proof for the rest.`
+          : `Tree approved! +${points.toLocaleString("en-PH")} pts for ${plantCount} ${quest.slot.requiredPlantType} — ${progress} planted. This slot is closed, so the quest has ended.`,
       "/dashboard",
     );
     if (referralBonus) {
@@ -99,7 +106,7 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
 
     // Quest chaining: completing a quest immediately unlocks the next one on the same slot.
     const nextQuest =
-      goalReached && quest.slot.status === "OPEN" && !quest.slot.deletedAt
+      goalReached && slotOpen && quest.slot.status === "OPEN"
         ? await tx.quest.create({
             data: { userId: quest.userId, slotId: quest.slotId, status: "ACTIVE", targetPlants: quest.slot.questGoal },
           })
@@ -119,9 +126,10 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
   });
 }
 
-/** Rejects a pending verification and reopens the quest for a new submission. */
+/** Rejects a pending verification and reopens the quest for a new submission (or ends it on a closed slot). */
 export async function rejectVerification(verificationId: string, reviewerId: string, reason?: string) {
   return prisma.$transaction(async (tx) => {
+    await lockQuestSlot(tx, verificationId);
     const { count } = await tx.verification.updateMany({
       where: { id: verificationId, status: "PENDING" },
       data: {
@@ -135,15 +143,40 @@ export async function rejectVerification(verificationId: string, reviewerId: str
 
     const { questId, quest } = await tx.verification.findUniqueOrThrow({
       where: { id: verificationId },
-      select: { questId: true, quest: { select: { userId: true, slot: { select: { requiredPlantType: true } } } } },
+      select: {
+        questId: true,
+        quest: { select: { userId: true, slot: { select: { requiredPlantType: true, status: true, deletedAt: true } } } },
+      },
     });
     const why = reason?.trim();
+    // Normally the quest reopens for new proof — but not on a slot that was closed meanwhile.
+    const slotOpen = isSlotOpen(quest.slot);
     await notify(
       tx,
       quest.userId,
-      `Your ${quest.slot.requiredPlantType} proof was not approved${why ? `: ${why}` : ""}. Please submit new proof.`,
+      `Your ${quest.slot.requiredPlantType} proof was not approved${why ? `: ${why}` : ""}. ` +
+        (slotOpen ? "Please submit new proof." : "This slot is closed, so the quest has ended."),
       "/dashboard",
     );
-    return tx.quest.update({ where: { id: questId }, data: { status: "ACTIVE" } });
+    return tx.quest.update({ where: { id: questId }, data: { status: slotOpen ? "ACTIVE" : "CANCELLED" } });
   });
+}
+
+export const SLOT_CLOSED = "This slot has been closed, so it no longer accepts proof.";
+
+/** A slot accepts proof unless an admin closed or removed it (FULL only stops new claims). */
+export function isSlotOpen(slot: { status: string; deletedAt: Date | null }) {
+  return slot.status !== "CLOSED" && !slot.deletedAt;
+}
+
+/**
+ * Shared lock on the slot of a verification's quest — taken first, before any row the review
+ * changes. Closing/removing a slot takes an exclusive lock on the same row first too, so a review
+ * either finishes before the close (which then ends the reopened quest) or waits and sees the slot
+ * closed, and the two can never deadlock.
+ */
+async function lockQuestSlot(tx: Prisma.TransactionClient, verificationId: string) {
+  await tx.$queryRaw`
+    SELECT 1 FROM "Slot" s JOIN "Quest" q ON q."slotId" = s."id" JOIN "Verification" v ON v."questId" = q."id"
+    WHERE v."id" = ${verificationId} FOR SHARE OF s`;
 }
