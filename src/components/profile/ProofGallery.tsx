@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import type { PublicProof } from "@/lib/public-profile";
 import { formatDate } from "@/lib/format";
 import { CameraIcon } from "@/components/ui/icons";
+import ProofLightbox from "@/components/profile/ProofLightbox";
 
-/** A planter's approved planting proof (permanent), each with the date it was acquired. */
+/** A planter's approved planting proof (permanent), each with the date it was acquired. Tap to view full screen. */
 export default function ProofGallery({
   proofs,
   total,
@@ -12,6 +16,7 @@ export default function ProofGallery({
   total: number;
   emptyText?: string;
 }) {
+  const [viewing, setViewing] = useState<number | null>(null);
   return (
     <section aria-labelledby="proofs-heading" className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
       <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
@@ -27,17 +32,16 @@ export default function ProofGallery({
         <p className="px-5 py-6 text-center text-sm text-slate-500">{emptyText}</p>
       ) : (
         <ul className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
-          {proofs.map((p) => {
+          {proofs.map((p, i) => {
             const acquired = p.approvedAt ?? p.submittedAt;
             const label = `${p.plantCount} × ${p.plantType}`;
             return (
               <li key={p.id} className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative block aspect-square bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
-                  aria-label={`Open proof: ${label}, acquired ${formatDate(acquired)}`}
+                <button
+                  type="button"
+                  onClick={() => setViewing(i)}
+                  className="group relative block aspect-square w-full cursor-zoom-in bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
+                  aria-label={`View proof: ${label}, acquired ${formatDate(acquired)}`}
                 >
                   {p.mediaType.startsWith("video/") ? (
                     <>
@@ -50,7 +54,7 @@ export default function ProofGallery({
                     // eslint-disable-next-line @next/next/no-img-element -- auth-gated proof media
                     <img src={p.url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   )}
-                </a>
+                </button>
                 <div className="space-y-0.5 px-3 py-2">
                   <p className="truncate text-sm font-semibold text-slate-900">{label}</p>
                   <p className="truncate text-xs text-slate-500">
@@ -65,6 +69,7 @@ export default function ProofGallery({
           })}
         </ul>
       )}
+      {viewing !== null && <ProofLightbox proofs={proofs} startIndex={viewing} onClose={() => setViewing(null)} />}
     </section>
   );
 }

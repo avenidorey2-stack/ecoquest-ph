@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicProfile } from "@/lib/public-profile";
 import { CloseIcon, CoinIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
+import ProofLightbox from "@/components/profile/ProofLightbox";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric" });
@@ -18,6 +19,8 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, setState] = useState<State>({ status: "loading" });
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  // Index of the proof shown full screen, if any.
+  const [viewing, setViewing] = useState<number | null>(null);
   const titleId = useId();
   const panelId = useId();
 
@@ -149,17 +152,17 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                   </p>
                 ) : (
                   <ul className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
-                    {profile.proofs.map((p) => {
+                    {profile.proofs.map((p, i) => {
                       const acquired = fmtDate(p.approvedAt ?? p.submittedAt);
                       const caption = `${p.plantCount} ${p.plantType} · acquired ${acquired}`;
                       return (
                         <li key={p.id}>
-                          <a
-                            href={p.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setViewing(i)}
                             title={caption}
-                            className="group relative block aspect-square overflow-hidden rounded-xl bg-slate-200 ring-1 ring-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            aria-label={`View proof: ${caption}`}
+                            className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-slate-200 ring-1 ring-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                           >
                             {p.mediaType.startsWith("video/") ? (
                               <>
@@ -176,7 +179,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                               <span className="block truncate">{p.plantType}</span>
                               <span className="block truncate text-white/80">{acquired}</span>
                             </span>
-                          </a>
+                          </button>
                         </li>
                       );
                     })}
@@ -254,6 +257,9 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
           )}
         </div>
       </div>
+      {profile && viewing !== null && (
+        <ProofLightbox proofs={profile.proofs} startIndex={viewing} onClose={() => setViewing(null)} />
+      )}
     </dialog>
   );
 }

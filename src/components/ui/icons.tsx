@@ -157,6 +157,16 @@ export const ExpandIcon = (p: IconProps) => (
     <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
   </Svg>
 );
+export const ChevronLeftIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m15 5-7 7 7 7" />
+  </Svg>
+);
+export const ChevronRightIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m9 5 7 7-7 7" />
+  </Svg>
+);
 export const MenuIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4 6h16M4 12h16M4 18h16" />
