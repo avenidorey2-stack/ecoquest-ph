@@ -2,9 +2,73 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ProofMediaPicker from "@/components/quests/ProofMediaPicker";
 
-const MAX_BYTES = 50 * 1024 * 1024;
 const MAX_PLANTS = 500; // = MAX_PLANTS_PER_SUBMISSION (server-validated)
+
+type DirectUpload = { url: string; key: string; token: string };
+type Result = { status: number; data: { error?: string; upload?: DirectUpload | null } };
+
+const succeeded = (r: Result) => r.status >= 200 && r.status < 300;
+const TOO_BIG = "This file is too big to upload. Try a shorter video or a smaller photo.";
+
+/** Sends with XHR (fetch can't report upload progress). Rejects only on network failure. */
+function sendWithProgress(
+  method: "POST" | "PUT",
+  url: string,
+  body: XMLHttpRequestBodyInit,
+  onProgress: (pct: number) => void,
+  headers: Record<string, string> = {},
+) {
+  return new Promise<Result>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
+    xhr.onload = () => {
+      let data = {};
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        // Non-JSON error page (e.g. the host rejecting an oversized request).
+      }
+      resolve({ status: xhr.status, data });
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.send(body);
+  });
+}
+
+async function postJson(url: string, body: unknown): Promise<Result> {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { status: res.status, data: await res.json().catch(() => ({})) };
+}
+
+/**
+ * Uploads the proof and records the submission; returns an error message, or null on success.
+ * Production: the file goes straight to Supabase Storage through a signed URL (Vercel limits
+ * requests to 4.5 MB), then only its key is submitted. Local disk: the file is posted to the API.
+ */
+async function submitProof(questId: string, file: File, plantCount: number, onProgress: (pct: number) => void) {
+  const base = `/api/quests/${questId}/verifications`;
+  const start = await postJson(`${base}/upload`, { type: file.type, size: file.size });
+  if (!succeeded(start)) return start.data.error ?? "Couldn't start the upload. Please try again.";
+
+  const upload = start.data.upload;
+  if (upload) {
+    const put = await sendWithProgress("PUT", upload.url, file, onProgress, { "Content-Type": file.type });
+    if (!succeeded(put)) return put.status === 413 ? TOO_BIG : "Upload to storage failed. Please try again.";
+    const done = await postJson(base, { key: upload.key, token: upload.token, plantCount });
+    return succeeded(done) ? null : (done.data.error ?? "Couldn't submit your proof. Please try again.");
+  }
+
+  const form = new FormData();
+  form.set("file", file);
+  form.set("plantCount", String(plantCount));
+  const res = await sendWithProgress("POST", base, form, onProgress);
+  if (succeeded(res)) return null;
+  return res.status === 413 ? TOO_BIG : (res.data.error ?? "Upload failed. Please try again.");
+}
 
 export type ProofContext = {
   plantType: string;
@@ -26,6 +90,8 @@ export default function ProofUploadForm({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
   const [quantity, setQuantity] = useState(() => Math.min(Math.max(context?.remaining ?? 1, 1), MAX_PLANTS));
 
   const valid = Number.isInteger(quantity) && quantity >= 1 && quantity <= MAX_PLANTS;
@@ -38,26 +104,24 @@ export default function ProofUploadForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const file = form.get("file");
-    if (file instanceof File && file.size > MAX_BYTES) {
-      setError("File is too large (max 50 MB).");
+    if (!file) {
+      setError("Take or choose a photo or video first.");
       return;
     }
     if (!valid) {
       setError(`Enter how many plants this proof shows (1–${MAX_PLANTS}).`);
       return;
     }
-    form.set("plantCount", String(quantity));
-
     setSubmitting(true);
+    setProgress(0);
     setError(null);
-    const res = await fetch(`/api/quests/${questId}/verifications`, { method: "POST", body: form }).catch(() => null);
+    const problem = await submitProof(questId, file, quantity, setProgress).catch(
+      () => "Upload failed. Check your connection and try again.",
+    );
     setSubmitting(false);
 
-    if (!res?.ok) {
-      const data = res ? await res.json().catch(() => ({})) : {};
-      setError(data.error ?? "Upload failed. Please try again.");
+    if (problem) {
+      setError(problem);
       return;
     }
     onSubmitted?.();
@@ -69,18 +133,17 @@ export default function ProofUploadForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <label className="block text-sm">
-        <span className="font-medium text-slate-700">Photo or video proof</span>
-        <input
-          name="file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
-          capture="environment"
-          required
-          className="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-medium file:text-emerald-800 hover:file:bg-emerald-200"
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-slate-700">Photo or video proof</legend>
+        <ProofMediaPicker
+          file={file}
+          onChange={(next) => {
+            setError(null);
+            setFile(next);
+          }}
+          disabled={submitting}
         />
-        <span className="mt-1 block text-xs text-slate-500">Show all the plants in this batch. Max 50 MB.</span>
-      </label>
+      </fieldset>
 
       <div>
         <label htmlFor={`qty-${questId}`} className="text-sm font-medium text-slate-700">
@@ -127,12 +190,29 @@ export default function ProofUploadForm({
         </p>
       )}
 
+      {submitting && (
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+          role="progressbar"
+          aria-label="Upload progress"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="h-full rounded-full bg-emerald-600 transition-[width] duration-200" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={submitting || !valid}
+        disabled={submitting || !valid || !file}
         className="w-full rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? "Uploading…" : `Submit proof for ${valid ? quantity : "…"} plant${quantity === 1 ? "" : "s"}`}
+        {submitting
+          ? progress < 100
+            ? `Uploading… ${progress}%`
+            : "Saving…"
+          : `Submit proof for ${valid ? quantity : "…"} plant${quantity === 1 ? "" : "s"}`}
       </button>
     </form>
   );

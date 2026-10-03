@@ -44,6 +44,61 @@ export function blobFolder(dir: () => string, prefix: string) {
   const objectUrl = (base: string, key: string) => `${base}/object/${BUCKET}/${prefix}/${key}`;
 
   return {
+    /**
+     * Supabase only: a one-time URL the browser can PUT the file to (valid ~2 hours), so large
+     * uploads skip our server and its request-size limit. Returns null on local disk.
+     */
+    async signedUploadUrl(key: string): Promise<string | null> {
+      const sb = supabase();
+      if (!sb) return null;
+      await ensureBucket(sb);
+      const res = await fetch(`${sb.base}/object/upload/sign/${BUCKET}/${prefix}/${key}`, {
+        method: "POST",
+        headers: headers(sb.key, { "Content-Type": "application/json" }),
+        body: "{}",
+      });
+      if (!res.ok) throw new Error(`Storage upload signing failed (${res.status}): ${await res.text()}`);
+      const { url } = (await res.json()) as { url?: string };
+      if (!url?.includes("token=")) throw new Error("Storage upload signing returned no token");
+      return `${sb.base}${url}`;
+    },
+
+    /** Size and content type of a stored file, or null if it doesn't exist. */
+    async stat(key: string): Promise<{ size: number; type: string } | null> {
+      const sb = supabase();
+      if (!sb) return null; // only needed for direct uploads, which are Supabase-only
+      const res = await fetch(`${sb.base}/object/info/${BUCKET}/${prefix}/${key}`, {
+        headers: headers(sb.key),
+        cache: "no-store",
+      });
+      // Supabase answers a missing object with 400 or 404.
+      if (res.status === 400 || res.status === 404) return null;
+      if (!res.ok) throw new Error(`Storage lookup failed (${res.status}): ${await res.text()}`);
+      const info = (await res.json()) as {
+        size?: number;
+        content_type?: string;
+        metadata?: { size?: number; mimetype?: string };
+      };
+      const size = info.size ?? info.metadata?.size;
+      const type = info.content_type ?? info.metadata?.mimetype;
+      if (typeof size !== "number" || typeof type !== "string") throw new Error("Storage lookup returned no size/type");
+      return { size, type };
+    },
+
+    /** Supabase only: a short-lived download URL, so big files stream from storage, not our server. */
+    async signedDownloadUrl(key: string, expiresInSeconds: number): Promise<string | null> {
+      const sb = supabase();
+      if (!sb) return null;
+      const res = await fetch(`${sb.base}/object/sign/${BUCKET}/${prefix}/${key}`, {
+        method: "POST",
+        headers: headers(sb.key, { "Content-Type": "application/json" }),
+        body: JSON.stringify({ expiresIn: expiresInSeconds }),
+      });
+      if (!res.ok) return null;
+      const { signedURL } = (await res.json()) as { signedURL?: string };
+      return signedURL ? `${sb.base}${signedURL}` : null;
+    },
+
     async put(key: string, data: Uint8Array, contentType: string) {
       const sb = supabase();
       if (!sb) {
