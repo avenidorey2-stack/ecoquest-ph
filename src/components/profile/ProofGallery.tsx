@@ -31,7 +31,7 @@ export default function ProofGallery({
       {proofs.length === 0 ? (
         <p className="px-5 py-6 text-center text-sm text-slate-500">{emptyText}</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="eq-stagger eq-spring grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
           {proofs.map((p, i) => {
             const acquired = p.approvedAt ?? p.submittedAt;
             const label = `${p.plantCount} × ${p.plantType}`;

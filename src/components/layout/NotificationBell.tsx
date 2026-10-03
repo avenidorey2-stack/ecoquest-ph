@@ -83,7 +83,7 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} data-tour="bell" className="relative">
       <button
         type="button"
         onClick={toggle}

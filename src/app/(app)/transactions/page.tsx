@@ -77,7 +77,7 @@ export default async function TransactionsPage() {
             </p>
           </div>
         ) : (
-          <ol className="divide-y divide-slate-100">
+          <ol className="eq-stagger divide-y divide-slate-100">
             {history.map((t) => {
               const isRefund = t.kind === "REFUND";
               const Icon = t.kind === "SEEDLING_ORDER" ? SproutIcon : t.kind === "REWARD_REDEMPTION" ? GiftIcon : WalletIcon;

@@ -168,7 +168,7 @@ export default function SlotManager({
             {slots.length === 0 ? (
               <p className="p-6 text-center text-sm text-slate-500">No slots yet — drop a pin on the map to add one.</p>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="eq-stagger divide-y divide-slate-100">
                 {slots.map((slot) => {
                   const hasHistory = slot.totalQuests > 0;
                   const asking = confirm?.id === slot.id ? confirm.action : null;

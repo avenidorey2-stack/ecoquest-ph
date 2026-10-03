@@ -81,7 +81,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
         {summary.referrals.length === 0 ? (
           <p className="text-sm text-slate-500">No one yet — share your link to get started.</p>
         ) : (
-          <ul className="divide-y rounded-2xl border border-slate-200/80 bg-white shadow-sm text-sm">
+          <ul className="eq-stagger divide-y rounded-2xl border border-slate-200/80 bg-white shadow-sm text-sm">
             {summary.referrals.map((r) => (
               <li key={r.id} className="flex items-center justify-between px-4 py-3">
                 <div>

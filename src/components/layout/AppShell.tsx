@@ -11,6 +11,7 @@ import {
   CloseIcon,
   CoinIcon,
   DashboardIcon,
+  FlagIcon,
   GiftIcon,
   LogoMark,
   LogoutIcon,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
 import EcoBackground from "./EcoBackground";
+import ScrollReveal from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
 
 export type ShellUser = {
@@ -111,7 +113,7 @@ function SidebarContent({
         </span>
       </Link>
 
-      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-3 py-2">
+      <nav aria-label="Main navigation" data-tour="nav" className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="space-y-1">
           {links.map(({ href, label, hint, Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -120,6 +122,7 @@ function SidebarContent({
                 <Link
                   href={href}
                   onClick={onNavigate}
+                  data-tour={`nav-${href.slice(1)}`}
                   aria-current={active ? "page" : undefined}
                   className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${
                     active ? "text-white" : "text-emerald-100/75 hover:bg-white/5 hover:text-white"
@@ -178,6 +181,14 @@ function SidebarContent({
           </dl>
         </section>
 
+        <Link
+          href="/dashboard?tour=1"
+          onClick={onNavigate}
+          data-tour="tour-replay"
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <FlagIcon className="h-4 w-4" /> Take the tour
+        </Link>
         <form action={signOutAction}>
           <button
             type="submit"
@@ -233,6 +244,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen text-slate-900">
       <EcoBackground />
+      <ScrollReveal />
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 bg-gradient-to-b from-emerald-950 to-[#04291f] lg:block">
         <SidebarAmbience />
@@ -262,6 +274,7 @@ export default function AppShell({
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setOpen(true)}
+              data-tour="menu"
               aria-label="Open menu"
               aria-expanded={open}
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-200/60 lg:hidden"
@@ -274,12 +287,13 @@ export default function AppShell({
               </h1>
               <p className="hidden truncate text-xs text-slate-500 sm:block">{subtitle}</p>
             </div>
-            <Link href="/achievements" title="Your level" className="hidden rounded-xl px-2 py-1 hover:bg-white/70 sm:block">
+            <Link href="/achievements" title="Your level" data-tour="level" className="hidden rounded-xl px-2 py-1 hover:bg-white/70 sm:block">
               <LevelBar xp={user.xp} compact />
             </Link>
             <Link
               href="/achievements"
               title="Your level"
+              data-tour="level"
               className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-100 sm:hidden"
             >
               {levelForXp(user.xp)}
@@ -290,6 +304,7 @@ export default function AppShell({
             <Link
               href="/rewards"
               title="Points balance"
+              data-tour="points"
               className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
             >
               <CoinIcon className="h-4 w-4" />

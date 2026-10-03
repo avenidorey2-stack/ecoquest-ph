@@ -150,7 +150,7 @@ export default function PatronAdManager({ ads }: { ads: AdminPatronAd[] }) {
       {ads.length === 0 ? (
         <p className="text-sm text-slate-500">No patron banners yet.</p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 md:grid-cols-2">
           {ads.map((ad) => (
             <AdCard key={`${ad.id}-${ad.isActive}-${ad.imageUrl}`} ad={ad} />
           ))}

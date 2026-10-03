@@ -196,7 +196,8 @@ export default function TreeDirectory({
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="space-y-9">
+      {/* Reveals itself (below), so the portal-wide ScrollReveal leaves it alone. */}
+      <div className="space-y-9" data-reveal-skip>
         {categories.map((category, index) => (
           // The first category is on screen at load (CSS stagger, visible before hydration);
           // later ones reveal as they scroll into view.
