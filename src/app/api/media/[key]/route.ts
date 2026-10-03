@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
-import { mediaUrlForKey, readMedia } from "@/lib/storage";
+import { mediaDownloadUrl, mediaUrlForKey, readMedia } from "@/lib/storage";
 import { parseRange } from "@/lib/http-range";
 
 // GET /api/media/:key — proof media. Pending/rejected proof is visible only to its owner and
@@ -20,6 +20,13 @@ export async function GET(req: Request, { params }: RouteContext<"/api/media/[ke
     (verification.status === "APPROVED" || verification.quest.userId === user.id || user.role === "ADMIN");
   if (!verification || !allowed) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Supabase: send the browser to a short-lived signed link, so large videos stream straight
+  // from storage (Vercel caps function responses at 4.5 MB). The access check above still applies.
+  const direct = await mediaDownloadUrl(key);
+  if (direct) {
+    return new Response(null, { status: 302, headers: { Location: direct, "Cache-Control": "private, max-age=300" } });
   }
 
   const data = await readMedia(key);

@@ -1,44 +1,35 @@
 import { NextResponse } from "next/server";
 import { requireVerifiedUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
-import { deleteMedia, saveMedia } from "@/lib/storage";
+import {
+  deleteMedia,
+  isValidUploadToken,
+  mediaUrlForKey,
+  saveMedia,
+  verifyDirectUpload,
+  type StoredMedia,
+} from "@/lib/storage";
 import { MAX_PLANTS_PER_SUBMISSION } from "@/lib/quests";
 
-// POST /api/quests/:id/verifications — multipart form: `file` (photo/video) + `plantCount`.
-export async function POST(req: Request, { params }: RouteContext<"/api/quests/[id]/verifications">) {
-  const { user, response } = await requireVerifiedUser();
-  if (response) return response;
-  const { id: questId } = await params;
+function plantCountError(plantCount: number) {
+  if (Number.isInteger(plantCount) && plantCount >= 1 && plantCount <= MAX_PLANTS_PER_SUBMISSION) return null;
+  return NextResponse.json({ error: `Plant count must be between 1 and ${MAX_PLANTS_PER_SUBMISSION}.` }, { status: 400 });
+}
 
-  const form = await req.formData().catch(() => null);
-  const file = form?.get("file");
-  const plantCount = Number(form?.get("plantCount"));
-
-  if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Attach a photo or video as proof." }, { status: 400 });
-  }
-  if (!Number.isInteger(plantCount) || plantCount < 1 || plantCount > MAX_PLANTS_PER_SUBMISSION) {
-    return NextResponse.json(
-      { error: `Plant count must be between 1 and ${MAX_PLANTS_PER_SUBMISSION}.` },
-      { status: 400 },
-    );
-  }
-
+/** The quest, if it's the user's and awaiting proof; otherwise the error response. */
+async function activeQuest(questId: string, userId: string) {
   const quest = await prisma.quest.findUnique({ where: { id: questId } });
-  if (!quest || quest.userId !== user.id) {
-    return NextResponse.json({ error: "Quest not found." }, { status: 404 });
+  if (!quest || quest.userId !== userId) {
+    return { response: NextResponse.json({ error: "Quest not found." }, { status: 404 }) };
   }
   if (quest.status !== "ACTIVE") {
-    return NextResponse.json({ error: "This quest is not awaiting proof." }, { status: 409 });
+    return { response: NextResponse.json({ error: "This quest is not awaiting proof." }, { status: 409 }) };
   }
+  return { response: null };
+}
 
-  let media;
-  try {
-    media = await saveMedia(file);
-  } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
-  }
-
+/** Records the submission; cleans up the stored file if that fails. */
+async function createVerification(questId: string, media: StoredMedia, plantCount: number) {
   try {
     const verification = await prisma.$transaction(async (tx) => {
       // Guarded transition so concurrent submissions can't both succeed.
@@ -60,7 +51,66 @@ export async function POST(req: Request, { params }: RouteContext<"/api/quests/[
     }
     return NextResponse.json({ verification }, { status: 201 });
   } catch (err) {
-    await deleteMedia(media.key);
+    // Never delete a file another submission already points at.
+    if ((await prisma.verification.count({ where: { mediaUrl: media.url } })) === 0) await deleteMedia(media.key);
     throw err;
   }
+}
+
+// POST /api/quests/:id/verifications
+//  • JSON `{ key, token, plantCount }` — the file was uploaded straight to storage via
+//    POST /api/quests/:id/verifications/upload (production, Supabase).
+//  • multipart form: `file` (photo/video) + `plantCount` — local-disk storage (dev, tests).
+export async function POST(req: Request, { params }: RouteContext<"/api/quests/[id]/verifications">) {
+  const { user, response } = await requireVerifiedUser();
+  if (response) return response;
+  const { id: questId } = await params;
+
+  if (req.headers.get("content-type")?.includes("application/json")) {
+    const body = (await req.json().catch(() => null)) as { key?: unknown; token?: unknown; plantCount?: unknown } | null;
+    const key = typeof body?.key === "string" ? body.key : "";
+    const token = typeof body?.token === "string" ? body.token : "";
+    const plantCount = Number(body?.plantCount);
+
+    if (!key || !token || !isValidUploadToken(questId, key, token)) {
+      return NextResponse.json({ error: "Upload expired or invalid. Please try again." }, { status: 400 });
+    }
+    const badCount = plantCountError(plantCount);
+    if (badCount) return badCount;
+
+    const quest = await activeQuest(questId, user.id);
+    if (quest.response) return quest.response;
+    if (await prisma.verification.findUnique({ where: { mediaUrl: mediaUrlForKey(key) }, select: { id: true } })) {
+      return NextResponse.json({ error: "This upload was already submitted. Please upload the file again." }, { status: 409 });
+    }
+
+    const checked = await verifyDirectUpload(key).catch((err) => {
+      console.error("Proof upload check failed:", err);
+      return null;
+    });
+    if (!checked) return NextResponse.json({ error: "Couldn't check your upload. Please try again." }, { status: 502 });
+    if ("error" in checked) return NextResponse.json({ error: checked.error }, { status: 400 });
+    return createVerification(questId, checked.media, plantCount);
+  }
+
+  const form = await req.formData().catch(() => null);
+  const file = form?.get("file");
+  const plantCount = Number(form?.get("plantCount"));
+
+  if (!(file instanceof File) || file.size === 0) {
+    return NextResponse.json({ error: "Attach a photo or video as proof." }, { status: 400 });
+  }
+  const badCount = plantCountError(plantCount);
+  if (badCount) return badCount;
+
+  const quest = await activeQuest(questId, user.id);
+  if (quest.response) return quest.response;
+
+  let media;
+  try {
+    media = await saveMedia(file);
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+  }
+  return createVerification(questId, media, plantCount);
 }
