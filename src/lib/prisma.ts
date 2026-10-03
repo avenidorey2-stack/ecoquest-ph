@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { runtimeDatabaseUrl } from "@/lib/database-url";
 
 // Dev keeps one client across hot reloads. It's tagged with the PrismaClient class it was built
 // from: `prisma generate` (e.g. after a migration) hot-reloads a new class, and the stale client —
@@ -11,7 +12,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function createClient() {
   const max = Number(process.env.DATABASE_POOL_MAX) || undefined; // pg default (10) when unset
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, max });
+  const adapter = new PrismaPg({ connectionString: runtimeDatabaseUrl(), max });
   return new PrismaClient({ adapter });
 }
 
