@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { listRegions, resolveCity } from "@/lib/psgc";
 import { deleteMedia } from "@/lib/storage";
 
+/** Planter notice when a slot closes (or is removed) while their quest there is active. */
+export function slotClosedNotice(slot: { requiredPlantType: string; city: string }) {
+  return `The ${slot.requiredPlantType} slot in ${slot.city} is now closed, so your quest there has ended. Plants and points already approved are yours to keep.`;
+}
+
 /**
  * Ends the in-progress quests of a slot that was just closed or removed — call it inside the
  * transaction that changed the slot, after locking the slot row. Quests are never deleted: they
@@ -43,17 +48,12 @@ export async function endSlotQuests(
     await tx.quest.updateMany({ where: { id: { in: cancelledIds } }, data: { status: "CANCELLED" } });
   }
 
-  const what = `The ${slot.requiredPlantType} slot in ${slot.city}`;
+  // To planters a removed slot is simply closed: the notices never say who closed it.
   const notices = [
-    ...cancelled.map((q) => ({
-      userId: q.userId,
-      message: keepReview
-        ? `${what} was closed by an admin, so your quest there has ended. Plants and points already approved are yours to keep.`
-        : `${what} was removed by an admin, so your quest there was cancelled.`,
-    })),
+    ...cancelled.map((q) => ({ userId: q.userId, message: slotClosedNotice(slot) })),
     ...awaitingReview.map((q) => ({
       userId: q.userId,
-      message: `${what} was closed by an admin. Your proof awaiting review will still be reviewed, but no new proof can be submitted there.`,
+      message: `The ${slot.requiredPlantType} slot in ${slot.city} is now closed. Your proof awaiting review will still be reviewed, but no new proof can be submitted there.`,
     })),
   ];
   if (notices.length) {
@@ -154,7 +154,7 @@ export async function deleteSlotPermanently(slotId: string) {
       await tx.notification.createMany({
         data: notifyIds.map((userId) => ({
           userId,
-          message: `The ${slot.requiredPlantType} slot in ${slot.city} was removed by an admin, so your quest there was cancelled.`,
+          message: slotClosedNotice(slot),
           link: "/dashboard",
         })),
       });

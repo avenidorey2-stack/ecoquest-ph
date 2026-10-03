@@ -56,14 +56,14 @@ describe("closing a slot (admin sets status CLOSED)", () => {
     expect(await notes(active.id)).toEqual([
       {
         message:
-          "The Narra slot in Quezon City was closed by an admin, so your quest there has ended. Plants and points already approved are yours to keep.",
+          "The Narra slot in Quezon City is now closed, so your quest there has ended. Plants and points already approved are yours to keep.",
         link: "/dashboard",
       },
     ]);
     expect(await notes(waiting.id)).toEqual([
       {
         message:
-          "The Narra slot in Quezon City was closed by an admin. Your proof awaiting review will still be reviewed, but no new proof can be submitted there.",
+          "The Narra slot in Quezon City is now closed. Your proof awaiting review will still be reviewed, but no new proof can be submitted there.",
         link: "/dashboard",
       },
     ]);
@@ -198,6 +198,6 @@ describe("deleting a slot permanently", () => {
     expect(await prisma.verification.findMany({ select: { id: true, status: true } })).toEqual([{ id: approved.id, status: "APPROVED" }]);
     expect(await prisma.plantedTree.count()).toBe(1);
     expect(await points(planter.id)).toBe(20);
-    expect((await notes(planter.id)).at(-1)?.message).toContain("was removed by an admin, so your quest there was cancelled.");
+    expect((await notes(planter.id)).at(-1)?.message).toContain("is now closed, so your quest there has ended.");
   });
 });

@@ -6,7 +6,7 @@
 INSERT INTO "Notification" ("id", "userId", "message", "link")
 SELECT gen_random_uuid()::text, q."userId",
        'The ' || s."requiredPlantType" || ' slot in ' || s."city" ||
-       ' was closed by an admin, so your quest there has ended. Plants and points already approved are yours to keep.',
+       ' is now closed, so your quest there has ended. Plants and points already approved are yours to keep.',
        '/dashboard'
 FROM "Quest" q
 JOIN "Slot" s ON s."id" = q."slotId"
