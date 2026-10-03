@@ -38,7 +38,7 @@ function ProofModal({ questId, context, onClose }: { questId: string; context?: 
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => e.target === e.currentTarget && ref.current?.close()}
-      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-y-auto rounded-3xl bg-transparent p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
+      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-transparent p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
     >
       <div className="bg-cream-50">
         <div className="relative bg-gradient-to-br from-emerald-800 to-emerald-950 px-5 pb-4 pt-5 text-white">
@@ -56,7 +56,7 @@ function ProofModal({ questId, context, onClose }: { questId: string; context?: 
           </h2>
           {context && (
             <p className="text-xs text-emerald-100/80">
-              {context.pointsPerPlant} pts per plant · {context.remaining} plant{context.remaining === 1 ? "" : "s"} left in this quest
+              {context.pointsPerPlant.toLocaleString("en-PH")} pts per plant · {context.remaining} plant{context.remaining === 1 ? "" : "s"} left in this quest
             </p>
           )}
         </div>
