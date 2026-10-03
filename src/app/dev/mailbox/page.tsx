@@ -59,7 +59,7 @@ export default async function DevMailboxPage() {
                         href={link}
                         className="mt-2 mr-2 inline-block rounded-lg bg-emerald-700 px-3 py-1.5 font-medium text-white hover:bg-emerald-800"
                       >
-                        Open link →
+                        Open link
                       </a>
                     ))}
                   </div>

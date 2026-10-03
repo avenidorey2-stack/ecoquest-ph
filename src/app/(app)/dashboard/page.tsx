@@ -139,7 +139,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   </span>
                 ) : (
                   <Link href="/profile" className="shrink-0 text-xs font-semibold text-emerald-700">
-                    Set your city →
+                    Set your city
                   </Link>
                 )}
               </div>
@@ -407,7 +407,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               </div>
             </dl>
             <Link href="/referrals" className="mt-3 inline-block text-xs font-medium text-emerald-700 hover:text-emerald-900">
-              Open Referral Hub →
+              Open Referral Hub
             </Link>
           </div>
 

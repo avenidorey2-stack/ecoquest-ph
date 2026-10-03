@@ -67,7 +67,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
           href="/profile"
           className="block rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 hover:bg-amber-100"
         >
-          <span className="font-medium">Set your home city</span> to see how you rank against planters near you →
+          <span className="font-medium">Set your home city</span> to see how you rank against planters near you
         </Link>
       ) : (
         board && (

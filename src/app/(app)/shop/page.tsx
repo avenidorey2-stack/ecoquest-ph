@@ -130,7 +130,7 @@ export default async function SeedlingShopPage() {
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">My seedling orders</h2>
           <Link href="/transactions" className="text-xs font-medium text-emerald-700 hover:text-emerald-900">
-            Full history →
+            Full history
           </Link>
         </header>
         {orders.length === 0 ? (

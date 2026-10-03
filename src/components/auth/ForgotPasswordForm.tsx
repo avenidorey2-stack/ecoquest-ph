@@ -41,7 +41,7 @@ export default function ForgotPasswordForm({ initialEmail, devMailbox }: { initi
             target="_blank"
             className="block rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 hover:bg-amber-100"
           >
-            <strong>Development mode:</strong> no real email is sent. Open the dev mailbox →
+            <strong>Development mode:</strong> no real email is sent. Open the dev mailbox
           </a>
         )}
       </div>

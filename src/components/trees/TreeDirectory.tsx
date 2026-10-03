@@ -169,7 +169,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
               href="/dashboard"
               className="block rounded-xl bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
             >
-              Find a {tree.name} slot on the map →
+              Find a {tree.name} slot on the map
             </Link>
           )}
         </div>
