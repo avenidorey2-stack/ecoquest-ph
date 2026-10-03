@@ -14,11 +14,11 @@ export const MISSION_OBJECTIVES: Record<
     describe: (n) => `Get ${n} plant${n === 1 ? "" : "s"} approved`,
   },
   SUBMIT_PROOF: {
-    label: "Submit planting proof",
-    unit: "submitted",
+    label: "Planting proofs (approved)",
+    unit: "approved",
     href: "/dashboard",
     action: "Submit",
-    describe: (n) => `Submit ${n} planting proof${n === 1 ? "" : "s"}`,
+    describe: (n) => `Get ${n} planting proof${n === 1 ? "" : "s"} approved`,
   },
   BUY_SEEDLINGS: {
     label: "Buy seedlings from the shop",

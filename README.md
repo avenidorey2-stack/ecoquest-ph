@@ -82,7 +82,9 @@ Set `AUTH_URL` to the public URL in production — links in emails are built fro
 - **Claiming** (`POST /api/slots/:id/claim`): only slots in the user's PSGC city, while open and below max participants.
   The quest copies the slot's goal (`targetPlants`).
 - **Proof**: the Submit Proof modal uploads a photo/video (images ≤ 10 MB, video ≤ 50 MB) with a plant quantity; each
-  submission stores its own `plantCount`.
+  submission stores its own `plantCount`. Phones get Take photo / Record video / Photos & files; desktop gets drag &
+  drop, Browse and webcam. With Supabase configured the browser uploads straight to Storage through a signed URL
+  (`POST /api/quests/:id/verifications/upload`), sidestepping Vercel's 4.5 MB request limit.
 - **Review** (admin → Verifications): approving adds exactly the approved count to the quest's progress and awards points
   (count × points per plant), XP and planted trees. When progress reaches the goal the quest **completes automatically**,
   the growing-tree celebration plays and the next quest on the same slot unlocks; otherwise it stays active for more proof.
@@ -92,8 +94,8 @@ Set `AUTH_URL` to the public URL in production — links in emails are built fro
 ## Daily & side quests
 
 Admin → Quests creates **daily** quests (reset every day at 12:00 AM PHT) and **side** quests (one-time, optional end
-date). Objectives are tracked automatically from existing activity: approved plants, proof submissions, seedlings
-bought, friends who signed up with the user's invite link, and rewards redeemed. When the target is met the dashboard's
+date). Objectives are tracked automatically from existing activity: approved plants, approved proofs (counted on the day
+an admin approves them — pending uploads earn nothing), seedlings bought, friends who signed up with the user's invite link, and rewards redeemed. When the target is met the dashboard's
 Quests card shows **Claim**; `POST /api/missions/:id/claim` awards the points (they count on the weekly leaderboard)
 and XP once per period — enforced by a unique `(mission, user, period)` row. `npm run db:seed` adds six starter
 quests only when none exist.
@@ -109,7 +111,8 @@ quests only when none exist.
 - **Transactions** (`/transactions`): unified history of seedling orders, redemptions and refunds (`Transaction` table)
   with live statuses.
 - **Notifications**: the header bell lists approvals, rejections, new slots, order and redemption updates, quest
-  rewards and referral bonuses (`Notification` table, polled every minute).
+  rewards and referral bonuses (`Notification` table, polled every minute). Admins are notified of every new proof
+  to review, linking to Admin → Verifications.
 - **Public profiles** (`/planters/[id]`, also a modal from any leaderboard row): level, trees, points, every
   achievement and every approved proof photo/video, each with the date it was acquired. Approved proof is visible to
   all signed-in users; pending/rejected proof stays private to its owner and admins.

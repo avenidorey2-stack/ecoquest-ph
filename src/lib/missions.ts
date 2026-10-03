@@ -49,7 +49,8 @@ export async function objectiveProgress(db: Db, userId: string, objective: Missi
     case "PLANT_TREES":
       return (await db.plantedTree.aggregate({ where: { userId, plantedAt: range }, _sum: { count: true } }))._sum.count ?? 0;
     case "SUBMIT_PROOF":
-      return db.verification.count({ where: { quest: { userId }, createdAt: range, status: { not: "REJECTED" } } });
+      // Only proofs an admin approved, counted on the day of approval — a pending upload earns nothing.
+      return db.verification.count({ where: { quest: { userId }, status: "APPROVED", reviewedAt: range } });
     case "BUY_SEEDLINGS":
       return (await db.order.aggregate({ where: { userId, createdAt: range, status: { not: "CANCELLED" } }, _sum: { quantity: true } }))._sum.quantity ?? 0;
     case "INVITE_FRIENDS":
@@ -171,7 +172,7 @@ async function progressByUser(db: Db, objective: MissionObjective, from: Date, t
       break;
     case "SUBMIT_PROOF":
       for (const v of await db.verification.findMany({
-        where: { createdAt: range, status: { not: "REJECTED" } },
+        where: { status: "APPROVED", reviewedAt: range },
         select: { quest: { select: { userId: true } } },
       })) {
         add(v.quest.userId, 1);
@@ -306,7 +307,7 @@ export function parseMission(body: Record<string, unknown>, { create }: { create
 // ─── Starter content (prisma/seed.ts) ───────────────────────────────────────
 
 const STARTER_MISSIONS: Omit<Prisma.MissionCreateManyInput, "id">[] = [
-  { kind: "DAILY", title: "Daily proof", description: "Submit a planting proof today.", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, sortOrder: 1 },
+  { kind: "DAILY", title: "Daily proof", description: "Get a planting proof approved today.", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, sortOrder: 1 },
   { kind: "DAILY", title: "Green day", description: "Get 3 plants approved today.", objective: "PLANT_TREES", target: 3, rewardPoints: 50, rewardXp: 20, sortOrder: 2 },
   { kind: "DAILY", title: "Seedling run", description: "Buy a seedling from the shop today.", objective: "BUY_SEEDLINGS", target: 1, rewardPoints: 15, rewardXp: 5, sortOrder: 3 },
   { kind: "SIDE", title: "Stock the nursery", description: "Buy 5 seedlings from the shop.", objective: "BUY_SEEDLINGS", target: 5, rewardPoints: 100, rewardXp: 30, sortOrder: 1 },

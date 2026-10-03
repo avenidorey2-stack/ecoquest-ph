@@ -133,7 +133,9 @@ export default function ProofUploadForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <fieldset>
+      {/* min-w-0: a fieldset is never narrower than its content by default, so a long file name
+          (e.g. from Messenger) would stretch the dialog past the screen. */}
+      <fieldset className="min-w-0">
         <legend className="mb-1.5 text-sm font-medium text-slate-700">Photo or video proof</legend>
         <ProofMediaPicker
           file={file}

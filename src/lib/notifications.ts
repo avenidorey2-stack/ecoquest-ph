@@ -20,6 +20,19 @@ export async function notifyCity(db: Db, cityCode: string, message: string, link
   return count;
 }
 
+/** Notifies every admin (e.g. a new proof to review), except `exceptUserId` — an admin acting themselves. */
+export async function notifyAdmins(db: Db, message: string, link?: string, exceptUserId?: string) {
+  const admins = await db.user.findMany({
+    where: { role: "ADMIN", ...(exceptUserId ? { id: { not: exceptUserId } } : {}) },
+    select: { id: true },
+  });
+  if (!admins.length) return 0;
+  const { count } = await db.notification.createMany({
+    data: admins.map((a) => ({ userId: a.id, message, link: safeLink(link) })),
+  });
+  return count;
+}
+
 /** Only same-site paths are stored, so a notification can never link off-site. */
 function safeLink(link: string | undefined) {
   return link && link.startsWith("/") && !link.startsWith("//") ? link : null;
