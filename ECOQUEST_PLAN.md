@@ -268,11 +268,14 @@ There are **no TODO/FIXME comments** in the source; the items below come from re
 
 ### Environment / data issues (local)
 - **`prisma dev` (PGlite) is fragile**: single shared connection (occasional `08P01 bind message` errors under
-  concurrent access), instances can hang on start after being force-stopped. The `ecoquest-test` instance referenced
-  by `.env.test` no longer starts — recreate it (`npx prisma dev rm ecoquest-test`, start a new one, update
-  `TEST_DATABASE_URL`, `migrate deploy`). Moving dev/test to the full PostgreSQL on port 5432 is recommended.
-- **Dev data inconsistency**: two slots were permanently deleted under an earlier implementation that erased their
-  proofs and planting records; at least one user's `totalPlants` counter no longer matches their `PlantedTree` records.
+  concurrent access), and force-stopping an instance can leave stale lock files in
+  `%LOCALAPPDATA%\prisma-dev-nodejs\Data\` so it can never start again. Fix: delete that instance's folders under
+  `Data\` and `Data\durable-streams\` (never `ecoquest-dev`), then `npx prisma dev --name <name> --detach`.
+  `ecoquest-test` was rebuilt this way (port 51214, migrations applied, full suite passing). Moving dev/test to the
+  full PostgreSQL on port 5432 is still recommended.
+- **Lost planting history (data, not fixable)**: two slots were permanently deleted under an earlier implementation
+  that erased their proofs and planting records. Both users' `totalPlants` counters were reconciled to their
+  `PlantedTree` records (15 → 0 and 40 → 35); points, XP and achievements already earned were left unchanged.
 - **Expired JWT cookies** in a browser produce repeated `JWTSessionError` log noise until the user signs in again.
 
 ---
