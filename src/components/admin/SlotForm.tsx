@@ -9,6 +9,17 @@ import type { AdminSlot } from "./SlotManager";
 
 export type SpeciesOption = { id: string; name: string; category: string };
 
+/** What closing a slot did (the `closed` part of PATCH /api/admin/slots/:id). */
+type ClosedResult = { cancelledQuests: number; awaitingReview: number; notified: number } | null | undefined;
+
+/** Admin notice after closing a slot (from the list's Close button or this form's status). */
+export function closedNotice(slot: Pick<AdminSlot, "requiredPlantType" | "city">, closed: ClosedResult) {
+  const parts = [`Closed “${slot.requiredPlantType}” in ${slot.city}`];
+  if (closed?.cancelledQuests) parts.push(`ended ${closed.cancelledQuests} active quest(s)`);
+  if (closed?.awaitingReview) parts.push(`${closed.awaitingReview} proof(s) still await your review in Verifications`);
+  return `${parts.join("; ")}${closed?.notified ? `. ${closed.notified} planter(s) notified.` : "."}`;
+}
+
 type Values = {
   /** Catalogue species id; "" keeps a legacy custom species name unchanged. */
   speciesId: string;
@@ -47,7 +58,8 @@ export default function SlotForm({
   draft: { lat: number; lng: number } | null;
   /** New slots: called when the admin types valid coordinates, to move the pin. */
   onDraftChange?: (lat: number, lng: number) => void;
-  onSaved: () => void;
+  /** `notice`: what the save did beyond the edit (e.g. closing ended quests), for the admin. */
+  onSaved: (notice?: string) => void;
   onCancel: () => void;
 }) {
   const isNew = !slot;
@@ -160,7 +172,8 @@ export default function SlotForm({
       setError((await res.json().catch(() => ({}))).error ?? "Save failed.");
       return;
     }
-    onSaved();
+    const { slot: saved, closed } = await res.json().catch(() => ({}));
+    onSaved(closed && saved ? closedNotice(saved, closed) : undefined);
   }
 
   const input = "mt-1 block w-full rounded border px-2 py-1.5 text-sm";
@@ -367,6 +380,13 @@ export default function SlotForm({
             <option value="FULL">Full (no new claims)</option>
             <option value="CLOSED">Closed (hidden from map)</option>
           </select>
+          {values.status === "CLOSED" && slot.status !== "CLOSED" && (
+            <span role="note" className="mt-1 block rounded bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+              Closing stops new claims and proof.
+              {slot.activeQuests > 0 &&
+                ` ${slot.activeQuests} planter(s) with a quest here will be notified and their quests end (approved plants and points are kept; proof already submitted can still be reviewed).`}
+            </span>
+          )}
         </label>
       )}
 

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { PsgcRegion } from "@/lib/psgc";
-import SlotForm, { type SpeciesOption } from "./SlotForm";
+import SlotForm, { closedNotice, type SpeciesOption } from "./SlotForm";
 
 export type AdminSlot = {
   id: string;
@@ -92,6 +92,10 @@ export default function SlotManager({
       setListError((res && (await res.json().catch(() => ({}))).error) ?? "Couldn't update the slot.");
       return;
     }
+    if (action === "close") {
+      const { closed } = await res.json().catch(() => ({}));
+      setNotice(closedNotice(slot, closed));
+    }
     if (action === "permanent") {
       const r = await res.json().catch(() => ({}));
       setNotice(
@@ -131,8 +135,9 @@ export default function SlotManager({
               draft={draft}
               onDraftChange={(lat, lng) => setSelection({ kind: "new", lat, lng })}
               onCancel={() => setSelection(null)}
-              onSaved={() => {
+              onSaved={(notice) => {
                 setSelection(null);
+                setNotice(notice ?? null);
                 router.refresh();
               }}
             />
@@ -223,7 +228,13 @@ export default function SlotManager({
                       ) : asking ? (
                         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">
                           <span className="flex-1">
-                            {asking === "close" ? "Close this slot? It will be hidden from the map." : "Delete this slot? It has no quests."}
+                            {asking === "close"
+                              ? `Close this slot? It will be hidden from the map and stop accepting proof.${
+                                  slot.activeQuests > 0
+                                    ? ` ${slot.activeQuests} planter(s) with a quest here will be notified; their quests end (approved plants and points are kept).`
+                                    : ""
+                                }`
+                              : "Delete this slot? It has no quests."}
                           </span>
                           <button
                             onClick={() => remove(slot, asking)}

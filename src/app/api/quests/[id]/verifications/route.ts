@@ -9,7 +9,7 @@ import {
   verifyDirectUpload,
   type StoredMedia,
 } from "@/lib/storage";
-import { MAX_PLANTS_PER_SUBMISSION } from "@/lib/quests";
+import { isSlotOpen, MAX_PLANTS_PER_SUBMISSION, SLOT_CLOSED } from "@/lib/quests";
 import { notifyAdmins } from "@/lib/notifications";
 
 function plantCountError(plantCount: number) {
@@ -19,9 +19,15 @@ function plantCountError(plantCount: number) {
 
 /** The quest, if it's the user's and awaiting proof; otherwise the error response. */
 async function activeQuest(questId: string, userId: string) {
-  const quest = await prisma.quest.findUnique({ where: { id: questId } });
+  const quest = await prisma.quest.findUnique({
+    where: { id: questId },
+    select: { userId: true, status: true, slot: { select: { status: true, deletedAt: true } } },
+  });
   if (!quest || quest.userId !== userId) {
     return { response: NextResponse.json({ error: "Quest not found." }, { status: 404 }) };
+  }
+  if (!isSlotOpen(quest.slot)) {
+    return { response: NextResponse.json({ error: SLOT_CLOSED }, { status: 409 }) };
   }
   if (quest.status !== "ACTIVE") {
     return { response: NextResponse.json({ error: "This quest is not awaiting proof." }, { status: 409 }) };
@@ -33,11 +39,15 @@ async function activeQuest(questId: string, userId: string) {
 async function createVerification(questId: string, media: StoredMedia, plantCount: number) {
   try {
     const verification = await prisma.$transaction(async (tx) => {
-      // Guarded transition so concurrent submissions can't both succeed.
-      // The quest's own plantCount is its approved progress; this submission's count is stored
-      // on the verification and added to the progress when it's approved.
+      // Shared lock on the slot first: an admin closing it at this moment either finishes first
+      // (then the check below refuses) or waits for this submission (then reviews it as pending).
+      await tx.$queryRaw`
+        SELECT 1 FROM "Slot" s JOIN "Quest" q ON q."slotId" = s."id" WHERE q."id" = ${questId} FOR SHARE OF s`;
+      // Guarded transition so concurrent submissions can't both succeed, and none land on a
+      // closed slot. The quest's own plantCount is its approved progress; this submission's count
+      // is stored on the verification and added to the progress when it's approved.
       const { count } = await tx.quest.updateMany({
-        where: { id: questId, status: "ACTIVE" },
+        where: { id: questId, status: "ACTIVE", slot: { status: { not: "CLOSED" }, deletedAt: null } },
         data: { status: "PENDING_VERIFICATION" },
       });
       if (count === 0) return null;

@@ -30,6 +30,7 @@ enum QuestStatus {
   PENDING_VERIFICATION
   COMPLETED
   REJECTED
+  CANCELLED // its slot was closed or removed; approved plants, points and proof are kept
 }
 
 enum VerificationStatus {

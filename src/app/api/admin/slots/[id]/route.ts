@@ -3,9 +3,11 @@ import { getAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { parseSlotUpdate } from "@/lib/slots";
 import { slotSpeciesFromInput } from "@/lib/species";
-import { deleteSlotPermanently } from "@/lib/admin-slots";
+import { deleteSlotPermanently, updateSlot } from "@/lib/admin-slots";
 
 // PATCH /api/admin/slots/:id — edit slot rules (species, points, status, place names).
+// Response: { slot, closed } — `closed` is { cancelledQuests, awaitingReview, notified } when
+// this edit closed the slot, otherwise null.
 export async function PATCH(req: Request, { params }: RouteContext<"/api/admin/slots/[id]">) {
   if (!(await getAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
@@ -18,10 +20,10 @@ export async function PATCH(req: Request, { params }: RouteContext<"/api/admin/s
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
   const data = { ...parsed.data, ...(species.speciesId !== undefined ? { speciesId: species.speciesId } : {}) };
-  const { count } = await prisma.slot.updateMany({ where: { id, deletedAt: null }, data });
-  if (count === 0) return NextResponse.json({ error: "Slot not found." }, { status: 404 });
-
-  return NextResponse.json({ slot: await prisma.slot.findUnique({ where: { id } }) });
+  // Closing ends the slot's in-progress quests and notifies those planters (see updateSlot).
+  const result = await updateSlot(id, data);
+  if (!result) return NextResponse.json({ error: "Slot not found." }, { status: 404 });
+  return NextResponse.json(result);
 }
 
 // DELETE /api/admin/slots/:id — deletes a slot that has no quests.

@@ -1,6 +1,84 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { listRegions, resolveCity } from "@/lib/psgc";
 import { deleteMedia } from "@/lib/storage";
+
+/** Planter notice when a slot closes (or is removed) while their quest there is active. */
+export function slotClosedNotice(slot: { requiredPlantType: string; city: string }) {
+  return `The ${slot.requiredPlantType} slot in ${slot.city} is now closed, so your quest there has ended. Plants and points already approved are yours to keep.`;
+}
+
+/**
+ * Ends the in-progress quests of a slot that was just closed or removed — call it inside the
+ * transaction that changed the slot, after locking the slot row. Quests are never deleted: they
+ * become CANCELLED and keep their approved plants, points and proof. Every affected planter is
+ * notified.
+ * - closed: a quest whose proof is awaiting review keeps it, so the admin can still approve that
+ *   planting; the review then ends the quest (see quests.ts) instead of reopening it.
+ * - removed: every in-progress quest is cancelled and its unapproved proof rows dropped; their
+ *   files are returned in `mediaKeys` for the caller to delete after the transaction commits.
+ */
+export async function endSlotQuests(
+  tx: Prisma.TransactionClient,
+  slot: { id: string; requiredPlantType: string; city: string },
+  { reason }: { reason: "closed" | "removed" },
+) {
+  // Row locks: a proof submission or review that is mid-flight finishes first, and later ones
+  // see the slot closed (they lock the slot row before touching the quest).
+  const quests = await tx.$queryRaw<{ id: string; userId: string; status: "ACTIVE" | "PENDING_VERIFICATION" }[]>`
+    SELECT "id", "userId", "status"::text AS "status" FROM "Quest"
+    WHERE "slotId" = ${slot.id} AND "status" IN ('ACTIVE', 'PENDING_VERIFICATION')
+    FOR UPDATE`;
+  const keepReview = reason === "closed";
+  const cancelled = quests.filter((q) => !keepReview || q.status === "ACTIVE");
+  const awaitingReview = quests.filter((q) => keepReview && q.status === "PENDING_VERIFICATION");
+  const cancelledIds = cancelled.map((q) => q.id);
+
+  let mediaKeys: string[] = [];
+  if (cancelledIds.length) {
+    if (!keepReview) {
+      // Approved proof is a permanent record; only proof that was never approved goes.
+      const dropped = await tx.verification.findMany({
+        where: { questId: { in: cancelledIds }, status: { not: "APPROVED" } },
+        select: { id: true, mediaUrl: true },
+      });
+      await tx.verification.deleteMany({ where: { id: { in: dropped.map((v) => v.id) } } });
+      mediaKeys = dropped.map((v) => v.mediaUrl.split("/").pop() ?? "");
+    }
+    await tx.quest.updateMany({ where: { id: { in: cancelledIds } }, data: { status: "CANCELLED" } });
+  }
+
+  // To planters a removed slot is simply closed: the notices never say who closed it.
+  const notices = [
+    ...cancelled.map((q) => ({ userId: q.userId, message: slotClosedNotice(slot) })),
+    ...awaitingReview.map((q) => ({
+      userId: q.userId,
+      message: `The ${slot.requiredPlantType} slot in ${slot.city} is now closed. Your proof awaiting review will still be reviewed, but no new proof can be submitted there.`,
+    })),
+  ];
+  if (notices.length) {
+    await tx.notification.createMany({ data: notices.map((n) => ({ ...n, link: "/dashboard" })) });
+  }
+  return { cancelledQuests: cancelled.length, awaitingReview: awaitingReview.length, notified: notices.length, mediaKeys };
+}
+
+/**
+ * Admin slot edit. Closing a slot (status → CLOSED) also ends its in-progress quests and notifies
+ * those planters (endSlotQuests). Returns null if there is no such slot.
+ */
+export async function updateSlot(slotId: string, data: Prisma.SlotUncheckedUpdateInput) {
+  return prisma.$transaction(async (tx) => {
+    // Exclusive lock on the slot row first, so concurrent submissions/reviews wait for the close.
+    const [before] = await tx.$queryRaw<{ status: string }[]>`
+      SELECT "status"::text AS "status" FROM "Slot" WHERE "id" = ${slotId} AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!before) return null;
+
+    const slot = await tx.slot.update({ where: { id: slotId }, data });
+    if (slot.status !== "CLOSED" || before.status === "CLOSED") return { slot, closed: null };
+    const { cancelledQuests, awaitingReview, notified } = await endSlotQuests(tx, slot, { reason: "closed" });
+    return { slot, closed: { cancelledQuests, awaitingReview, notified } };
+  });
+}
 
 /** Data for the admin slot manager (/admin/slots). */
 export async function loadAdminSlotData() {
@@ -43,51 +121,47 @@ export async function loadAdminSlotData() {
  * Admin "delete permanently". Approved proof and planted trees are permanent records on planters'
  * profiles, so they always survive:
  * - Slot with approved plantings: the slot disappears from every list and map (soft delete via
- *   `deletedAt`); in-progress quests (active / awaiting review) are cancelled and their unapproved
- *   proof files removed. Completed quests, approved proof and planted trees stay.
+ *   `deletedAt`); in-progress quests (active / awaiting review) are cancelled — not deleted, since a
+ *   part-done quest holds approved proof and trees — and their unapproved proof removed
+ *   (endSlotQuests). Completed quests, approved proof and planted trees stay.
  * - Slot without approved plantings: the slot and all its quests are erased (hard delete).
  * Planters with a quest in progress are notified. Returns null if there is no such slot.
  */
 export async function deleteSlotPermanently(slotId: string) {
   const result = await prisma.$transaction(async (tx) => {
-    const slot = await tx.slot.findFirst({
-      where: { id: slotId, deletedAt: null },
-      select: {
-        city: true,
-        requiredPlantType: true,
-        quests: {
-          select: { id: true, userId: true, status: true, verifications: { select: { mediaUrl: true, status: true } } },
-        },
-      },
-    });
-    if (!slot) return null;
+    // Exclusive lock on the slot row first (same order as closing, submitting and reviewing).
+    const [locked] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT "id" FROM "Slot" WHERE "id" = ${slotId} AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) return null;
+    const slot = await tx.slot.findUniqueOrThrow({ where: { id: slotId }, select: { id: true, city: true, requiredPlantType: true } });
 
-    const inProgress = slot.quests.filter((q) => q.status === "ACTIVE" || q.status === "PENDING_VERIFICATION");
-    const notifyIds = [...new Set(inProgress.map((q) => q.userId))];
+    const keepHistory = (await tx.verification.count({ where: { status: "APPROVED", quest: { slotId } } })) > 0;
+    if (keepHistory) {
+      const ended = await endSlotQuests(tx, slot, { reason: "removed" });
+      await tx.slot.update({ where: { id: slotId }, data: { deletedAt: new Date(), status: "CLOSED" } });
+      return { keepHistory, removedQuests: ended.cancelledQuests, mediaKeys: ended.mediaKeys, notified: ended.notified };
+    }
+
+    // Nothing was ever approved here: erase the slot with every quest and proof on it.
+    const quests = await tx.quest.findMany({
+      where: { slotId },
+      select: { userId: true, status: true, verifications: { select: { mediaUrl: true } } },
+    });
+    const notifyIds = [
+      ...new Set(quests.filter((q) => q.status === "ACTIVE" || q.status === "PENDING_VERIFICATION").map((q) => q.userId)),
+    ];
     if (notifyIds.length) {
       await tx.notification.createMany({
         data: notifyIds.map((userId) => ({
           userId,
-          message: `The ${slot.requiredPlantType} slot in ${slot.city} was removed by an admin, so your quest there was cancelled.`,
+          message: slotClosedNotice(slot),
           link: "/dashboard",
         })),
       });
     }
-
-    const keepHistory = slot.quests.some((q) => q.verifications.some((v) => v.status === "APPROVED"));
-    const removed = keepHistory ? inProgress : slot.quests;
-    // Approved proof is never deleted — only the files of proof that was never approved.
-    const mediaKeys = removed.flatMap((q) =>
-      q.verifications.filter((v) => v.status !== "APPROVED").map((v) => v.mediaUrl.split("/").pop() ?? ""),
-    );
-
-    if (keepHistory) {
-      await tx.quest.deleteMany({ where: { id: { in: inProgress.map((q) => q.id) } } });
-      await tx.slot.update({ where: { id: slotId }, data: { deletedAt: new Date(), status: "CLOSED" } });
-    } else {
-      await tx.slot.delete({ where: { id: slotId } }); // cascades to its quests and their (unapproved) proof rows
-    }
-    return { keepHistory, removedQuests: removed.length, mediaKeys, notified: notifyIds.length };
+    const mediaKeys = quests.flatMap((q) => q.verifications.map((v) => v.mediaUrl.split("/").pop() ?? ""));
+    await tx.slot.delete({ where: { id: slotId } }); // cascades to its quests and their (unapproved) proof rows
+    return { keepHistory, removedQuests: quests.length, mediaKeys, notified: notifyIds.length };
   });
   if (!result) return null;
 

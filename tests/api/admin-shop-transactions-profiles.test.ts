@@ -346,7 +346,7 @@ describe("slot barangay, permanent delete and the admin all-slots map", () => {
     expect(profile.proofs[0].approvedAt).toEqual(expect.any(String));
 
     const note = await prisma.notification.findFirstOrThrow({ where: { userId: waiting.id } });
-    expect(note.message).toContain("was removed by an admin");
+    expect(note.message).toContain("is now closed, so your quest there has ended.");
     signInAs(admin);
     expect((await delPermanent(slot.id)).status).toBe(404); // already deleted
     expect((await claimRoute(new Request("http://test.local", { method: "POST" }), ctx({ id: slot.id }))).status).toBe(404);
