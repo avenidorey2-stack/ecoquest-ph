@@ -26,7 +26,7 @@ export default function InviteLink({ url }: { url: string }) {
     }
   }
 
-  const button = "rounded-lg px-4 py-2 text-sm font-medium";
+  const button = "rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm transition motion-safe:active:scale-[0.98]";
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
@@ -35,21 +35,21 @@ export default function InviteLink({ url }: { url: string }) {
           value={url}
           onFocus={(e) => e.currentTarget.select()}
           aria-label="Your invite link"
-          className="min-w-0 flex-1 rounded-lg border bg-gray-50 px-3 py-2 font-mono text-sm"
+          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 font-mono text-base sm:text-sm"
         />
-        <button onClick={copy} className={`${button} bg-green-600 text-white hover:bg-green-700`}>
+        <button onClick={copy} className={`${button} bg-emerald-700 text-white hover:bg-emerald-800`}>
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button onClick={share} className={`${button} border hover:bg-gray-50`}>
+        <button onClick={share} className={`${button} border border-slate-300 bg-white hover:bg-slate-50`}>
           Share…
         </button>
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${button} border hover:bg-gray-50`}
+          className={`${button} border border-slate-300 bg-white hover:bg-slate-50`}
         >
           Facebook
         </a>
@@ -57,7 +57,7 @@ export default function InviteLink({ url }: { url: string }) {
           href={`https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${url}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${button} border hover:bg-gray-50`}
+          className={`${button} border border-slate-300 bg-white hover:bg-slate-50`}
         >
           WhatsApp
         </a>

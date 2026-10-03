@@ -187,9 +187,9 @@ export default function SlotForm({
       <div>
         <h2 className="font-semibold">{isNew ? "Add planting slot" : "Edit slot rules"}</h2>
         {isNew ? (
-          <p className="text-xs text-gray-500">Pin captured from the map — adjust the coordinates if needed.</p>
+          <p className="text-xs text-slate-500">Pin captured from the map — adjust the coordinates if needed.</p>
         ) : (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             {slot.latitude.toFixed(5)}, {slot.longitude.toFixed(5)} · {slot.activeQuests} active quest(s)
           </p>
         )}
@@ -285,7 +285,7 @@ export default function SlotForm({
 
       {!locating && (
         <label className="block text-sm">
-          Barangay <span className="text-xs text-gray-500">(optional)</span>
+          Barangay <span className="text-xs text-slate-500">(optional)</span>
           <input
             className={input}
             value={barangay}
@@ -294,7 +294,7 @@ export default function SlotForm({
             placeholder="e.g. Poblacion"
           />
           {isNew && located?.place && (
-            <span className="text-xs text-gray-500">Detected from OpenStreetMap. Double-check it.</span>
+            <span className="text-xs text-slate-500">Detected from OpenStreetMap. Double-check it.</span>
           )}
         </label>
       )}
@@ -320,7 +320,7 @@ export default function SlotForm({
             </optgroup>
           ))}
         </select>
-        <span className="text-xs text-gray-500">Approved plantings count toward this species in the Tree Directory.</span>
+        <span className="text-xs text-slate-500">Approved plantings count toward this species in the Tree Directory.</span>
       </label>
 
       <label className="block text-sm">
@@ -348,7 +348,7 @@ export default function SlotForm({
           onChange={(e) => set("questGoal", e.target.value)}
           required
         />
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-slate-500">
           Approved plants needed to complete one quest. Planters can submit proof in several batches.
           {!isNew && " Applies to quests claimed after saving."}
         </span>
@@ -366,7 +366,7 @@ export default function SlotForm({
           onChange={(e) => set("maxParticipants", e.target.value)}
           required
         />
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-slate-500">
           Planters who can work this slot at once (active or awaiting review).
           {!isNew && slot.activeQuests > 0 && ` Currently ${slot.activeQuests}.`}
         </span>
@@ -396,11 +396,11 @@ export default function SlotForm({
         <button
           type="submit"
           disabled={saving || locating}
-          className="rounded bg-green-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded bg-emerald-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
         >
           {saving ? "Saving…" : isNew ? "Create slot" : "Save changes"}
         </button>
-        <button type="button" onClick={onCancel} className="rounded px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100">
+        <button type="button" onClick={onCancel} className="rounded px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
           Cancel
         </button>
       </div>

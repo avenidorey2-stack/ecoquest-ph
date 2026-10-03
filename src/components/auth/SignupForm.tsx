@@ -45,7 +45,7 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
           📬
         </p>
         <h2 className="font-semibold">Check your inbox</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate-600">
           If <strong>{sentTo}</strong> can be registered, we&apos;ve sent it a link to confirm your email and set your
           password. It expires in 24 hours — check your spam folder too.
         </p>
@@ -62,18 +62,18 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
         <button
           onClick={send}
           disabled={busy || cooldown > 0}
-          className="w-full rounded-lg border py-2 text-sm font-medium disabled:text-gray-400"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-medium transition hover:bg-slate-50 motion-safe:active:scale-[0.98] disabled:text-slate-400"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : busy ? "Sending…" : "Resend email"}
         </button>
-        <button onClick={() => setSentTo(null)} className="text-sm text-green-700">
+        <button onClick={() => setSentTo(null)} className="text-sm text-emerald-700">
           Use a different email
         </button>
       </div>
     );
   }
 
-  const input = "mt-1 block w-full rounded-lg border px-3 py-2 text-sm";
+  const input = "mt-1.5 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm";
   return (
     <form
       onSubmit={(e) => {
@@ -82,11 +82,11 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
       }}
       className="space-y-3"
     >
-      <label className="block text-sm">
+      <label className="block text-sm font-medium text-slate-700">
         Name
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="name" required className={input} />
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm font-medium text-slate-700">
         Email
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required className={input} />
       </label>
@@ -104,11 +104,11 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
       )}
       <button
         disabled={busy}
-        className="w-full rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+        className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
         {busy ? "Sending…" : "Email me a confirmation link"}
       </button>
-      <p className="text-xs text-gray-500">You&apos;ll set your password after confirming your email.</p>
+      <p className="text-xs text-slate-500">You&apos;ll set your password after confirming your email.</p>
     </form>
   );
 }

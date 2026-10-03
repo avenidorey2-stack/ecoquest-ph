@@ -62,7 +62,7 @@ export default async function DashboardPage() {
       {d.ads.length > 0 && <PatronBanner ads={d.ads} />}
 
       {/* ── Main grid: 3 columns on desktop, 2 on tablets, stacked on phones ── */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="eq-stagger grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {/* 1 · Eco-impact score */}
         <Card title="Eco-impact score" icon={<SproutIcon className="h-4 w-4" />}>
           <div className="flex items-center gap-5">
@@ -287,16 +287,16 @@ export default async function DashboardPage() {
             {isAdmin ? (
               <>
                 <span className="font-medium text-slate-700">All regions</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-600" /> Open</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-700" /> Open</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" /> Full</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-500" /> Closed</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-slate-500" /> Closed</span>
               </>
             ) : (
               <>
                 <span className="font-medium text-slate-700">{city ? `${city}, ${d.place?.province}` : "No city set"}</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-600" /> Claimable</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-700" /> Claimable</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" /> Your quest</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-400" /> Full</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-slate-400" /> Full</span>
               </>
             )}
           </div>
@@ -360,7 +360,7 @@ export default async function DashboardPage() {
         <h2 id="hub-title" className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
           Notifications &amp; referral hub
         </h2>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="eq-stagger grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
               <BellIcon className="h-4 w-4 text-emerald-600" /> Recent admin updates

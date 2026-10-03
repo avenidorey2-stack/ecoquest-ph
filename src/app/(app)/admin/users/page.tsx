@@ -22,7 +22,7 @@ export default async function AdminUsersPage() {
         <h2 className="text-lg font-semibold text-slate-900">Users</h2>
         <p className="text-sm text-slate-500">Registered planters grouped by the city or town on their profile.</p>
       </div>
-      <ul className="grid grid-cols-3 gap-3">
+      <ul className="eq-stagger grid grid-cols-3 gap-3">
         {stats.map((s) => (
           <li key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <p className="text-2xl font-bold tracking-tight text-slate-900">{s.value.toLocaleString("en-PH")}</p>

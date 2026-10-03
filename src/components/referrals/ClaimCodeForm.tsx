@@ -36,11 +36,11 @@ export default function ClaimCodeForm({ initialCode }: { initialCode: string }) 
           placeholder="Invite code"
           aria-label="Invite code"
           required
-          className="min-w-0 flex-1 rounded-lg border px-3 py-2 font-mono text-sm"
+          className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-base shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm"
         />
         <button
           disabled={busy}
-          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 motion-safe:active:scale-[0.98] disabled:opacity-50"
         >
           Apply
         </button>

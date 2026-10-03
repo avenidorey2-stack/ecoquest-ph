@@ -110,7 +110,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
                             // eslint-disable-next-line @next/next/no-img-element -- uploaded avatar or OAuth photo
                             <img src={u.image} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
                           ) : (
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-green-100 font-semibold text-green-700">
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-100 font-semibold text-emerald-700">
                               {(u.name ?? u.email ?? "?").slice(0, 1).toUpperCase()}
                             </span>
                           )}

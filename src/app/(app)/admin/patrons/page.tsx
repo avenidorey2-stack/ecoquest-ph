@@ -13,7 +13,7 @@ export default async function AdminPatronsPage() {
   return (
     <div className="p-4">
       <h1 className="mb-1 font-semibold">Patron banners</h1>
-      <p className="mb-4 text-sm text-gray-500">Live banners rotate at the top of every user&apos;s dashboard.</p>
+      <p className="mb-4 text-sm text-slate-500">Live banners rotate at the top of every user&apos;s dashboard.</p>
       <PatronAdManager ads={ads} />
     </div>
   );

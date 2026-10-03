@@ -56,9 +56,9 @@ export default function WelcomeModal({ hasCity, invitedBy }: { hasCity: boolean;
       aria-labelledby="welcome-title"
       onKeyDown={(e) => e.key === "Escape" && finish()}
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center text-gray-900 shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center text-slate-900 shadow-2xl">
         {step === 0 && invitedBy && (
-          <p className="mb-3 rounded-lg bg-green-50 px-3 py-1.5 text-xs text-green-800">
+          <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs text-emerald-800">
             You were invited by <strong>{invitedBy}</strong> 🎉
           </p>
         )}
@@ -68,11 +68,11 @@ export default function WelcomeModal({ hasCity, invitedBy }: { hasCity: boolean;
         <h2 id="welcome-title" className="mt-3 text-lg font-semibold">
           {current.title}
         </h2>
-        <p className="mt-2 text-sm text-gray-600">{current.body}</p>
+        <p className="mt-2 text-sm text-slate-600">{current.body}</p>
 
         <div className="mt-4 flex justify-center gap-1.5" aria-hidden>
           {STEPS.map((_, i) => (
-            <span key={i} className={`h-1.5 w-6 rounded-full ${i <= step ? "bg-green-600" : "bg-gray-200"}`} />
+            <span key={i} className={`h-1.5 w-6 rounded-full ${i <= step ? "bg-emerald-700" : "bg-slate-200"}`} />
           ))}
         </div>
         <p className="sr-only">
@@ -85,20 +85,20 @@ export default function WelcomeModal({ hasCity, invitedBy }: { hasCity: boolean;
               Back
             </button>
           ) : (
-            <button onClick={finish} className="flex-1 rounded-lg py-2 text-sm text-gray-500 hover:bg-gray-50">
+            <button onClick={finish} className="flex-1 rounded-lg py-2 text-sm text-slate-500 hover:bg-slate-50">
               Skip
             </button>
           )}
           {last ? (
             hasCity ? (
-              <button onClick={finish} autoFocus className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white">
+              <button onClick={finish} autoFocus className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white">
                 Start planting
               </button>
             ) : (
               <Link
                 href="/profile"
                 onClick={finish}
-                className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white"
+                className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white"
               >
                 Set my city
               </Link>
@@ -107,7 +107,7 @@ export default function WelcomeModal({ hasCity, invitedBy }: { hasCity: boolean;
             <button
               onClick={() => setStep(step + 1)}
               autoFocus
-              className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white"
+              className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white"
             >
               Next
             </button>
