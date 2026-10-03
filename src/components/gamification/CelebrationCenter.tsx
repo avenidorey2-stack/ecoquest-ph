@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, MotionConfig, animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { AnimatePresence, MotionConfig, animate, motion, useMotionValue, useTransform } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -17,7 +17,7 @@ function acknowledge(kind: "level" | "achievements" | "rank") {
 
 function CountUp({ from, to }: { from: number; to: number }) {
   const value = useMotionValue(from);
-  const rounded = useTransform(value, (v) => Math.round(v));
+  const rounded = useTransform(() => Math.round(value.get()));
   useEffect(() => {
     const controls = animate(value, to, { duration: 1.1, delay: 0.35, ease: "easeOut" });
     return () => controls.stop();
@@ -28,7 +28,7 @@ function CountUp({ from, to }: { from: number; to: number }) {
 function Modal({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label: string }) {
   return (
     <motion.div
-      className="fixed inset-0 z-[2100] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[2100] m-0 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[2px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

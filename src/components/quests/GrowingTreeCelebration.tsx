@@ -57,7 +57,7 @@ export default function GrowingTreeCelebration({
 
   return (
     <div
-      className="eq-celebration fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
+      className="eq-celebration fixed inset-0 z-[2000] m-0 flex items-center justify-center bg-black/60 p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Quest verified"

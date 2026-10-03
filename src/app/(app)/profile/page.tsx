@@ -67,7 +67,7 @@ export default async function ProfilePage() {
         </p>
       )}
 
-      <section className="eq-stagger grid grid-cols-3 gap-3 text-center">
+      <section className="eq-stagger eq-spring grid grid-cols-3 gap-3 text-center">
         {[
           ["Total points", user.points],
           ["This week", currentWeeklyPoints(user)],

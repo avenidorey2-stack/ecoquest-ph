@@ -18,7 +18,7 @@ export default function LevelBar({ xp, compact = false, dark = false }: { xp: nu
       aria-valuemax={p.xpForLevel}
     >
       <div
-        className="h-full rounded-full bg-gradient-to-r from-lime-400 via-emerald-500 to-emerald-600 transition-[width] duration-1000 ease-out"
+        className="eq-fill h-full rounded-full bg-gradient-to-r from-lime-400 via-emerald-500 to-emerald-600 transition-[width] duration-1000 ease-out"
         style={{ width: `${Math.max(p.pct, 3)}%` }}
       />
     </div>

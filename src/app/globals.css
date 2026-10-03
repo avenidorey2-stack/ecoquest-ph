@@ -9,6 +9,7 @@
   /* Motion tokens: quick feedback, standard reveals, long ambient loops. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-pop: cubic-bezier(0.34, 1.32, 0.64, 1);
   --dur-fast: 150ms;
   --dur-base: 260ms;
   --dur-reveal: 560ms;
@@ -144,6 +145,15 @@ body {
 @keyframes eq-fade {
   from { opacity: 0; }
 }
+@keyframes eq-pop-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+}
+@keyframes eq-fill {
+  from { transform: scaleX(0); }
+}
+@keyframes eq-ring {
+  from { stroke-dasharray: 0 100; }
+}
 
 /* In the components layer so per-element Tailwind utilities can still override. */
 @layer components {
@@ -159,6 +169,22 @@ body {
   .eq-stagger > :nth-child(7) { animation-delay: 340ms; }
   .eq-stagger > :nth-child(8) { animation-delay: 380ms; }
   .eq-stagger > :nth-child(n + 9) { animation-delay: 420ms; }
+
+  /* Card grids: a soft spring pop (slight overshoot). Lists and forms keep the calm ease. */
+  .eq-stagger.eq-spring > * {
+    animation-name: eq-pop-in;
+    animation-duration: 640ms;
+    animation-timing-function: var(--ease-pop);
+  }
+
+  /* Progress bars grow from the left and rings draw in once the card has risen. */
+  .eq-fill {
+    transform-origin: left center;
+    animation: eq-fill 900ms var(--ease-out) 280ms backwards;
+  }
+  .eq-ring {
+    animation: eq-ring 1100ms var(--ease-out) 250ms backwards;
+  }
 
   .eq-rise { animation: eq-rise var(--dur-reveal) var(--ease-out) backwards; }
   .eq-fade { animation: eq-fade var(--dur-reveal) ease-out backwards; }
@@ -284,7 +310,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .eq-stagger > *,
   .eq-rise,
-  .eq-fade {
+  .eq-fade,
+  .eq-fill,
+  .eq-ring {
     animation: none !important;
   }
   .eq-eco-tree,

@@ -26,7 +26,7 @@ export default async function AdminOverviewPage() {
         <h2 className="text-lg font-semibold text-slate-900">Overview</h2>
         <p className="text-sm text-slate-500">Platform-wide totals. Use the tabs above to manage each area.</p>
       </div>
-      <ul className="eq-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, hint, Icon, href }) => {
           const body = (
             <>

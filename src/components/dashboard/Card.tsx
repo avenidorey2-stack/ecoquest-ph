@@ -48,7 +48,7 @@ export function ProgressBar({ value, max, tone = "emerald" }: { value: number; m
       aria-valuemax={max}
     >
       <div
-        className={`h-full rounded-full transition-[width] duration-700 ${tone === "amber" ? "bg-amber-400" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
+        className={`eq-fill h-full rounded-full transition-[width] duration-700 ${tone === "amber" ? "bg-amber-400" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
         style={{ width: `${pct}%` }}
       />
     </div>

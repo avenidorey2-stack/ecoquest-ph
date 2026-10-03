@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { CompletedTask, DashboardQuest } from "@/lib/dashboard";
 import type { MissionView } from "@/lib/missions";
 import { MISSION_OBJECTIVES } from "@/lib/mission-meta";
+import ActivePill from "@/components/ui/ActivePill";
 import QuestList from "./QuestList";
 
 type Tab = "daily" | "side" | "planting";
@@ -59,7 +60,7 @@ function MissionRow({ m }: { m: MissionView }) {
       <div className="mt-2 flex items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={m.target}>
           <div
-            className={`h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-slate-300" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
+            className={`eq-fill h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-slate-300" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -140,13 +141,14 @@ export default function QuestBoard({
             aria-selected={tab === t.id}
             aria-controls={`quest-panel-${t.id}`}
             onClick={() => setTab(t.id)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
-              tab === t.id ? "bg-white text-emerald-800 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800"
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
+              tab === t.id ? "text-emerald-800" : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            {t.label}
+            {tab === t.id && <ActivePill id="quest-tab" className="inset-0 rounded-lg bg-white shadow-sm ring-1 ring-slate-200" />}
+            <span className="relative">{t.label}</span>
             {t.badge > 0 && (
-              <span className={`grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] ${t.id === "planting" ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"}`}>
+              <span className={`relative grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] ${t.id === "planting" ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"}`}>
                 {t.badge}
               </span>
             )}

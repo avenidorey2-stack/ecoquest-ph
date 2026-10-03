@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion, type Variants } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -26,6 +26,18 @@ export type TreeCard = {
 const pct = (t: TreeCard) => (t.plantingGoal > 0 ? Math.min(100, (t.totalPlanted / t.plantingGoal) * 100) : 0);
 const fmt = (n: number) => n.toLocaleString("en-PH");
 
+// Scroll reveal for categories below the fold: the group staggers its children, each
+// rising in on a soft spring. `transform` strings run on WAAPI (off the main thread).
+const REVEAL_GROUP: Variants = { hidden: {}, shown: { transition: { staggerChildren: 0.06 } } };
+const REVEAL_ITEM: Variants = {
+  hidden: { opacity: 0, transform: "translateY(20px) scale(0.96)" },
+  shown: {
+    opacity: 1,
+    transform: "translateY(0px) scale(1)",
+    transition: { type: "spring", bounce: 0.25, visualDuration: 0.5 },
+  },
+};
+
 function Progress({ tree, light = false }: { tree: TreeCard; light?: boolean }) {
   const value = pct(tree);
   return (
@@ -39,7 +51,7 @@ function Progress({ tree, light = false }: { tree: TreeCard; light?: boolean }) 
         aria-valuemax={tree.plantingGoal}
       >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-lime-300 via-emerald-400 to-emerald-500"
+          className="eq-fill h-full rounded-full bg-gradient-to-r from-lime-300 via-emerald-400 to-emerald-500"
           style={{ width: `${Math.max(value, tree.totalPlanted > 0 ? 2 : 0)}%` }}
         />
       </div>
@@ -66,7 +78,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
 
   return (
     <motion.div
-      className="fixed inset-0 z-[2100] flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[2100] m-0 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -185,17 +197,27 @@ export default function TreeDirectory({
   return (
     <MotionConfig reducedMotion="user">
       <div className="space-y-9">
-        {categories.map((category) => (
-          <section key={category.title} aria-labelledby={`cat-${category.title}`}>
-            <div className="mb-3 flex items-baseline justify-between gap-3">
+        {categories.map((category, index) => (
+          // The first category is on screen at load (CSS stagger, visible before hydration);
+          // later ones reveal as they scroll into view.
+          <motion.section
+            key={category.title}
+            aria-labelledby={`cat-${category.title}`}
+            {...(index > 0 && { initial: "hidden", whileInView: "shown", viewport: { once: true, amount: 0.15 } })}
+            variants={REVEAL_GROUP}
+          >
+            <motion.div variants={REVEAL_ITEM} className="mb-3 flex items-baseline justify-between gap-3">
               <h2 id={`cat-${category.title}`} className="text-lg font-bold text-slate-900">
                 {category.title}
               </h2>
               <span className="text-xs text-slate-400">{category.trees.length} species</span>
-            </div>
-            <ul className="eq-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            </motion.div>
+            <motion.ul
+              variants={REVEAL_GROUP}
+              className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 ${index === 0 ? "eq-stagger eq-spring" : ""}`}
+            >
               {category.trees.map((tree) => (
-                <li key={tree.id}>
+                <motion.li key={tree.id} variants={REVEAL_ITEM}>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -222,10 +244,10 @@ export default function TreeDirectory({
                       <Progress tree={tree} light />
                     </div>
                   </button>
-                </li>
+                </motion.li>
               ))}
-            </ul>
-          </section>
+            </motion.ul>
+          </motion.section>
         ))}
       </div>
 

@@ -47,7 +47,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
         </p>
       </section>
 
-      <section className="eq-stagger grid grid-cols-3 gap-3 text-center">
+      <section className="eq-stagger eq-spring grid grid-cols-3 gap-3 text-center">
         {[
           ["Invited", summary.invited],
           ["Planted", summary.qualified],
