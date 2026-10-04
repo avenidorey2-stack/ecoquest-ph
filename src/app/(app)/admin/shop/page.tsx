@@ -5,6 +5,7 @@ import type { OrderStatus } from "@/generated/prisma/client";
 import InventoryTable from "@/components/admin/InventoryTable";
 import OrderManager from "@/components/admin/OrderManager";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status";
+import ActivePill from "@/components/ui/ActivePill";
 
 const ORDER_LIMIT = 100;
 const STATUS_FILTERS: (OrderStatus | "OPEN" | "ALL")[] = ["OPEN", "PENDING", "PACKED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "ALL"];
@@ -44,11 +45,12 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
     <Link
       href={`/admin/shop?tab=${value}`}
       aria-current={tab === value ? "page" : undefined}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-        tab === value ? "bg-white text-emerald-800 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
+      className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+        tab === value ? "text-emerald-300" : "text-ink-2 hover:text-ink"
       }`}
     >
-      {label}
+      {tab === value && <ActivePill id="admin-shop-tab" className="inset-0 rounded-lg bg-card shadow-sm ring-1 ring-line" />}
+      <span className="relative">{label}</span>
     </Link>
   );
 
@@ -56,10 +58,10 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
     <div className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Shop &amp; orders</h2>
-          <p className="text-sm text-slate-500">Seedling prices, stock and order fulfilment.</p>
+          <h2 className="text-lg font-semibold text-ink">Shop &amp; orders</h2>
+          <p className="text-sm text-ink-3">Seedling prices, stock and order fulfilment.</p>
         </div>
-        <nav className="flex gap-1 rounded-xl bg-slate-100 p-1" aria-label="Shop sections">
+        <nav className="flex gap-1 rounded-xl bg-card-2 p-1" aria-label="Shop sections">
           {tabLink("inventory", "Inventory")}
           {tabLink("orders", `Orders${openCount ? ` (${openCount})` : ""}`)}
         </nav>
@@ -67,12 +69,12 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
 
       {tab === "inventory" ? (
         products.length === 0 ? (
-          <p className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-            No seedling products yet. Run <code className="rounded bg-slate-100 px-1">npm run db:seed</code> to stock the shop.
+          <p className="eq-panel rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-3">
+            No seedling products yet. Run <code className="rounded bg-card-2 px-1">npm run db:seed</code> to stock the shop.
           </p>
         ) : (
           <>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-3">
               A peso price of ₱0.00 hides the pesos option for that seedling. Peso orders are paid cash on delivery.
             </p>
             <InventoryTable
@@ -98,7 +100,7 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
                 href={`/admin/shop?tab=orders&status=${f}`}
                 aria-current={filter === f ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${
-                  filter === f ? "bg-emerald-700 text-white ring-emerald-700" : "bg-white text-slate-600 ring-slate-200 hover:ring-emerald-300"
+                  filter === f ? "bg-emerald-400 text-emerald-950 ring-emerald-700" : "bg-card text-ink-2 ring-line hover:ring-emerald-400/40"
                 }`}
               >
                 {filterLabel(f)}
@@ -120,7 +122,7 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
             }))}
           />
           {orders.length === ORDER_LIMIT && (
-            <p className="text-center text-xs text-slate-500">Showing the first {ORDER_LIMIT} orders.</p>
+            <p className="text-center text-xs text-ink-3">Showing the first {ORDER_LIMIT} orders.</p>
           )}
         </>
       )}

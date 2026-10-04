@@ -129,14 +129,14 @@ export default function ProofUploadForm({
   }
 
   const stepBtn =
-    "grid h-10 w-10 place-items-center text-lg font-semibold text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent";
+    "grid h-10 w-10 place-items-center text-lg font-semibold text-ink-2 transition-colors hover:bg-emerald-400/10 hover:text-emerald-300 disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* min-w-0: a fieldset is never narrower than its content by default, so a long file name
           (e.g. from Messenger) would stretch the dialog past the screen. */}
       <fieldset className="min-w-0">
-        <legend className="mb-1.5 text-sm font-medium text-slate-700">Photo or video proof</legend>
+        <legend className="mb-1.5 text-sm font-medium text-ink-2">Photo or video proof</legend>
         <ProofMediaPicker
           file={file}
           onChange={(next) => {
@@ -148,11 +148,11 @@ export default function ProofUploadForm({
       </fieldset>
 
       <div>
-        <label htmlFor={`qty-${questId}`} className="text-sm font-medium text-slate-700">
+        <label htmlFor={`qty-${questId}`} className="text-sm font-medium text-ink-2">
           Plants in this proof
         </label>
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center overflow-hidden rounded-xl border border-line bg-card">
             <button type="button" onClick={() => change(quantity - 1)} disabled={quantity <= 1 || submitting} aria-label="Fewer plants" className={stepBtn}>
               −
             </button>
@@ -166,20 +166,20 @@ export default function ProofUploadForm({
               value={quantity || ""}
               onChange={(e) => change(e.target.valueAsNumber)}
               disabled={submitting}
-              className="h-10 w-16 border-x border-slate-200 text-center text-base font-semibold text-slate-900 [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-10 w-16 border-x border-line text-center text-base font-semibold text-ink [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             <button type="button" onClick={() => change(quantity + 1)} disabled={quantity >= MAX_PLANTS || submitting} aria-label="More plants" className={stepBtn}>
               +
             </button>
           </div>
           {context && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-3">
               {context.remaining} more to complete this quest
             </p>
           )}
         </div>
         {context && valid && (
-          <p className={`mt-2 rounded-lg px-3 py-2 text-xs ${completes ? "bg-emerald-50 text-emerald-900" : "bg-slate-50 text-slate-600"}`}>
+          <p className={`mt-2 rounded-lg px-3 py-2 text-xs ${completes ? "bg-emerald-400/10 text-emerald-200" : "bg-card-2 text-ink-2"}`}>
             If approved: <span className="font-semibold">+{(quantity * context.pointsPerPlant).toLocaleString("en-PH")} pts</span>
             {completes ? " and the quest is complete 🎉" : ` · ${context.remaining - quantity} still to go after this`}
           </p>
@@ -187,28 +187,28 @@ export default function ProofUploadForm({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-red-400">
           {error}
         </p>
       )}
 
       {submitting && (
         <div
-          className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-card-2"
           role="progressbar"
           aria-label="Upload progress"
           aria-valuenow={progress}
           aria-valuemin={0}
           aria-valuemax={100}
         >
-          <div className="h-full rounded-full bg-emerald-600 transition-[width] duration-200" style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full bg-emerald-400 transition-[width] duration-200" style={{ width: `${progress}%` }} />
         </div>
       )}
 
       <button
         type="submit"
         disabled={submitting || !valid || !file}
-        className="w-full rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting
           ? progress < 100

@@ -28,7 +28,7 @@ export default async function AchievementsPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      <section className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:grid-cols-[auto_1fr_1fr] md:items-center">
+      <section className="eq-panel grid grid-cols-1 gap-5 rounded-2xl border border-line/80 bg-card p-5 shadow-sm md:grid-cols-[auto_1fr_1fr] md:items-center">
         <div className="flex items-center gap-4">
           <div className="grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-center text-white">
             <div>
@@ -37,28 +37,28 @@ export default async function AchievementsPage() {
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Badges unlocked</p>
-            <p className="text-lg font-bold text-slate-900">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Badges unlocked</p>
+            <p className="text-lg font-bold text-ink">
               {unlocked === badges.length ? "All badges collected! 🎉" : `${badges.length - unlocked} still to earn`}
             </p>
           </div>
         </div>
-        <div className="rounded-xl bg-cream-50 p-4">
+        <div className="rounded-xl bg-card-2 p-4">
           <LevelBar xp={user.xp} />
         </div>
-        <div className="rounded-xl border border-dashed border-emerald-200 p-4 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Closest next badge</p>
+        <div className="rounded-xl border border-dashed border-emerald-400/20 p-4 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Closest next badge</p>
           {nextUp ? (
-            <p className="mt-1 text-slate-800">
+            <p className="mt-1 text-ink">
               <span className="mr-1 text-lg" aria-hidden>
                 {nextUp.icon}
               </span>
               <strong>{nextUp.name}</strong> — {nextUp.progress!.current}/{nextUp.progress!.target}
             </p>
           ) : (
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-ink-2">
               Claim a slot on the{" "}
-              <Link href="/dashboard" className="font-medium text-emerald-700">
+              <Link href="/dashboard" className="font-medium text-emerald-400">
                 dashboard map
               </Link>{" "}
               to start earning.
@@ -73,10 +73,10 @@ export default async function AchievementsPage() {
         return (
           <section key={category} aria-labelledby={`cat-${category}`}>
             <div className="mb-3 flex items-baseline justify-between gap-3">
-              <h2 id={`cat-${category}`} className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <h2 id={`cat-${category}`} className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
                 {category}
               </h2>
-              <p className="text-xs text-slate-400">{CATEGORY_BLURB[category]}</p>
+              <p className="text-xs text-ink-4">{CATEGORY_BLURB[category]}</p>
             </div>
             <BadgeGrid badges={group.map((b) => ({ ...b, unlockedAt: b.unlockedAt?.toISOString() ?? null }))} />
           </section>

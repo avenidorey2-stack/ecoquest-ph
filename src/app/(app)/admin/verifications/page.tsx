@@ -24,7 +24,7 @@ export default async function AdminVerificationsPage() {
     <div className="p-4">
       <h1 className="mb-4 font-semibold">Pending verifications ({pending.length})</h1>
       {pending.length === 0 ? (
-        <p className="text-sm text-slate-500">All caught up — no submissions waiting for review.</p>
+        <p className="text-sm text-ink-3">All caught up — no submissions waiting for review.</p>
       ) : (
         <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pending.map((v) => (

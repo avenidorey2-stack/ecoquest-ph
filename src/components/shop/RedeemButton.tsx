@@ -52,7 +52,7 @@ export default function RedeemButton({
       <button
         onClick={() => setOpen(true)}
         disabled={!affordable}
-        className="w-full rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:bg-slate-200 disabled:text-slate-500"
+        className="w-full rounded-lg bg-emerald-400 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:bg-card-3 disabled:text-ink-3"
       >
         {affordable ? "Redeem" : `Need ${reward.costPoints - balance} more pts`}
       </button>
@@ -65,19 +65,19 @@ export default function RedeemButton({
           aria-label={`Redeem ${label}`}
           onKeyDown={(e) => e.key === "Escape" && close()}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-slate-900 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-5 text-ink shadow-xl">
             {done ? (
               <div className="space-y-3 text-center">
                 <p className="text-3xl" aria-hidden>
                   🎉
                 </p>
                 <p className="font-semibold">Request sent!</p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-ink-2">
                   {reward.isCash
                     ? `We'll send ₱${reward.valuePesos} to ${number} once an admin processes it.`
                     : "Your voucher code will appear in your history once an admin processes it."}
                 </p>
-                <button onClick={close} autoFocus className="w-full rounded-lg bg-emerald-700 py-2 font-semibold text-white">
+                <button onClick={close} autoFocus className="w-full rounded-lg bg-emerald-400 py-2 font-semibold text-emerald-950">
                   Done
                 </button>
               </div>
@@ -85,7 +85,7 @@ export default function RedeemButton({
               <form onSubmit={confirm} className="space-y-4">
                 <div>
                   <p className="font-semibold">Redeem {label}?</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-ink-2">
                     {reward.costPoints} points will be deducted now ({balance} → {balance - reward.costPoints}). If the
                     request is rejected, they&apos;re refunded.
                   </p>
@@ -104,17 +104,17 @@ export default function RedeemButton({
                       autoFocus
                       className="mt-1 block w-full rounded border px-2 py-1.5"
                     />
-                    <span className="text-xs text-slate-500">Double-check it — cash sent to a wrong number can&apos;t be recovered.</span>
+                    <span className="text-xs text-ink-3">Double-check it — cash sent to a wrong number can&apos;t be recovered.</span>
                   </label>
                 )}
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm text-red-400">{error}</p>}
 
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={busy}
-                    className="flex-1 rounded-lg bg-emerald-700 py-2 font-semibold text-white disabled:opacity-50"
+                    className="flex-1 rounded-lg bg-emerald-400 py-2 font-semibold text-emerald-950 disabled:opacity-50"
                   >
                     {busy ? "Redeeming…" : "Confirm"}
                   </button>

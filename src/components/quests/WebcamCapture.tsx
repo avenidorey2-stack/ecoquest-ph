@@ -70,7 +70,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
     <div className="space-y-3">
       <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-900">
         {error ? (
-          <p role="alert" className="absolute inset-0 grid place-items-center p-4 text-center text-sm text-slate-200">
+          <p role="alert" className="absolute inset-0 grid place-items-center p-4 text-center text-sm text-ink-4">
             {error}
           </p>
         ) : (
@@ -85,7 +85,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
               aria-label="Camera preview"
             />
             {!ready && (
-              <p className="absolute inset-0 grid place-items-center text-sm text-slate-300">
+              <p className="absolute inset-0 grid place-items-center text-sm text-ink-4">
                 Starting camera… allow access if your browser asks.
               </p>
             )}
@@ -96,7 +96,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="flex-1 rounded-xl border border-line bg-card py-2.5 text-sm font-medium text-ink-2 hover:bg-card-2"
         >
           Cancel
         </button>
@@ -104,7 +104,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
           type="button"
           onClick={snap}
           disabled={!ready || !!error}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CameraIcon className="h-4 w-4" /> Take photo
         </button>

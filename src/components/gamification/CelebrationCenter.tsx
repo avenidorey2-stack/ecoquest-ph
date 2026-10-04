@@ -38,7 +38,7 @@ function Modal({ children, onClose, label }: { children: React.ReactNode; onClos
       onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <motion.div
-        className="relative w-full max-w-sm overflow-visible rounded-3xl bg-white p-7 text-center text-slate-900 shadow-2xl"
+        className="relative w-full max-w-sm overflow-visible rounded-3xl bg-card p-7 text-center text-ink shadow-2xl"
         initial={{ scale: 0.6, y: 40, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -54,22 +54,22 @@ function LevelUp({ data, onClose }: { data: NonNullable<PendingCelebrations["lev
   return (
     <Modal onClose={onClose} label={`Level up to ${data.to}`}>
       <Confetti />
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">Level up!</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Level up!</p>
       <motion.div
-        className="mx-auto mt-4 grid h-28 w-28 place-items-center rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-5xl font-black text-amber-950 shadow-[0_10px_40px_-10px_rgba(245,158,11,.7)] ring-8 ring-amber-100"
+        className="mx-auto mt-4 grid h-28 w-28 place-items-center rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-5xl font-black text-amber-950 shadow-[0_10px_40px_-10px_rgba(245,158,11,.7)] ring-8 ring-amber-400/30"
         animate={{ rotate: [0, -6, 6, 0], scale: [1, 1.08, 1] }}
         transition={{ duration: 0.9, delay: 0.4 }}
       >
         <CountUp from={data.from} to={data.to} />
       </motion.div>
       <h2 className="mt-5 text-2xl font-bold">You&apos;re now a {data.title}</h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-ink-3">
         Level {data.from} → {data.to}. Every verified tree brings you closer to the next one.
       </p>
       <button
         onClick={onClose}
         autoFocus
-        className="mt-6 w-full rounded-xl bg-emerald-600 py-2.5 font-semibold text-white hover:bg-emerald-700"
+        className="mt-6 w-full rounded-xl bg-emerald-400 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300"
       >
         Keep planting
       </button>
@@ -82,40 +82,40 @@ function Badges({ items, onClose }: { items: PendingCelebrations["achievements"]
   return (
     <Modal onClose={onClose} label="Achievements unlocked">
       <Confetti />
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
         {items.length === 1 ? "Achievement unlocked" : `${items.length} achievements unlocked`}
       </p>
       <ul className="mt-5 space-y-2.5">
         {items.slice(0, 5).map((a, i) => (
           <motion.li
             key={a.key}
-            className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cream-50 p-3 text-left"
+            className="flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-emerald-400/10 to-card-2 p-3 text-left"
             initial={{ opacity: 0, x: -24, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ delay: 0.25 + i * 0.12, type: "spring", stiffness: 300, damping: 20 }}
           >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-2xl shadow-sm ring-1 ring-emerald-100">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-card text-2xl shadow-sm ring-1 ring-emerald-400/20">
               {a.icon}
             </span>
             <span className="min-w-0 flex-1 font-semibold">{a.name}</span>
-            {a.xpReward > 0 && <span className="text-xs font-bold text-amber-600">+{a.xpReward} XP</span>}
+            {a.xpReward > 0 && <span className="text-xs font-bold text-amber-400">+{a.xpReward} XP</span>}
           </motion.li>
         ))}
       </ul>
-      {items.length > 5 && <p className="mt-2 text-xs text-slate-500">…and {items.length - 5} more</p>}
-      {totalXp > 0 && <p className="mt-4 text-sm text-slate-600">+{totalXp} XP added to your level bar</p>}
+      {items.length > 5 && <p className="mt-2 text-xs text-ink-3">…and {items.length - 5} more</p>}
+      {totalXp > 0 && <p className="mt-4 text-sm text-ink-2">+{totalXp} XP added to your level bar</p>}
       <div className="mt-6 flex gap-2">
         <Link
           href="/achievements"
           onClick={onClose}
-          className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="flex-1 rounded-xl border border-line py-2.5 text-sm font-semibold text-ink-2 hover:bg-card-2"
         >
           View all
         </Link>
         <button
           onClick={onClose}
           autoFocus
-          className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="flex-1 rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300"
         >
           Awesome!
         </button>
@@ -133,7 +133,7 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
   return (
     <motion.div
       role="status"
-      className="fixed right-4 top-20 z-[2050] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-xl"
+      className="fixed right-4 top-20 z-[2050] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-emerald-400/20 bg-card shadow-xl"
       initial={{ x: 420, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 420, opacity: 0 }}
@@ -141,7 +141,7 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
     >
       <div className="flex items-start gap-3 p-4">
         <motion.span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-lg font-black text-emerald-700"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-lg font-black text-emerald-400"
           animate={{ y: [0, -6, 0] }}
           transition={{ repeat: 2, duration: 0.6 }}
           aria-hidden
@@ -149,10 +149,10 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
           ▲
         </motion.span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-slate-900">
+          <p className="font-semibold text-ink">
             Up {climbed} {climbed === 1 ? "place" : "places"} — now #{data.to}!
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-2">
             {data.passed ? (
               <>
                 You overtook <strong>{data.passed}</strong> in {data.place} this week.
@@ -161,11 +161,11 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
               <>You climbed from #{data.from} in {data.place} this week.</>
             )}
           </p>
-          <Link href={`/leaderboard?scope=${data.scope}`} onClick={onClose} className="mt-1 inline-block text-xs font-semibold text-emerald-700">
+          <Link href={`/leaderboard?scope=${data.scope}`} onClick={onClose} className="mt-1 inline-block text-xs font-semibold text-emerald-400">
             See leaderboard
           </Link>
         </div>
-        <button onClick={onClose} aria-label="Dismiss" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+        <button onClick={onClose} aria-label="Dismiss" className="rounded-lg p-1 text-ink-4 hover:bg-card-2">
           ✕
         </button>
       </div>

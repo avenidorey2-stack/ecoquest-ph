@@ -43,19 +43,19 @@ export default function CompleteSignupForm({
     router.push(`/login?registered=1&email=${encodeURIComponent(email)}`);
   }
 
-  const input = "mt-1.5 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm";
+  const input = "mt-1.5 block w-full rounded-xl border border-line-strong bg-card px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-ink-4 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/20 sm:text-sm";
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+      <p className="rounded-lg bg-emerald-400/10 p-3 text-sm text-emerald-300">
         ✅ <strong>{email}</strong> confirmed. Choose a password to finish.
       </p>
       {/* Lets password managers save the right username. */}
       <input type="email" value={email} autoComplete="username" readOnly hidden />
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Name
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} required className={input} />
       </label>
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Password
         <input
           type="password"
@@ -66,9 +66,9 @@ export default function CompleteSignupForm({
           required
           className={input}
         />
-        <span className="text-xs text-slate-500">At least {minPasswordLength} characters.</span>
+        <span className="text-xs text-ink-3">At least {minPasswordLength} characters.</span>
       </label>
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Confirm password
         <input
           type="password"
@@ -80,13 +80,13 @@ export default function CompleteSignupForm({
         />
       </label>
       {error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}
       <button
         disabled={busy}
-        className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
         {busy ? "Creating account…" : "Create account"}
       </button>

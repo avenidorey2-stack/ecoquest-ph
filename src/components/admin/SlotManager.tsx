@@ -31,7 +31,7 @@ export type AdminSlot = {
 
 const AdminSlotMap = dynamic(() => import("./AdminSlotMap"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 animate-pulse bg-emerald-50" />,
+  loading: () => <div className="absolute inset-0 animate-pulse bg-emerald-400/10" />,
 });
 
 type Selection = { kind: "new"; lat: number; lng: number } | { kind: "edit"; id: string } | null;
@@ -39,9 +39,9 @@ type Selection = { kind: "new"; lat: number; lng: number } | { kind: "edit"; id:
 type RemoveAction = "delete" | "close" | "permanent";
 
 const STATUS_STYLES: Record<AdminSlot["status"], string> = {
-  OPEN: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-  FULL: "bg-amber-50 text-amber-800 ring-amber-200",
-  CLOSED: "bg-slate-100 text-slate-600 ring-slate-200",
+  OPEN: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
+  FULL: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  CLOSED: "bg-card-2 text-ink-2 ring-line",
 };
 
 /** Admin slot tool: map (drop a pin to add, click a marker to edit) beside the slot list or form. */
@@ -123,7 +123,7 @@ export default function SlotManager({
         />
       </div>
 
-      <aside className="bg-white lg:w-[26rem] lg:overflow-y-auto lg:border-l lg:border-slate-200">
+      <aside className="bg-card lg:w-[26rem] lg:overflow-y-auto lg:border-l lg:border-line">
         {selection && (draft || selectedSlot) ? (
           <div className="p-4">
             <SlotForm
@@ -144,42 +144,42 @@ export default function SlotManager({
           </div>
         ) : (
           <div className="flex flex-col">
-            <div className="space-y-1 border-b border-slate-100 p-4 text-sm text-slate-600">
-              <p className="font-semibold text-slate-900">Planting slots ({slots.length})</p>
+            <div className="space-y-1 border-b border-line p-4 text-sm text-ink-2">
+              <p className="font-semibold text-ink">Planting slots ({slots.length})</p>
               <p>Click the map to drop a pin and add a slot. Click a marker or “Edit” to change one.</p>
               <ul className="flex flex-wrap gap-3 pt-1 text-xs">
-                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-700" />Open</li>
+                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />Open</li>
                 <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Full</li>
-                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-500" />Closed</li>
+                <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-line-strong" />Closed</li>
               </ul>
             </div>
 
             {listError && (
-              <p role="alert" className="mx-4 mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-700">
+              <p role="alert" className="mx-4 mt-3 rounded-lg bg-red-400/10 p-2 text-xs text-red-300">
                 {listError}
               </p>
             )}
             {notice && (
-              <p role="status" className="mx-4 mt-3 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">
+              <p role="status" className="mx-4 mt-3 rounded-lg bg-emerald-400/10 p-2 text-xs text-emerald-300">
                 {notice}
               </p>
             )}
 
             {slots.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-500">No slots yet — drop a pin on the map to add one.</p>
+              <p className="p-6 text-center text-sm text-ink-3">No slots yet — drop a pin on the map to add one.</p>
             ) : (
-              <ul className="eq-stagger divide-y divide-slate-100">
+              <ul className="eq-stagger divide-y divide-line">
                 {slots.map((slot) => {
                   const hasHistory = slot.totalQuests > 0;
                   const asking = confirm?.id === slot.id ? confirm.action : null;
                   const busy = busyId === slot.id;
-                  const btn = "rounded-md border border-slate-200 px-3 py-1 text-xs font-medium";
+                  const btn = "rounded-md border border-line px-3 py-1 text-xs font-medium";
                   return (
                     <li key={slot.id} className="space-y-2 px-4 py-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-900">{slot.requiredPlantType}</p>
-                          <p className="truncate text-xs text-slate-500">
+                          <p className="truncate text-sm font-semibold text-ink">{slot.requiredPlantType}</p>
+                          <p className="truncate text-xs text-ink-3">
                             {slot.barangay && `${slot.barangay}, `}
                             {slot.city}, {slot.province}
                           </p>
@@ -188,13 +188,13 @@ export default function SlotManager({
                           {slot.status.toLowerCase()}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-ink-3">
                         {slot.activeQuests}/{slot.maxParticipants} planters · goal {slot.questGoal} plant{slot.questGoal === 1 ? "" : "s"}/quest · {slot.pointsPerPlant} pts/plant
                         {hasHistory && ` · ${slot.totalQuests} quest(s) in history`}
                       </p>
 
                       {asking === "permanent" ? (
-                        <div role="alertdialog" aria-label="Delete slot permanently" className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-900">
+                        <div role="alertdialog" aria-label="Delete slot permanently" className="space-y-2 rounded-lg border border-red-400/30 bg-red-400/10 p-3 text-xs text-red-200">
                           <p className="font-semibold">Delete this slot permanently?</p>
                           <p>
                             The slot is removed from every map and list for good.
@@ -208,7 +208,7 @@ export default function SlotManager({
                               type="checkbox"
                               checked={acknowledged}
                               onChange={(e) => setAcknowledged(e.target.checked)}
-                              className="mt-0.5 h-4 w-4 accent-red-600"
+                              className="mt-0.5 h-4 w-4 accent-red-400"
                             />
                             I understand this slot can&apos;t be restored.
                           </label>
@@ -220,13 +220,13 @@ export default function SlotManager({
                             >
                               {busy ? "Deleting…" : "Delete permanently"}
                             </button>
-                            <button onClick={() => setConfirm(null)} className="rounded-md px-3 py-1 hover:bg-red-100">
+                            <button onClick={() => setConfirm(null)} className="rounded-md px-3 py-1 hover:bg-red-400/15">
                               Cancel
                             </button>
                           </div>
                         </div>
                       ) : asking ? (
-                        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-red-400/10 p-2 text-xs text-red-300">
                           <span className="flex-1">
                             {asking === "close"
                               ? `Close this slot? It will be hidden from the map and stop accepting proof.${
@@ -243,7 +243,7 @@ export default function SlotManager({
                           >
                             {busy ? "Working…" : asking === "close" ? "Close" : "Delete"}
                           </button>
-                          <button onClick={() => setConfirm(null)} className="rounded-md px-2.5 py-1 text-red-800 hover:bg-red-100">
+                          <button onClick={() => setConfirm(null)} className="rounded-md px-2.5 py-1 text-red-300 hover:bg-red-400/15">
                             Keep
                           </button>
                         </div>
@@ -251,7 +251,7 @@ export default function SlotManager({
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => setSelection({ kind: "edit", id: slot.id })}
-                            className={`${btn} text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800`}
+                            className={`${btn} text-ink-2 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300`}
                           >
                             Edit
                           </button>
@@ -261,20 +261,20 @@ export default function SlotManager({
                                 <button
                                   onClick={() => ask(slot.id, "close")}
                                   title="Hide from the map and keep its planting history"
-                                  className={`${btn} text-slate-700 hover:border-slate-300 hover:bg-slate-50`}
+                                  className={`${btn} text-ink-2 hover:border-line-strong hover:bg-card-2`}
                                 >
                                   Close
                                 </button>
                               )}
                               <button
                                 onClick={() => ask(slot.id, "permanent")}
-                                className={`${btn} text-red-700 hover:border-red-300 hover:bg-red-50`}
+                                className={`${btn} text-red-300 hover:border-red-400/30 hover:bg-red-400/10`}
                               >
                                 Delete permanently
                               </button>
                             </>
                           ) : (
-                            <button onClick={() => ask(slot.id, "delete")} className={`${btn} text-red-700 hover:border-red-300 hover:bg-red-50`}>
+                            <button onClick={() => ask(slot.id, "delete")} className={`${btn} text-red-300 hover:border-red-400/30 hover:bg-red-400/10`}>
                               Delete
                             </button>
                           )}

@@ -26,9 +26,9 @@ const toDraft = (r: InventoryRow): Draft => ({
 /** Admin inventory: edit points/peso prices, stock and visibility per seedling. */
 export default function InventoryTable({ rows }: { rows: InventoryRow[] }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="eq-panel overflow-x-auto rounded-2xl border border-line/80 bg-card shadow-sm">
       <table className="w-full min-w-[760px] text-sm">
-        <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-[0.12em] text-slate-500">
+        <thead className="bg-card-2 text-left text-[11px] uppercase tracking-[0.12em] text-ink-3">
           <tr>
             <th className="px-4 py-3 font-semibold">Seedling</th>
             <th className="px-3 py-3 font-semibold">Price (points)</th>
@@ -38,7 +38,7 @@ export default function InventoryTable({ rows }: { rows: InventoryRow[] }) {
             <th className="px-4 py-3" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-line">
           {rows.map((row) => (
             <InventoryRowEditor key={row.id} row={row} />
           ))}
@@ -85,17 +85,17 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
   }
 
   const input =
-    "w-24 rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
+    "w-24 rounded-lg border border-line px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
 
   return (
-    <tr className={draft.isActive ? "" : "bg-slate-50/60"}>
+    <tr className={draft.isActive ? "" : "bg-card-2/60"}>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG illustration */}
-          <img src={row.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-cream-100 object-cover" />
+          <img src={row.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-card-2 object-cover" />
           <div className="min-w-0">
-            <p className="font-medium text-slate-900">{row.name}</p>
-            <p className="truncate text-xs text-slate-500">{row.category}</p>
+            <p className="font-medium text-ink">{row.name}</p>
+            <p className="truncate text-xs text-ink-3">{row.category}</p>
           </div>
         </div>
       </td>
@@ -124,7 +124,7 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
       <td className="px-3 py-3">
         <input
           aria-label={`${row.name} stock`}
-          className={`${input} ${Number(draft.stockQuantity) === 0 ? "border-red-300 text-red-700" : ""}`}
+          className={`${input} ${Number(draft.stockQuantity) === 0 ? "border-red-400/30 text-red-300" : ""}`}
           type="number"
           min={0}
           step={1}
@@ -133,12 +133,12 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
         />
       </td>
       <td className="px-3 py-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-2">
           <input
             type="checkbox"
             checked={draft.isActive}
             onChange={(e) => set("isActive", e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 accent-emerald-600"
+            className="h-4 w-4 rounded border-line-strong accent-emerald-400"
           />
           {draft.isActive ? "Listed" : "Hidden"}
         </label>
@@ -146,14 +146,14 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
       <td className="px-4 py-3 text-right">
         <div className="flex items-center justify-end gap-2">
           {status && (
-            <span role="status" className={`text-xs ${status.ok ? "text-emerald-700" : "text-red-600"}`}>
+            <span role="status" className={`text-xs ${status.ok ? "text-emerald-400" : "text-red-400"}`}>
               {status.text}
             </span>
           )}
           <button
             onClick={save}
             disabled={!dirty || saving}
-            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4"
           >
             {saving ? "Saving…" : "Save"}
           </button>

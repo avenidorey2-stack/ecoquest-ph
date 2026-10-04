@@ -17,11 +17,10 @@ export const metadata: Metadata = {
   description: "Gamified climate action for the Philippines",
 };
 
-// Light-only design: tell browsers not to apply dark-mode form controls/scrollbars, and tint
-// the mobile browser bar to the cream canvas.
+// Dark-only design: dark form controls/scrollbars, and tint the mobile browser bar to the canvas.
 export const viewport: Viewport = {
-  themeColor: "#fbfaf6",
-  colorScheme: "light",
+  themeColor: "#04100b",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

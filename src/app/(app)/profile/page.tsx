@@ -42,17 +42,17 @@ export default async function ProfilePage() {
   const initials = (user.name ?? user.email ?? "?").slice(0, 1).toUpperCase();
 
   return (
-    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-slate-900 sm:px-6 lg:py-8">
-      <section className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
+    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-ink sm:px-6 lg:py-8">
+      <section className="eq-panel flex items-center gap-4 rounded-2xl border border-line/80 bg-card shadow-sm p-5">
         <AvatarUploader src={displayAvatar(user)} initials={initials} hasUpload={!!user.avatarUrl} />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-semibold">{user.name ?? "Unnamed planter"}</h1>
-          <p className="truncate text-sm text-slate-500">{user.email}</p>
-          <p className="text-xs text-slate-500">
+          <p className="truncate text-sm text-ink-3">{user.email}</p>
+          <p className="text-xs text-ink-3">
             {place ? `${place.city}, ${place.province}` : "No home city set"} · Member since{" "}
             {user.createdAt.toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
             {user.role !== "USER" && (
-              <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">{user.role}</span>
+              <span className="ml-2 rounded bg-emerald-400/15 px-1.5 py-0.5 font-medium text-emerald-300">{user.role}</span>
             )}
           </p>
           <div className="mt-3 max-w-xs">
@@ -62,7 +62,7 @@ export default async function ProfilePage() {
       </section>
 
       {!place && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-300">
           Set your home city below to start claiming planting slots.
         </p>
       )}
@@ -73,14 +73,14 @@ export default async function ProfilePage() {
           ["This week", currentWeeklyPoints(user)],
           ["Plants", user.totalPlants],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-3">
-            <p className="text-2xl font-bold text-emerald-700">{value}</p>
-            <p className="text-xs text-slate-500">{label}</p>
+          <div key={label} className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-3">
+            <p className="text-2xl font-bold text-emerald-400">{value}</p>
+            <p className="text-xs text-ink-3">{label}</p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
+      <section className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-5">
         <h2 className="mb-4 font-semibold">Edit profile</h2>
         <ProfileForm
           regions={listRegions()}
@@ -93,8 +93,8 @@ export default async function ProfilePage() {
       {publicProfile && (
         <>
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-600">Your achievements and approved plantings are permanent and public.</p>
-            <Link href={`/planters/${userId}`} className="shrink-0 text-sm font-medium text-emerald-700 hover:text-emerald-900">
+            <p className="text-sm text-ink-2">Your achievements and approved plantings are permanent and public.</p>
+            <Link href={`/planters/${userId}`} className="shrink-0 text-sm font-medium text-emerald-400 hover:text-emerald-200">
               View as others see it
             </Link>
           </div>
@@ -109,13 +109,13 @@ export default async function ProfilePage() {
 
       <Link
         href="/referrals"
-        className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5 text-sm hover:border-emerald-500"
+        className="eq-panel flex items-center justify-between rounded-2xl border border-line/80 bg-card shadow-sm p-5 text-sm hover:border-emerald-500"
       >
         <span>
           <span className="block font-semibold">Invite friends</span>
-          Your code: <span className="font-mono text-emerald-700">{user.referralCode}</span>
+          Your code: <span className="font-mono text-emerald-400">{user.referralCode}</span>
         </span>
-        <span className="text-emerald-700">Referral Hub</span>
+        <span className="text-emerald-400">Referral Hub</span>
       </Link>
     </div>
   );

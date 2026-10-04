@@ -67,7 +67,7 @@ export default function AvatarUploader({
         type="button"
         onClick={() => input.current?.click()}
         disabled={busy}
-        className="group relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-emerald-100 focus:outline-none focus-visible:ring-emerald-400"
+        className="group relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-emerald-400/20 focus:outline-none focus-visible:ring-emerald-400"
         aria-label="Change profile picture"
       >
         <AnimatePresence mode="wait">
@@ -82,7 +82,7 @@ export default function AvatarUploader({
               exit={{ opacity: 0 }}
             />
           ) : (
-            <span className="grid h-full w-full place-items-center bg-emerald-700 text-3xl font-bold text-emerald-50">{initials}</span>
+            <span className="grid h-full w-full place-items-center bg-emerald-400 text-3xl font-bold text-emerald-950">{initials}</span>
           )}
         </AnimatePresence>
         <span className="absolute inset-0 grid place-items-center bg-slate-950/45 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -102,12 +102,12 @@ export default function AvatarUploader({
         }}
       />
       {hasUpload && !busy && (
-        <button type="button" onClick={remove} className="text-[11px] text-slate-500 hover:text-rose-600">
+        <button type="button" onClick={remove} className="text-[11px] text-ink-3 hover:text-rose-400">
           Remove photo
         </button>
       )}
       {error && (
-        <p className="max-w-40 text-center text-[11px] text-rose-600" role="alert">
+        <p className="max-w-40 text-center text-[11px] text-rose-400" role="alert">
           {error}
         </p>
       )}

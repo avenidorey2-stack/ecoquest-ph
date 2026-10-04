@@ -19,7 +19,7 @@ const TABS = [
 export default function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b bg-white/85 px-4 backdrop-blur" aria-label="Admin sections">
+    <nav className="flex gap-1 overflow-x-auto border-b bg-card/85 px-4 backdrop-blur" aria-label="Admin sections">
       {TABS.map((tab) => {
         const active = tab.href === "/admin" ? pathname === "/admin" : pathname.startsWith(tab.href);
         return (
@@ -28,10 +28,10 @@ export default function AdminNav() {
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={`relative whitespace-nowrap px-3 py-3 text-sm transition-colors ${
-              active ? "font-medium text-emerald-700" : "text-slate-600 hover:text-slate-900"
+              active ? "font-medium text-emerald-400" : "text-ink-2 hover:text-ink"
             }`}
           >
-            {active && <ActivePill id="admin-tab" className="inset-x-1 bottom-0 h-0.5 rounded-full bg-emerald-600" />}
+            {active && <ActivePill id="admin-tab" className="inset-x-1 bottom-0 h-0.5 rounded-full bg-emerald-400" />}
             {tab.label}
           </Link>
         );

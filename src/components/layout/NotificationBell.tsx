@@ -90,11 +90,11 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
         aria-label={unread ? `Notifications (${unread} unread)` : "Notifications"}
         aria-expanded={open}
         aria-haspopup="true"
-        className="relative grid h-10 w-10 place-items-center rounded-full text-slate-600 transition-colors hover:bg-white hover:text-emerald-800 hover:shadow-sm"
+        className="relative grid h-10 w-10 place-items-center rounded-full text-ink-2 transition-colors hover:bg-white/5 hover:text-emerald-300 hover:shadow-sm"
       >
         <BellIcon className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-cream-50">
+          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -104,32 +104,32 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
         <div
           role="dialog"
           aria-label="Notifications"
-          className="fixed inset-x-3 top-16 z-[1400] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_16px_40px_-12px_rgba(15,23,42,.25)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-96"
+          className="fixed inset-x-3 top-16 z-[1400] overflow-hidden rounded-2xl border border-line/80 bg-card shadow-[0_16px_40px_-12px_rgba(15,23,42,.25)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-96"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Notifications</p>
-            {items && items.length > 0 && <p className="text-xs text-slate-400">Latest {items.length}</p>}
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Notifications</p>
+            {items && items.length > 0 && <p className="text-xs text-ink-4">Latest {items.length}</p>}
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto">
             {items === null ? (
               failed ? (
-                <p className="p-6 text-center text-sm text-red-600">Couldn&apos;t load notifications.</p>
+                <p className="p-6 text-center text-sm text-red-400">Couldn&apos;t load notifications.</p>
               ) : (
                 <div className="space-y-3 p-4" aria-label="Loading">
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-card-2" />
                   ))}
                 </div>
               )
             ) : items.length === 0 ? (
               <div className="p-8 text-center">
-                <BellIcon className="mx-auto h-8 w-8 text-slate-300" />
-                <p className="mt-2 text-sm font-medium text-slate-700">You&apos;re all caught up</p>
-                <p className="text-xs text-slate-500">Approvals, new slots and rewards will show up here.</p>
+                <BellIcon className="mx-auto h-8 w-8 text-ink-4" />
+                <p className="mt-2 text-sm font-medium text-ink-2">You&apos;re all caught up</p>
+                <p className="text-xs text-ink-3">Approvals, new slots and rewards will show up here.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-line">
                 {items.map((n) => {
                   const body = (
                     <>
@@ -138,18 +138,18 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
                         aria-hidden
                       />
                       <span className="min-w-0">
-                        <span className={`block text-sm ${n.isRead ? "text-slate-600" : "font-medium text-slate-900"}`}>
+                        <span className={`block text-sm ${n.isRead ? "text-ink-2" : "font-medium text-ink"}`}>
                           {n.message}
                         </span>
-                        <span className="block text-xs text-slate-400">{timeAgo(n.createdAt)}</span>
+                        <span className="block text-xs text-ink-4">{timeAgo(n.createdAt)}</span>
                       </span>
                     </>
                   );
-                  const cls = `flex gap-3 px-4 py-3 ${n.isRead ? "" : "bg-emerald-50/60"}`;
+                  const cls = `flex gap-3 px-4 py-3 ${n.isRead ? "" : "bg-emerald-400/[0.06]"}`;
                   return (
                     <li key={n.id}>
                       {n.link ? (
-                        <Link href={n.link} onClick={() => setOpen(false)} className={`${cls} hover:bg-slate-50`}>
+                        <Link href={n.link} onClick={() => setOpen(false)} className={`${cls} hover:bg-card-2`}>
                           {body}
                         </Link>
                       ) : (

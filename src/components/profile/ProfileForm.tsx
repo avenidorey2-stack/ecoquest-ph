@@ -54,20 +54,20 @@ export default function ProfileForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Display name
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={60}
           required
-          className="mt-1.5 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm"
+          className="mt-1.5 block w-full rounded-xl border border-line-strong bg-card px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/20 sm:text-sm"
         />
       </label>
 
       <div>
         <p className="text-sm font-medium">Home city</p>
-        <p className="mb-2 text-xs text-slate-500">
+        <p className="mb-2 text-xs text-ink-3">
           You can only claim planting slots in this city/municipality. It also sets your local leaderboard.
         </p>
         <LocationPicker
@@ -77,7 +77,7 @@ export default function ProfileForm({
           disabled={!!locationLockedUntil}
         />
         {locationLockedUntil && (
-          <p className="mt-2 text-xs text-amber-700">
+          <p className="mt-2 text-xs text-amber-300">
             You can change your city again on{" "}
             {new Date(locationLockedUntil).toLocaleDateString("en-PH", { dateStyle: "long" })}.
           </p>
@@ -85,7 +85,7 @@ export default function ProfileForm({
       </div>
 
       {status && (
-        <p className={`text-sm ${status.kind === "ok" ? "text-emerald-700" : "text-red-600"}`} role="status">
+        <p className={`text-sm ${status.kind === "ok" ? "text-emerald-400" : "text-red-400"}`} role="status">
           {status.text}
         </p>
       )}
@@ -93,7 +93,7 @@ export default function ProfileForm({
       <button
         type="submit"
         disabled={saving}
-        className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 motion-safe:active:scale-[0.98] disabled:opacity-50"
+        className="rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm transition hover:bg-emerald-300 motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save profile"}
       </button>

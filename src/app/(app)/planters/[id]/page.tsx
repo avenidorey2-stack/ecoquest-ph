@@ -31,7 +31,7 @@ export default async function PlanterProfilePage({ params }: PageProps<"/planter
             // eslint-disable-next-line @next/next/no-img-element -- uploaded avatar or OAuth photo
             <img src={profile.image} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-4 ring-white/15 sm:h-24 sm:w-24" />
           ) : (
-            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-3xl font-bold ring-4 ring-white/15 sm:h-24 sm:w-24">
+            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-emerald-400 text-3xl font-bold ring-4 ring-white/15 sm:h-24 sm:w-24">
               {profile.name.slice(0, 1).toUpperCase()}
             </span>
           )}

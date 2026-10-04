@@ -74,10 +74,10 @@ function Avatar({ user, size = "h-10 w-10" }: { user: ShellUser; size?: string }
   const initial = (user.name ?? "?").trim().slice(0, 1).toUpperCase() || "?";
   return user.image ? (
     // eslint-disable-next-line @next/next/no-img-element -- external OAuth avatar
-    <img src={user.image} alt="" className={`${size} rounded-full object-cover ring-2 ring-emerald-100`} />
+    <img src={user.image} alt="" className={`${size} rounded-full object-cover ring-2 ring-emerald-400/20`} />
   ) : (
     <span
-      className={`${size} flex items-center justify-center rounded-full bg-emerald-700 font-semibold text-emerald-50 ring-2 ring-emerald-100`}
+      className={`${size} flex items-center justify-center rounded-full bg-emerald-400 font-semibold text-emerald-950 ring-2 ring-emerald-400/20`}
     >
       {initial}
     </span>
@@ -130,8 +130,8 @@ function SidebarContent({
                 >
                   {active && (
                     <>
-                      <ActivePill id={`${navId}-bg`} className="inset-0 rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/25" />
-                      <ActivePill id={`${navId}-bar`} className="inset-y-2 left-0 w-[3px] rounded-r-full bg-emerald-300" />
+                      <ActivePill id={`${navId}-bg`} className="inset-0 rounded-xl bg-gradient-to-r from-emerald-400/20 to-emerald-400/[0.04] ring-1 ring-emerald-400/25" />
+                      <ActivePill id={`${navId}-bar`} className="inset-y-2 left-0 w-[3px] rounded-r-full bg-emerald-300 shadow-[0_0_10px_2px_rgba(110,231,183,.6)]" />
                     </>
                   )}
                   <Icon
@@ -242,11 +242,11 @@ export default function AppShell({
   const subtitle = page ? page[2] : "Your environmental impact and active quests overview.";
 
   return (
-    <div className="min-h-screen text-slate-900">
+    <div className="min-h-screen text-ink">
       <EcoBackground />
       <ScrollReveal />
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 bg-gradient-to-b from-emerald-950 to-[#04291f] lg:block">
+      <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 border-r border-line bg-gradient-to-b from-[#071a12] to-[#030b07] lg:block">
         <SidebarAmbience />
         <SidebarContent navId="nav-desktop" user={user} status={status} pathname={pathname} />
       </aside>
@@ -254,7 +254,7 @@ export default function AppShell({
       {/* Mobile drawer */}
       {open && <div className="eq-fade fixed inset-0 z-[1200] bg-slate-950/50 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden />}
       <aside
-        className={`fixed inset-y-0 left-0 z-[1300] w-72 bg-gradient-to-b from-emerald-950 to-[#04291f] shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-[1300] w-72 border-r border-line bg-gradient-to-b from-[#071a12] to-[#030b07] shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:hidden ${
           open ? "translate-x-0" : "invisible -translate-x-full"
         }`}
       >
@@ -270,46 +270,46 @@ export default function AppShell({
       </aside>
 
       <div className="flex min-h-screen flex-col lg:pl-64">
-        <header className="sticky top-0 z-[1000] border-b border-slate-200/70 bg-cream-50/85 backdrop-blur">
+        <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas/75 backdrop-blur-md">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setOpen(true)}
               data-tour="menu"
               aria-label="Open menu"
               aria-expanded={open}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-200/60 lg:hidden"
+              className="rounded-lg p-2 text-ink-2 hover:bg-card-3/60 lg:hidden"
             >
               <MenuIcon />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[13px] font-bold uppercase tracking-wide text-slate-900 sm:text-base sm:tracking-[0.12em]">
+              <h1 className="truncate text-[13px] font-bold uppercase tracking-wide text-ink sm:text-base sm:tracking-[0.12em]">
                 {title}
               </h1>
-              <p className="hidden truncate text-xs text-slate-500 sm:block">{subtitle}</p>
+              <p className="hidden truncate text-xs text-ink-3 sm:block">{subtitle}</p>
             </div>
-            <Link href="/achievements" title="Your level" data-tour="level" className="hidden rounded-xl px-2 py-1 hover:bg-white/70 sm:block">
+            <Link href="/achievements" title="Your level" data-tour="level" className="hidden rounded-xl px-2 py-1 hover:bg-white/5 sm:block">
               <LevelBar xp={user.xp} compact />
             </Link>
             <Link
               href="/achievements"
               title="Your level"
               data-tour="level"
-              className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-100 sm:hidden"
+              className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-400/30 sm:hidden"
             >
               {levelForXp(user.xp)}
             </Link>
-            <div className="hidden border-l border-slate-200 pl-3 xl:block">
+            <div className="hidden border-l border-line pl-3 xl:block">
               <LiveClock initialIso={serverNowIso} />
             </div>
             <Link
               href="/rewards"
               title="Points balance"
               data-tour="points"
-              className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
+              className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/15"
             >
               <CoinIcon className="h-4 w-4" />
               {user.points.toLocaleString("en-PH")}
-              <span className="hidden text-xs font-medium text-emerald-600 sm:inline">pts</span>
+              <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
             <NotificationBell initialUnread={unreadNotifications} />
             <Link href="/profile" title="Profile" className="shrink-0">

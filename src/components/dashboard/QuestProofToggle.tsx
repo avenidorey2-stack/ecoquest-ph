@@ -12,7 +12,7 @@ export default function QuestProofToggle({ questId, context }: { questId: string
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+        className="mt-2 rounded-lg bg-emerald-400 px-3 py-1 text-xs font-semibold text-emerald-950 hover:bg-emerald-300"
       >
         Submit proof
       </button>
@@ -38,9 +38,9 @@ function ProofModal({ questId, context, onClose }: { questId: string; context?: 
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => e.target === e.currentTarget && ref.current?.close()}
-      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-transparent p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
+      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-transparent p-0 text-ink shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
     >
-      <div className="bg-cream-50">
+      <div className="bg-card-2">
         <div className="relative bg-gradient-to-br from-emerald-800 to-emerald-950 px-5 pb-4 pt-5 text-white">
           <button
             type="button"

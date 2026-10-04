@@ -22,10 +22,10 @@ export default function LiveClock({ initialIso }: { initialIso: string }) {
 
   return (
     <div className="text-right leading-tight" suppressHydrationWarning>
-      <p className="text-sm font-semibold text-slate-800" suppressHydrationWarning>
-        {TIME.format(now)} <span className="text-xs font-normal text-slate-400">PHT</span>
+      <p className="text-sm font-semibold text-ink" suppressHydrationWarning>
+        {TIME.format(now)} <span className="text-xs font-normal text-ink-4">PHT</span>
       </p>
-      <p className="text-xs text-slate-500" suppressHydrationWarning>
+      <p className="text-xs text-ink-3" suppressHydrationWarning>
         {DATE.format(now)}
       </p>
     </div>

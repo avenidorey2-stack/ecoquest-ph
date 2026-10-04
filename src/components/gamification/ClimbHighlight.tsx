@@ -17,7 +17,7 @@ export default function ClimbHighlight({ from, to }: { from: number; to: number 
         transition={{ duration: 2.4, ease: "easeInOut" }}
       />
       <motion.span
-        className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800"
+        className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[11px] font-bold text-amber-300"
         initial={{ scale: 0, y: 6 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 15, delay: 0.3 }}
