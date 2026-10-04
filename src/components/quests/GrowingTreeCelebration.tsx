@@ -24,13 +24,13 @@ const SPARKLES = Array.from({ length: 14 }, (_, i) => {
 const fmt = (n: number) => Math.round(n).toLocaleString("en-PH");
 
 /** A number that rolls from its previous value to `to` whenever `to` changes. */
-function Ticker({ from, to, instant }: { from: number; to: number; instant: boolean }) {
-  const value = useMotionValue(instant ? to : from);
+function Ticker({ from, to }: { from: number; to: number }) {
+  const value = useMotionValue(from);
   const text = useTransform(value, fmt);
   useEffect(() => {
-    const controls = animate(value, to, { duration: instant ? 0 : 0.6, ease: "easeOut" });
+    const controls = animate(value, to, { duration: 0.6, ease: "easeOut" });
     return () => controls.stop();
-  }, [value, to, instant]);
+  }, [value, to]);
   return <motion.span>{text}</motion.span>;
 }
 
@@ -51,17 +51,17 @@ export default function GrowingTreeCelebration({
   plantType: string;
   onContinue: () => void;
 }) {
+  // Reduced motion (e.g. Windows "Animation effects" off) still shows the plant growing and the
+  // points counting — stages cross-fade — but drops the floating chips, sparkles and bounces.
   const reduced = !!useReducedMotion();
-  // 0 = nothing shown yet; 1–5 = growth stage on screen. Reduced motion jumps to the grown tree.
-  const [grown, setStage] = useState(0);
-  const stage = reduced ? STAGES.length : grown;
+  // 0 = nothing shown yet; 1–5 = growth stage on screen.
+  const [stage, setStage] = useState(0);
   const done = stage === STAGES.length;
 
   useEffect(() => {
-    if (reduced) return;
     const timers = STAGES.map((_, i) => setTimeout(() => setStage(i + 1), START_MS + i * STAGE_MS));
     return () => timers.forEach(clearTimeout);
-  }, [reduced]);
+  }, []);
 
   const earned = earnedAt(points, stage);
   const gain = stage > 0 ? earned - earnedAt(points, stage - 1) : 0;
@@ -164,7 +164,7 @@ export default function GrowingTreeCelebration({
           >
             <CoinIcon className="h-8 w-8 shrink-0" />
             <span>
-              +<Ticker from={0} to={earned} instant={reduced} />
+              +<Ticker from={0} to={earned} />
             </span>
             <span className="text-lg font-bold text-amber-200/80">pts</span>
           </motion.p>
@@ -172,7 +172,7 @@ export default function GrowingTreeCelebration({
             <p className="mt-1 text-sm text-ink-3" aria-hidden>
               Balance {fmt(balanceBefore)} →{" "}
               <strong className="tabular-nums text-ink">
-                <Ticker from={balanceBefore} to={balanceBefore + earned} instant={reduced} />
+                <Ticker from={balanceBefore} to={balanceBefore + earned} />
               </strong>{" "}
               pts
             </p>
