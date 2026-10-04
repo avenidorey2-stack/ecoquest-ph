@@ -20,7 +20,7 @@ export default function CopyField({ value, label }: { value: string; label: stri
     <button
       onClick={copy}
       title="Click to copy"
-      className="group flex w-full items-center gap-2 rounded-xl border border-dashed border-emerald-400/40 bg-emerald-400/[0.06] px-3 py-2.5 text-left transition-colors hover:border-emerald-500 hover:bg-emerald-400/10"
+      className="group flex w-full items-center gap-2 rounded-xl border border-dashed border-emerald-400/40 bg-emerald-400/[0.06] px-3 py-3 text-left transition-colors hover:border-emerald-500 hover:bg-emerald-400/10"
     >
       <span className="min-w-0 flex-1 truncate font-mono text-xs text-emerald-200">{value}</span>
       <span

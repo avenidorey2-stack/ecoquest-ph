@@ -58,9 +58,9 @@ function MissionRow({ m }: { m: MissionView }) {
         </span>
       </div>
       <div className="mt-2 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-2" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={m.target}>
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-card-2" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={m.target}>
           <div
-            className={`eq-fill h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-line-strong" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
+            className={`eq-fill h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-line-strong" : m.status === "ready" ? "bg-gradient-to-r from-amber-400 to-lime-300 shadow-[0_0_10px_rgba(251,191,36,.55)]" : "bg-gradient-to-r from-emerald-500 to-lime-400 shadow-[0_0_10px_rgba(52,211,153,.5)]"}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -73,14 +73,14 @@ function MissionRow({ m }: { m: MissionView }) {
           <button
             onClick={claim}
             disabled={busy}
-            className="rounded-lg bg-amber-500 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm hover:bg-amber-400 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-amber-400 px-4 text-sm font-bold text-amber-950 hover:bg-amber-300 disabled:opacity-60"
           >
             {busy ? "Claiming…" : `Claim +${m.rewardPoints.toLocaleString("en-PH")} pts`}
           </button>
         ) : m.status === "claimed" ? (
           <span className="text-xs font-medium text-emerald-400">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & claimed"}</span>
         ) : (
-          <Link href={meta.href} className="rounded-lg border border-line px-3 py-1 text-xs font-medium text-ink-2 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300">
+          <Link href={meta.href} className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 text-sm font-medium text-ink-2 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300">
             {meta.action}
           </Link>
         )}
@@ -141,14 +141,14 @@ export default function QuestBoard({
             aria-selected={tab === t.id}
             aria-controls={`quest-panel-${t.id}`}
             onClick={() => setTab(t.id)}
-            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
+            className={`relative flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-colors ${
               tab === t.id ? "text-emerald-300" : "text-ink-3 hover:text-ink"
             }`}
           >
             {tab === t.id && <ActivePill id="quest-tab" className="inset-0 rounded-lg bg-card shadow-sm ring-1 ring-line" />}
             <span className="relative">{t.label}</span>
             {t.badge > 0 && (
-              <span className={`relative grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] ${t.id === "planting" ? "bg-emerald-400 text-emerald-950" : "bg-amber-500 text-amber-950"}`}>
+              <span className={`relative grid h-5 min-w-5 place-items-center rounded-full px-1 text-[11px] font-bold ${t.id === "planting" ? "bg-emerald-400 text-emerald-950" : "bg-amber-400 text-amber-950"}`}>
                 {t.badge}
               </span>
             )}

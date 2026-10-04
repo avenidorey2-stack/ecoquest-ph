@@ -53,7 +53,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
       onClose={onClose}
       // Clicking the backdrop (the dialog element itself, outside the panel) closes it.
       onClick={(e) => e.target === e.currentTarget && dialogRef.current?.close()}
-      className="m-auto max-h-[92vh] w-[calc(100%-1.5rem)] max-w-lg overflow-hidden rounded-3xl bg-transparent p-0 text-ink shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
+      className="m-auto max-h-[92vh] w-[calc(100%-1.5rem)] max-w-lg overflow-hidden rounded-3xl bg-transparent p-0 text-ink shadow-2xl backdrop:bg-canvas/80 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
     >
       <div className="flex max-h-[92vh] flex-col bg-card-2">
         {/* Header band */}
@@ -167,7 +167,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                             {p.mediaType.startsWith("video/") ? (
                               <>
                                 <video src={p.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                                <span className="absolute inset-0 grid place-items-center bg-slate-950/25 text-2xl text-white" aria-hidden>
+                                <span className="absolute inset-0 grid place-items-center bg-black/30 text-2xl text-white" aria-hidden>
                                   ▶
                                 </span>
                               </>

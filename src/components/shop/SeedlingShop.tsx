@@ -70,7 +70,7 @@ function OrderSheet({
   return (
     <div className="fixed inset-0 z-[2100] m-0 flex items-end justify-center p-0 sm:items-center sm:p-4" onClick={onClose}>
       <motion.div
-        className="absolute inset-0 bg-[#020a06]/70 backdrop-blur-md"
+        className="absolute inset-0 bg-canvas/80 backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: { duration: 0.25 } }}
@@ -104,7 +104,7 @@ function OrderSheet({
             ref={closeButton}
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white ring-1 ring-white/20 backdrop-blur transition-colors hover:bg-black/60"
+            className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full bg-black/40 text-white ring-1 ring-white/20 backdrop-blur transition-colors hover:bg-black/60"
           >
             <CloseIcon className="h-4 w-4" />
           </motion.button>
@@ -211,7 +211,7 @@ function SeedlingTile({
         loading="lazy"
         className={`absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-out group-hover:scale-[1.06] ${soldOut ? "grayscale" : ""}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent via-45% to-black/85" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent via-45% to-black/85" />
       <motion.div
         className="absolute inset-0"
         initial={false}
@@ -222,7 +222,7 @@ function SeedlingTile({
           <motion.h3 layoutId={`seedling-name-${product.id}`} transition={MORPH} className="w-fit text-lg font-bold leading-tight text-white drop-shadow sm:text-xl">
             {product.name}
           </motion.h3>
-          <p className="mt-0.5 truncate text-[11px] italic text-emerald-50/80 sm:text-xs">{product.scientificName}</p>
+          <p className="mt-0.5 truncate text-[11px] italic text-ink/90 drop-shadow sm:text-xs">{product.scientificName}</p>
           {product.credit?.shows && (
             <span className="mt-1.5 inline-block rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur">
               Related species
@@ -240,7 +240,7 @@ function SeedlingTile({
               <span className="text-xs font-medium text-emerald-100/80">pts</span>
             </p>
             {product.priceInPesos > 0 && (
-              <p className="mt-1 truncate text-[11px] text-emerald-50/80">or {formatPesos(product.priceInPesos)} COD</p>
+              <p className="mt-1 truncate text-[11px] font-medium text-ink/90">or {formatPesos(product.priceInPesos)} COD</p>
             )}
           </div>
           <span

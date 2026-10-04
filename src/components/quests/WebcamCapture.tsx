@@ -68,7 +68,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-900">
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-canvas">
         {error ? (
           <p role="alert" className="absolute inset-0 grid place-items-center p-4 text-center text-sm text-ink-4">
             {error}

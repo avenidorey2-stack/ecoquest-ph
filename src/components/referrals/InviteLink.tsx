@@ -26,7 +26,7 @@ export default function InviteLink({ url }: { url: string }) {
     }
   }
 
-  const button = "rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm transition motion-safe:active:scale-[0.98]";
+  const button = "min-h-11 rounded-xl px-4 py-3 text-sm font-medium shadow-sm transition motion-safe:active:scale-[0.98]";
   return (
     <div className="space-y-3">
       <div className="flex gap-2">

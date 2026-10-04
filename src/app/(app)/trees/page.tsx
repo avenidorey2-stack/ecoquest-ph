@@ -64,7 +64,7 @@ export default async function TreeDirectoryPage() {
       <section className="relative overflow-hidden rounded-3xl p-6 text-white ring-1 ring-white/10 sm:p-10">
         {/* eslint-disable-next-line @next/next/no-img-element -- static decorative photo */}
         <img src="/trees/dao.jpg" alt="" className="eq-kenburns absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#04100b] via-[#04100b]/80 to-[#04100b]/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/80 to-canvas/20" />
         <div className="relative max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Philippine Tree Encyclopedia</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">

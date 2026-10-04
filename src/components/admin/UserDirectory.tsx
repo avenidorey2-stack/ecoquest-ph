@@ -50,7 +50,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
           <button
             type="button"
             onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(groups.map(groupKey)))}
-            className="rounded-lg border border-line-strong bg-card px-3 py-2 text-sm text-ink-2 hover:bg-card-2"
+            className="min-h-11 rounded-lg border border-line-strong bg-card px-3 text-sm text-ink-2 hover:bg-card-2"
           >
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
@@ -116,7 +116,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="flex min-w-0 items-center gap-2">
-                              <Link href={`/planters/${u.id}`} className="truncate font-medium text-ink hover:text-emerald-400 hover:underline">
+                              <Link href={`/planters/${u.id}`} className="eq-hit relative truncate font-medium text-ink hover:text-emerald-400 hover:underline">
                                 {label}
                               </Link>
                               {!u.verified && (

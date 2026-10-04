@@ -94,7 +94,7 @@ export default async function ProfilePage() {
         <>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-ink-2">Your achievements and approved plantings are permanent and public.</p>
-            <Link href={`/planters/${userId}`} className="shrink-0 text-sm font-medium text-emerald-400 hover:text-emerald-200">
+            <Link href={`/planters/${userId}`} className="eq-hit relative shrink-0 text-sm font-medium text-emerald-400 hover:text-emerald-200">
               View as others see it
             </Link>
           </div>

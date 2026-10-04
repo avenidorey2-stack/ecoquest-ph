@@ -1,6 +1,7 @@
 import Link from "next/link";
 import EcoBackground from "@/components/layout/EcoBackground";
 import FallingLeaves, { makeLeaves } from "@/components/layout/FallingLeaves";
+import Fireflies, { makeFireflies } from "@/components/layout/Fireflies";
 import MorphWord from "@/components/ui/MorphWord";
 import CountUp from "@/components/ui/CountUp";
 import { CameraIcon, GiftIcon, LogoMark, PinIcon } from "@/components/ui/icons";
@@ -22,6 +23,9 @@ const HERO_LEAVES = makeLeaves(
   ["rgb(110 231 183 / 0.6)", "rgb(190 242 100 / 0.55)", "rgb(253 224 71 / 0.5)", "rgb(52 211 153 / 0.55)", "rgb(251 191 36 / 0.45)"],
   { size: [14, 26], duration: [14, 26] },
 );
+
+// Bioluminescent fireflies rising up the photo panel.
+const HERO_FIREFLIES = makeFireflies(12, 13);
 
 /** Live headline numbers; the sign-in page still works if the database is unreachable. */
 async function loadStats(): Promise<CommunityStats | null> {
@@ -52,9 +56,10 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
           {/* eslint-disable-next-line @next/next/no-img-element -- static decorative photo */}
           <img src="/images/auth-hero.jpg" alt="" className="eq-kenburns h-full w-full object-cover" />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#04100b] via-[#04100b]/55 to-[#04100b]/10" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#04100b]/70 to-transparent" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/55 to-canvas/10" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-canvas/70 to-transparent" aria-hidden />
         <FallingLeaves leaves={HERO_LEAVES} />
+        <Fireflies fireflies={HERO_FIREFLIES} />
 
         <div className="relative flex flex-1 flex-col p-10 xl:p-12">
           <Link href="/" className="flex w-fit items-center gap-3">

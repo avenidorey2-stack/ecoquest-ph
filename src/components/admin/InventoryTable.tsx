@@ -133,7 +133,7 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
         />
       </td>
       <td className="px-3 py-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-2">
+        <label className="inline-flex cursor-pointer items-center gap-2 pr-2 text-xs text-ink-2 pointer-coarse:min-h-11">
           <input
             type="checkbox"
             checked={draft.isActive}
@@ -153,7 +153,7 @@ function InventoryRowEditor({ row }: { row: InventoryRow }) {
           <button
             onClick={save}
             disabled={!dirty || saving}
-            className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4"
+            className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 pointer-coarse:min-h-11 pointer-coarse:px-4 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4"
           >
             {saving ? "Saving…" : "Save"}
           </button>

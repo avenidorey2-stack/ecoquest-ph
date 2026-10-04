@@ -101,7 +101,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
   return (
     <div className="fixed inset-0 z-[2100] m-0 flex items-end justify-center p-0 sm:items-center sm:p-4" onClick={onClose}>
       <motion.div
-        className="absolute inset-0 bg-[#020a06]/70 backdrop-blur-md"
+        className="absolute inset-0 bg-canvas/80 backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: { duration: 0.25 } }}
@@ -135,7 +135,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
             ref={closeButton}
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white ring-1 ring-white/20 backdrop-blur transition-colors hover:bg-black/60"
+            className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full bg-black/40 text-white ring-1 ring-white/20 backdrop-blur transition-colors hover:bg-black/60"
           >
             <CloseIcon className="h-4 w-4" />
           </motion.button>
@@ -257,7 +257,7 @@ function TreeTile({
         loading="lazy"
         className="absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-out group-hover:scale-[1.06]"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent via-45% to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent via-45% to-black/80" />
       <motion.div
         className="absolute inset-0"
         initial={false}

@@ -46,7 +46,7 @@ export default function ProofGallery({
                   {p.mediaType.startsWith("video/") ? (
                     <>
                       <video src={p.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                      <span className="absolute inset-0 grid place-items-center bg-slate-950/25 text-3xl text-white" aria-hidden>
+                      <span className="absolute inset-0 grid place-items-center bg-black/30 text-3xl text-white" aria-hidden>
                         ▶
                       </span>
                     </>

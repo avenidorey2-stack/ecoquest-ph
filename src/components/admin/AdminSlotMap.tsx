@@ -5,9 +5,9 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { PH_BOUNDS, PH_CENTER } from "@/lib/geo";
+import { MAP_SELECTED, SLOT_STATUS_COLORS } from "@/lib/palette";
 import type { AdminSlot } from "./SlotManager";
 
-const STATUS_COLORS = { OPEN: "#16a34a", FULL: "#f59e0b", CLOSED: "#6b7280" } as const;
 
 function ClickToPin({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({ click: (e) => onPick(e.latlng.lat, e.latlng.lng) });
@@ -65,8 +65,8 @@ export default function AdminSlotMap({
           center={[slot.latitude, slot.longitude]}
           radius={slot.id === selectedId ? 12 : 8}
           pathOptions={{
-            color: slot.id === selectedId ? "#1d4ed8" : STATUS_COLORS[slot.status],
-            fillColor: STATUS_COLORS[slot.status],
+            color: slot.id === selectedId ? MAP_SELECTED.stroke : SLOT_STATUS_COLORS[slot.status],
+            fillColor: SLOT_STATUS_COLORS[slot.status],
             fillOpacity: 0.8,
             weight: slot.id === selectedId ? 4 : 2,
           }}
@@ -87,7 +87,7 @@ export default function AdminSlotMap({
         <CircleMarker
           center={[draft.lat, draft.lng]}
           radius={10}
-          pathOptions={{ color: "#1d4ed8", fillColor: "#60a5fa", fillOpacity: 0.9, dashArray: "4" }}
+          pathOptions={{ color: MAP_SELECTED.stroke, fillColor: MAP_SELECTED.fill, fillOpacity: 0.9, dashArray: "4" }}
         />
       )}
     </MapContainer>

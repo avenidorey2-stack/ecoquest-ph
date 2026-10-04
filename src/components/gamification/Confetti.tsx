@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
+import { CONFETTI_COLORS } from "@/lib/palette";
 
-const COLORS = ["#10b981", "#34d399", "#fbbf24", "#f59e0b", "#a3e635", "#38bdf8", "#f472b6"];
+const COLORS = CONFETTI_COLORS;
 const GOLDEN_ANGLE = 137.508;
 
 /** A deterministic confetti burst (positions derive from the particle index, not Math.random). */

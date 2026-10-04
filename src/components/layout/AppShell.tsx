@@ -124,7 +124,7 @@ function SidebarContent({
                   onClick={onNavigate}
                   data-tour={`nav-${href.slice(1)}`}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${
+                  className={`group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors duration-200 ${
                     active ? "text-white" : "text-emerald-100/75 hover:bg-white/5 hover:text-white"
                   }`}
                 >
@@ -185,14 +185,14 @@ function SidebarContent({
           href="/dashboard?tour=1"
           onClick={onNavigate}
           data-tour="tour-replay"
-          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
         >
           <FlagIcon className="h-4 w-4" /> Take the tour
         </Link>
         <form action={signOutAction}>
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
           >
             <LogoutIcon className="h-4 w-4" /> Log out
           </button>
@@ -249,20 +249,20 @@ export default function AppShell({
   const subtitle = page ? page[2] : "Your environmental impact and active quests overview.";
 
   return (
-    <div className="min-h-screen text-ink">
+    <div className="min-h-dvh text-ink">
       <EcoBackground />
       <ScrollReveal />
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 border-r border-line bg-gradient-to-b from-[#071a12] to-[#030b07] lg:block">
+      <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 border-r border-line bg-gradient-to-b from-card to-canvas lg:block">
         <SidebarAmbience />
         <SidebarContent navId="nav-desktop" user={user} status={status} pathname={pathname} />
       </aside>
 
       {/* Mobile drawer */}
-      {open && <div className="eq-fade fixed inset-0 z-[1200] bg-slate-950/50 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden />}
+      {open && <div className="eq-fade fixed inset-0 z-[1200] bg-black/65 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)} aria-hidden />}
       <aside
         data-tour-drawer
-        className={`fixed inset-y-0 left-0 z-[1300] w-72 border-r border-line bg-gradient-to-b from-[#071a12] to-[#030b07] shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-[1300] w-72 border-r border-line bg-gradient-to-b from-card to-canvas shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:hidden ${
           open ? "translate-x-0" : "invisible -translate-x-full"
         }`}
       >
@@ -270,14 +270,14 @@ export default function AppShell({
         <button
           onClick={() => setOpen(false)}
           aria-label="Close menu"
-          className="absolute right-3 top-5 z-10 rounded-lg p-1.5 text-emerald-100/70 hover:bg-white/10"
+          className="absolute right-3 top-3.5 z-10 grid h-11 w-11 place-items-center rounded-xl text-emerald-100/70 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-emerald-400"
         >
           <CloseIcon />
         </button>
         <SidebarContent navId="nav-drawer" user={user} status={status} pathname={pathname} onNavigate={() => setOpen(false)} />
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
+      <div className="flex min-h-dvh flex-col lg:pl-64">
         <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas/75 backdrop-blur-md">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
@@ -285,7 +285,7 @@ export default function AppShell({
               data-tour="menu"
               aria-label="Open menu"
               aria-expanded={open}
-              className="rounded-lg p-2 text-ink-2 hover:bg-card-3/60 lg:hidden"
+              className="-ml-2 grid h-11 w-11 place-items-center rounded-xl text-ink-2 hover:bg-card-3/60 lg:hidden"
             >
               <MenuIcon />
             </button>
@@ -302,7 +302,7 @@ export default function AppShell({
               href="/achievements"
               title="Your level"
               data-tour="level"
-              className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-400/30 sm:hidden"
+              className="eq-hit relative grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-400/30 sm:hidden"
             >
               {levelForXp(user.xp)}
             </Link>
@@ -313,14 +313,14 @@ export default function AppShell({
               href="/rewards"
               title="Points balance"
               data-tour="points"
-              className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/15"
+              className="eq-hit relative flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/15"
             >
               <CoinIcon className="h-4 w-4" />
               {user.points.toLocaleString("en-PH")}
               <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
             <NotificationBell initialUnread={unreadNotifications} />
-            <Link href="/profile" title="Profile" className="shrink-0">
+            <Link href="/profile" title="Profile" className="eq-hit relative shrink-0 rounded-full">
               <Avatar user={user} />
             </Link>
           </div>

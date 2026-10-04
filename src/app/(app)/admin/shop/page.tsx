@@ -45,7 +45,7 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
     <Link
       href={`/admin/shop?tab=${value}`}
       aria-current={tab === value ? "page" : undefined}
-      className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+      className={`relative inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-medium transition-colors ${
         tab === value ? "text-emerald-300" : "text-ink-2 hover:text-ink"
       }`}
     >
