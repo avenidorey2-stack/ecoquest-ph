@@ -26,8 +26,12 @@ describe("AI image manifest", () => {
     }
   });
 
-  it("has every growth stage used by the points celebration, plus both backgrounds", () => {
-    for (const key of ["grow:1", "grow:2", "grow:3", "grow:4", "grow:5", "auth-bg", "app-bg"]) expect(isAiImage(key), key).toBe(true);
+  it("has both AI backgrounds", () => {
+    for (const key of ["auth-bg", "app-bg"]) expect(isAiImage(key), key).toBe(true);
+  });
+
+  it("has every growth stage the points celebration shows", () => {
+    for (let i = 1; i <= 5; i++) expect(existsSync(`public/images/grow/stage-${i}.jpg`), `stage ${i}`).toBe(true);
   });
 
   it("credits each tree image by where it came from", () => {

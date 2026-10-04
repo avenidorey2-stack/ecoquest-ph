@@ -4,7 +4,8 @@
  *
  * Generates every AI image the app uses and writes optimised JPEGs into public/:
  *   - sign-in hero + page background, in-app background
- *   - five growth stages (seed -> full tree) for the points celebration, drawn on black
+ *   - only with --include-stages: five growth stages (seed -> full tree) for the points
+ *       celebration. Off by default: the celebration uses the hand-made vase stages.
  *   - only with --include-trees: one image per tree species (read from src/data/tree-species.ts)
  *       public/trees/<slug>.jpg (1200x900) + public/trees/<slug>-sm.jpg (640x480). Off by default:
  *       the Tree Directory and Seedling Shop use the real photo collection (process-tree-photos.mjs).
@@ -23,6 +24,7 @@
  *   node scripts/generate-ai-images.mjs --only tree:narra,hero
  *   node scripts/generate-ai-images.mjs --force         regenerate (re-download) the selected images
  *   node scripts/generate-ai-images.mjs --include-trees also generate AI tree images (replaces photos)
+ *   node scripts/generate-ai-images.mjs --include-stages also generate AI growth stages (replaces them)
  *   node scripts/generate-ai-images.mjs --list          print the job keys and exit
  */
 
@@ -84,7 +86,7 @@ const STAGES = [
 ];
 
 /** Every image the app uses: a prompt, the size to request, and the files to write from it. */
-function buildJobs({ includeTrees }) {
+function buildJobs({ includeTrees, includeStages }) {
   const jobs = [];
   for (const s of includeTrees ? TREE_SPECIES : []) {
     const look = TREE_LOOKS[s.slug] ?? "healthy mature native tree with a full green crown";
@@ -122,7 +124,7 @@ function buildJobs({ includeTrees }) {
       outputs: [{ file: "public/images/app-bg.jpg", w: 1600, h: 1000, quality: 72 }],
     },
   );
-  STAGES.forEach((stage, i) =>
+  (includeStages ? STAGES : []).forEach((stage, i) =>
     jobs.push({
       key: `grow:${i + 1}`,
       prompt: `${stage}, ${STAGE_STYLE}`,
@@ -211,7 +213,7 @@ async function readManifest() {
 
 async function main() {
   const args = process.argv.slice(2);
-  const all = buildJobs({ includeTrees: args.includes("--include-trees") });
+  const all = buildJobs({ includeTrees: args.includes("--include-trees"), includeStages: args.includes("--include-stages") });
   if (args.includes("--list")) {
     for (const j of all) console.log(j.key);
     return;

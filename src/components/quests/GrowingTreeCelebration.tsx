@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import Confetti from "@/components/gamification/Confetti";
 import { CoinIcon } from "@/components/ui/icons";
 
-// AI-generated growth stages (scripts/generate-ai-images.mjs, keys grow:1 … grow:5).
+// Growth stages: the same glowing vase in every frame, only the plant grows.
 const STAGES = [
-  { src: "/images/grow/stage-1.jpg", label: "Seed" },
-  { src: "/images/grow/stage-2.jpg", label: "Sprout" },
-  { src: "/images/grow/stage-3.jpg", label: "Sapling" },
-  { src: "/images/grow/stage-4.jpg", label: "Young tree" },
+  { src: "/images/grow/stage-1.jpg", label: "Planting seed…" },
+  { src: "/images/grow/stage-2.jpg", label: "Sprouting…" },
+  { src: "/images/grow/stage-3.jpg", label: "Seedling…" },
+  { src: "/images/grow/stage-4.jpg", label: "Growing…" },
   { src: "/images/grow/stage-5.jpg", label: "Grown!" },
 ];
 const START_MS = 350;
@@ -34,8 +34,8 @@ function Ticker({ from, to, instant }: { from: number; to: number; instant: bool
   return <motion.span>{text}</motion.span>;
 }
 
-/** Points earned once `stage` of the five stages has grown (the last stage lands on the exact total). */
-const earnedAt = (points: number, stage: number) => Math.round((points * stage) / STAGES.length);
+/** Points shown at `stage`: +0 on the seed, rising evenly to the exact total when fully grown. */
+const earnedAt = (points: number, stage: number) => (stage <= 1 ? 0 : Math.round((points * (stage - 1)) / (STAGES.length - 1)));
 
 export default function GrowingTreeCelebration({
   points,
@@ -88,7 +88,7 @@ export default function GrowingTreeCelebration({
           {done && <Confetti />}
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Quest verified</p>
 
-          {/* The tree: AI-painted stages cross-fade and swell as it grows. */}
+          {/* The plant: stages cross-fade and swell as it grows. */}
           <div className="relative mx-auto mt-3 h-60 w-60 sm:h-64 sm:w-64" aria-hidden>
             <motion.div
               className="absolute inset-4 rounded-full bg-emerald-400/25 blur-2xl"
@@ -113,13 +113,13 @@ export default function GrowingTreeCelebration({
               })}
             </div>
 
-            {/* A "+N" chip floats up off the tree as each stage lands (each replaces the last). */}
+            {/* A "+N" chip floats up off the plant as each stage lands (each replaces the last). */}
             {gain > 0 && !reduced && (
               <motion.span
                 key={stage}
-                className="absolute left-1/2 top-1/3 -ml-7 w-14 rounded-full bg-amber-400 py-0.5 text-sm font-extrabold text-amber-950 shadow-lg"
+                className="absolute left-1/2 top-[18%] -ml-7 w-14 rounded-full bg-amber-400 py-0.5 text-sm font-extrabold text-amber-950 shadow-lg"
                 initial={{ opacity: 0, y: 12, scale: 0.6 }}
-                animate={{ opacity: [0, 1, 1, 0], y: -64, scale: 1 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -40, scale: 1 }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
               >
                 +{fmt(gain)}
@@ -152,7 +152,7 @@ export default function GrowingTreeCelebration({
               </li>
             ))}
           </ol>
-          <p className="mt-1.5 h-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3" aria-hidden>
+          <p className={`mt-1.5 h-4 text-[11px] font-semibold uppercase tracking-[0.16em] ${done ? "text-emerald-300" : "text-ink-3"}`} aria-hidden>
             {stage > 0 ? STAGES[stage - 1].label : " "}
           </p>
 
