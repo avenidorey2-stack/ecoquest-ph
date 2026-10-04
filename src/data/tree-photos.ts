@@ -1,8 +1,19 @@
-// Real photos for the tree directory (public/trees/<slug>.jpg + a 640px "-sm" card version),
-// all freely licensed from Wikimedia Commons. Credit is shown wherever a photo is opened.
-// `shows`: no free photo of the species itself exists yet, so a close relative stands in.
+// Images for the tree directory and seedling shop (public/trees/<slug>.jpg + a 640px "-sm" card
+// version). Images listed in ai-images.json were made by scripts/generate-ai-images.mjs and are
+// credited as AI; the rest are freely licensed Wikimedia Commons photos. Credit is shown wherever
+// an image is opened. `shows`: the Wikimedia photo is of a close relative, not the species itself.
 
-export type PhotoCredit = { author: string; license: string; source: string; shows?: string };
+import AI_IMAGES from "./ai-images.json";
+
+export type PhotoCredit = { author: string; license: string; source: string; shows?: string; ai?: boolean };
+
+/** Credit for every image made by scripts/generate-ai-images.mjs. */
+export const AI_CREDIT: PhotoCredit = { author: "Pollinations.ai", license: "AI-generated", source: "https://pollinations.ai", ai: true };
+
+/** Whether the generator has produced the image with this key (e.g. "tree:narra", "hero"). */
+export function isAiImage(key: string): boolean {
+  return Object.hasOwn(AI_IMAGES.images, key);
+}
 
 export const TREE_PHOTOS: Record<string, PhotoCredit> = {
   narra: { author: "Richard N Horne", license: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Pterocarpus_indicus,_Burmese_rose_wood_tree_in_the_Penang_Botanic_Garden.jpg" },
@@ -32,10 +43,18 @@ export const TREE_PHOTOS: Record<string, PhotoCredit> = {
 };
 
 /** Sign-in hero photo (public/images/auth-hero.jpg). */
-export const HERO_PHOTO: PhotoCredit = { author: "Dietmar Rabich", license: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Rorup,_NSG_Roruper_Holz_--_2021_--_8187-91.jpg" };
+export const HERO_PHOTO: PhotoCredit = isAiImage("hero") ? AI_CREDIT : { author: "Dietmar Rabich", license: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Rorup,_NSG_Roruper_Holz_--_2021_--_8187-91.jpg" };
+
+/** Who made a page's images, for its footer note: AI, Wikimedia Commons contributors, or both. */
+export function imageSourcesNote(credits: (PhotoCredit | null)[]): string {
+  const ai = credits.some((c) => c?.ai);
+  const wikimedia = credits.some((c) => c && !c.ai);
+  if (ai && wikimedia) return "AI-generated (Pollinations.ai) and photos from Wikimedia Commons contributors";
+  return ai ? "AI-generated with Pollinations.ai" : "Photos from Wikimedia Commons contributors";
+}
 
 /** Card-size and full-size photo paths for a species, or null when it has no photo. */
 export function treePhoto(slug: string): { card: string; full: string; credit: PhotoCredit } | null {
-  const credit = TREE_PHOTOS[slug];
+  const credit = isAiImage(`tree:${slug}`) ? AI_CREDIT : TREE_PHOTOS[slug];
   return credit ? { card: `/trees/${slug}-sm.jpg`, full: `/trees/${slug}.jpg`, credit } : null;
 }

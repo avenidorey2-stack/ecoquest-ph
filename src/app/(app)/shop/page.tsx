@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MAX_ORDER_QUANTITY } from "@/lib/seedlings";
 import { formatAmount } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/order-status";
-import { treePhoto } from "@/data/tree-photos";
+import { imageSourcesNote, isAiImage, treePhoto } from "@/data/tree-photos";
 import SeedlingShop, { type ShopProduct } from "@/components/shop/SeedlingShop";
 import { CoinIcon, SproutIcon } from "@/components/ui/icons";
 
@@ -49,8 +49,15 @@ export default async function SeedlingShopPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-400/10 bg-gradient-to-br from-emerald-800 to-emerald-950 p-5 text-white shadow-sm sm:p-6">
-        <div className="max-w-xl">
+      <section className="relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-emerald-400/10 bg-gradient-to-br from-emerald-800 to-emerald-950 p-5 text-white shadow-sm sm:p-6">
+        {isAiImage("shop-hero") && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static decorative image */}
+            <img src="/images/shop-hero.jpg" alt="" className="eq-kenburns absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/80 to-canvas/30" aria-hidden />
+          </>
+        )}
+        <div className="relative max-w-xl">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
             <SproutIcon className="h-4 w-4" /> Seedling shop
           </p>
@@ -59,7 +66,7 @@ export default async function SeedlingShopPage() {
             Order native Philippine seedlings with your planting points, or pay in pesos cash on delivery. Tap a seedling to order.
           </p>
         </div>
-        <div className="rounded-xl bg-white/10 px-4 py-3 text-right ring-1 ring-white/15">
+        <div className="relative rounded-xl bg-white/10 px-4 py-3 text-right ring-1 ring-white/15 backdrop-blur">
           <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200">Your balance</p>
           <p className="flex items-center justify-end gap-1.5 text-2xl font-bold">
             <CoinIcon className="h-5 w-5 text-amber-300" />
@@ -109,7 +116,7 @@ export default async function SeedlingShopPage() {
       </section>
 
       <p className="text-center text-xs text-ink-4">
-        Seedling photos: Wikimedia Commons contributors, credited when you open each seedling and in the{" "}
+        Seedling images: {imageSourcesNote(items.map((i) => i.credit))}, credited when you open each seedling and in the{" "}
         <Link href="/trees" className="underline underline-offset-2 hover:text-ink-2">
           Tree Directory
         </Link>

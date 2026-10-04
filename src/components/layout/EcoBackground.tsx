@@ -2,9 +2,9 @@ import FallingLeaves, { makeLeaves, type Leaf } from "./FallingLeaves";
 import Fireflies, { makeFireflies } from "./Fireflies";
 import { TREELINE } from "@/lib/palette";
 
-// Decorative, fixed backdrop behind every portal and sign-in page: a soft sky, drifting
-// sunlight, faint terrain contours, rolling hills with a tree line, falling leaves, and
-// living bioluminescent fireflies and canopy light sweeps — pure SVG + CSS.
+// Decorative, fixed backdrop behind every portal and sign-in page: a dim AI-generated forest
+// photo, a soft sky, drifting sunlight, faint terrain contours, rolling hills with a tree line,
+// falling leaves, and living bioluminescent fireflies and canopy light sweeps — SVG + CSS.
 // Motion stops under prefers-reduced-motion.
 
 const BLOB = "M0-60C34-62 66-38 64-4 62 30 38 58 2 60-34 62-64 36-62 0-60-34-34-58 0-60Z";
@@ -57,6 +57,7 @@ const LUSH_FIREFLIES = makeFireflies(28, 77);
 export default function EcoBackground({ lush = false }: { lush?: boolean }) {
   return (
     <div className="eq-eco-bg" aria-hidden>
+      <div className={lush ? "eq-eco-photo eq-eco-photo--lush" : "eq-eco-photo"} />
       <div className="eq-eco-grid" />
       <div className="eq-eco-sweep" />
       <div className="eq-eco-glow eq-eco-glow--sun" />

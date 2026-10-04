@@ -170,7 +170,11 @@ describe("GET /api/trees/art/:slug", () => {
       const photo = treePhoto(s.slug);
       expect(photo, s.slug).not.toBeNull();
       for (const file of [photo!.card, photo!.full]) expect(existsSync(`public${file}`), file).toBe(true);
-      expect(photo!.credit.author && photo!.credit.license && photo!.credit.source.startsWith("https://commons.wikimedia.org/"), s.slug).toBeTruthy();
+      const { credit } = photo!;
+      // AI images credit the generator; the rest are Wikimedia Commons photos.
+      const source = credit.ai ? "https://pollinations.ai" : "https://commons.wikimedia.org/";
+      expect(credit.author && credit.license && credit.source.startsWith(source), s.slug).toBeTruthy();
+      if (credit.ai) expect(credit.shows, s.slug).toBeUndefined(); // "close relative" notes are for real photos only
     }
   });
 

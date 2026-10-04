@@ -50,3 +50,6 @@ next-env.d.ts
 !.env.example
 .vercel
 .env*
+
+# AI image generator cache + originals backup (scripts/generate-ai-images.mjs)
+/.ai-images
