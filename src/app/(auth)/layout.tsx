@@ -117,11 +117,11 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
               ))}
             </ul>
             <p className="text-[10px] text-white/40">
-              Photo:{" "}
+              {HERO_PHOTO.ai ? "Image: AI-generated with" : "Photo:"}{" "}
               <a href={HERO_PHOTO.source} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white/70">
                 {HERO_PHOTO.author}
-              </a>{" "}
-              · {HERO_PHOTO.license}
+              </a>
+              {!HERO_PHOTO.ai && ` · ${HERO_PHOTO.license}`}
             </p>
           </div>
         </div>

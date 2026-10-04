@@ -1,165 +1,198 @@
 "use client";
 
+import { MotionConfig, animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { useEffect, useState } from "react";
+import Confetti from "@/components/gamification/Confetti";
+import { CoinIcon } from "@/components/ui/icons";
 
-const ROOTS = [
-  "M100 140 C 98 160, 86 172, 70 192",
-  "M100 140 C 102 164, 114 176, 132 194",
-  "M100 140 L 100 204",
-  "M90 166 C 82 170, 74 170, 64 168",
-  "M110 168 C 120 172, 128 172, 138 170",
+// AI-generated growth stages (scripts/generate-ai-images.mjs, keys grow:1 … grow:5).
+const STAGES = [
+  { src: "/images/grow/stage-1.jpg", label: "Seed" },
+  { src: "/images/grow/stage-2.jpg", label: "Sprout" },
+  { src: "/images/grow/stage-3.jpg", label: "Sapling" },
+  { src: "/images/grow/stage-4.jpg", label: "Young tree" },
+  { src: "/images/grow/stage-5.jpg", label: "Grown!" },
 ];
-const BRANCHES = ["M100 100 C 90 92, 80 88, 68 80", "M100 92 C 110 84, 120 80, 132 74"];
-const CANOPY = [
-  { cx: 100, cy: 58, r: 38, fill: "#16a34a", delay: 1.6 },
-  { cx: 66, cy: 76, r: 26, fill: "#22c55e", delay: 1.75 },
-  { cx: 134, cy: 76, r: 26, fill: "#22c55e", delay: 1.85 },
-  { cx: 100, cy: 30, r: 24, fill: "#4ade80", delay: 1.95 },
-];
-const SPARKLES = Array.from({ length: 12 }, (_, i) => {
-  const angle = (i / 12) * Math.PI * 2;
-  return { dx: Math.cos(angle) * 80, dy: Math.sin(angle) * 70, delay: 2.1 + (i % 3) * 0.08 };
+const START_MS = 350;
+const STAGE_MS = 750;
+
+const SPARKLES = Array.from({ length: 14 }, (_, i) => {
+  const angle = (i / 14) * Math.PI * 2;
+  return { x: Math.cos(angle) * 125, y: Math.sin(angle) * 110, delay: (i % 3) * 0.06 };
 });
 
-function useCountUp(target: number, startDelayMs: number, durationMs = 900) {
-  const [value, setValue] = useState(0);
+const fmt = (n: number) => Math.round(n).toLocaleString("en-PH");
+
+/** A number that rolls from its previous value to `to` whenever `to` changes. */
+function Ticker({ from, to, instant }: { from: number; to: number; instant: boolean }) {
+  const value = useMotionValue(instant ? to : from);
+  const text = useTransform(value, fmt);
   useEffect(() => {
-    let frame = 0;
-    const timeout = setTimeout(() => {
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - start) / durationMs);
-        setValue(Math.round(target * (1 - Math.pow(1 - t, 3))));
-        if (t < 1) frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
-    }, startDelayMs);
-    return () => {
-      clearTimeout(timeout);
-      cancelAnimationFrame(frame);
-    };
-  }, [target, startDelayMs, durationMs]);
-  return value;
+    const controls = animate(value, to, { duration: instant ? 0 : 0.6, ease: "easeOut" });
+    return () => controls.stop();
+  }, [value, to, instant]);
+  return <motion.span>{text}</motion.span>;
 }
+
+/** Points earned once `stage` of the five stages has grown (the last stage lands on the exact total). */
+const earnedAt = (points: number, stage: number) => Math.round((points * stage) / STAGES.length);
 
 export default function GrowingTreeCelebration({
   points,
+  balanceAfter,
   plantCount,
   plantType,
   onContinue,
 }: {
   points: number;
+  /** The planter's balance including these points. */
+  balanceAfter: number;
   plantCount: number;
   plantType: string;
   onContinue: () => void;
 }) {
-  const shownPoints = useCountUp(points, 2100);
+  const reduced = !!useReducedMotion();
+  // 0 = nothing shown yet; 1–5 = growth stage on screen. Reduced motion jumps to the grown tree.
+  const [grown, setStage] = useState(0);
+  const stage = reduced ? STAGES.length : grown;
+  const done = stage === STAGES.length;
+
+  useEffect(() => {
+    if (reduced) return;
+    const timers = STAGES.map((_, i) => setTimeout(() => setStage(i + 1), START_MS + i * STAGE_MS));
+    return () => timers.forEach(clearTimeout);
+  }, [reduced]);
+
+  const earned = earnedAt(points, stage);
+  const gain = stage > 0 ? earned - earnedAt(points, stage - 1) : 0;
+  // Points spent before this celebration played can make "before" negative; skip the line then.
+  const balanceBefore = balanceAfter - points;
 
   return (
-    <div
-      className="eq-celebration fixed inset-0 z-[2000] m-0 flex items-center justify-center bg-black/60 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Quest verified"
-    >
-      <div className="w-full max-w-sm rounded-2xl bg-card p-6 text-center text-ink shadow-2xl">
-        <svg viewBox="0 0 200 220" className="mx-auto h-64 w-64" aria-hidden>
-          {/* soil */}
-          <rect x="0" y="140" width="200" height="80" rx="8" fill="#a16207" opacity="0.15" />
-          <line x1="20" y1="140" x2="180" y2="140" stroke="#854d0e" strokeWidth="3" strokeLinecap="round" />
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        className="fixed inset-0 z-[2000] m-0 flex items-center justify-center bg-canvas/75 p-4 backdrop-blur-[2px]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Quest verified: plus ${points} points`}
+        onKeyDown={(e) => e.key === "Escape" && onContinue()}
+      >
+        <motion.div
+          className="relative w-full max-w-sm rounded-3xl border border-emerald-400/15 bg-card p-6 text-center text-ink shadow-2xl"
+          initial={{ scale: 0.9, y: 24, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        >
+          {done && <Confetti />}
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Quest verified</p>
 
-          {/* seed */}
-          <ellipse className="eq-pop" cx="100" cy="140" rx="7" ry="5" fill="#854d0e" />
-
-          {/* roots */}
-          {ROOTS.map((d, i) => (
-            <path
-              key={d}
-              d={d}
-              pathLength={1}
-              className="eq-draw"
-              style={{ animationDelay: `${0.2 + i * 0.12}s` }}
-              fill="none"
-              stroke="#92400e"
-              strokeWidth={i < 3 ? 3 : 2}
-              strokeLinecap="round"
+          {/* The tree: AI-painted stages cross-fade and swell as it grows. */}
+          <div className="relative mx-auto mt-3 h-60 w-60 sm:h-64 sm:w-64" aria-hidden>
+            <motion.div
+              className="absolute inset-4 rounded-full bg-emerald-400/25 blur-2xl"
+              animate={{ opacity: 0.25 + stage * 0.15, scale: 0.6 + stage * 0.1 }}
+              transition={{ duration: 0.6 }}
             />
-          ))}
+            <div className="eq-grow-stage absolute inset-0">
+              {STAGES.map((s, i) => {
+                const active = i === stage - 1;
+                return (
+                  <motion.img
+                    key={s.src}
+                    src={s.src}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ transformOrigin: "50% 80%" }}
+                    initial={false}
+                    animate={{ opacity: active ? 1 : 0, scale: active ? 1 : i < stage - 1 ? 1.06 : 0.82, y: active ? 0 : 10 }}
+                    transition={{ type: "spring", stiffness: 180, damping: 18, opacity: { duration: 0.45 } }}
+                  />
+                );
+              })}
+            </div>
 
-          <g className="eq-sway">
-            {/* trunk */}
-            <rect
-              className="eq-grow-y"
-              style={{ animationDelay: "0.9s" }}
-              x="94"
-              y="70"
-              width="12"
-              height="70"
-              rx="4"
-              fill="#78350f"
-            />
-            {/* branches */}
-            {BRANCHES.map((d, i) => (
-              <path
-                key={d}
-                d={d}
-                pathLength={1}
-                className="eq-draw"
-                style={{ animationDelay: `${1.3 + i * 0.1}s` }}
-                fill="none"
-                stroke="#78350f"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
+            {/* A "+N" chip floats up off the tree as each stage lands (each replaces the last). */}
+            {gain > 0 && !reduced && (
+              <motion.span
+                key={stage}
+                className="absolute left-1/2 top-1/3 -ml-7 w-14 rounded-full bg-amber-400 py-0.5 text-sm font-extrabold text-amber-950 shadow-lg"
+                initial={{ opacity: 0, y: 12, scale: 0.6 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -64, scale: 1 }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+              >
+                +{fmt(gain)}
+              </motion.span>
+            )}
+
+            {done && !reduced &&
+              SPARKLES.map((s, i) => (
+                <motion.span
+                  key={i}
+                  className={`absolute left-1/2 top-1/2 h-2 w-2 rounded-full ${i % 2 ? "bg-amber-300" : "bg-lime-300"}`}
+                  initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
+                  animate={{ x: s.x, y: s.y, opacity: [0, 1, 0], scale: 1 }}
+                  transition={{ duration: 1.2, delay: s.delay, ease: "easeOut" }}
+                />
+              ))}
+          </div>
+
+          {/* Growth progress: seed → grown. */}
+          <ol className="mx-auto mt-1 flex max-w-[15rem] gap-1.5" aria-hidden>
+            {STAGES.map((s, i) => (
+              <li key={s.label} className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-3">
+                <motion.span
+                  className="block h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-400"
+                  initial={false}
+                  animate={{ scaleX: i < stage ? 1 : 0 }}
+                  style={{ originX: 0 }}
+                  transition={{ duration: 0.4 }}
+                />
+              </li>
             ))}
-            {/* canopy */}
-            {CANOPY.map((c) => (
-              <circle
-                key={`${c.cx}-${c.cy}`}
-                className="eq-pop"
-                style={{ animationDelay: `${c.delay}s` }}
-                cx={c.cx}
-                cy={c.cy}
-                r={c.r}
-                fill={c.fill}
-              />
-            ))}
-          </g>
+          </ol>
+          <p className="mt-1.5 h-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3" aria-hidden>
+            {stage > 0 ? STAGES[stage - 1].label : " "}
+          </p>
 
-          {/* sparkles */}
-          {SPARKLES.map((s, i) => (
-            <circle
-              key={i}
-              className="eq-sparkle"
-              style={
-                {
-                  animationDelay: `${s.delay}s`,
-                  "--dx": `${s.dx}px`,
-                  "--dy": `${s.dy}px`,
-                } as React.CSSProperties
-              }
-              cx="100"
-              cy="60"
-              r="3.5"
-              fill={i % 2 ? "#facc15" : "#86efac"}
-            />
-          ))}
-        </svg>
+          <motion.p
+            className="mt-3 flex items-center justify-center gap-2 text-4xl font-extrabold tabular-nums text-amber-300"
+            animate={done && !reduced ? { scale: [1, 1.12, 1] } : undefined}
+            transition={{ duration: 0.5 }}
+            aria-hidden
+          >
+            <CoinIcon className="h-8 w-8 shrink-0" />
+            <span>
+              +<Ticker from={0} to={earned} instant={reduced} />
+            </span>
+            <span className="text-lg font-bold text-amber-200/80">pts</span>
+          </motion.p>
+          {balanceBefore >= 0 && (
+            <p className="mt-1 text-sm text-ink-3" aria-hidden>
+              Balance {fmt(balanceBefore)} →{" "}
+              <strong className="tabular-nums text-ink">
+                <Ticker from={balanceBefore} to={balanceBefore + earned} instant={reduced} />
+              </strong>{" "}
+              pts
+            </p>
+          )}
+          <p className="sr-only">
+            You earned {points} points. Your balance is now {balanceAfter} points.
+          </p>
 
-        <div className="eq-fade-up" style={{ animationDelay: "2.1s" }}>
-          <p className="text-4xl font-extrabold text-emerald-400">+{shownPoints} pts</p>
-          <p className="mt-2 text-ink-2">
+          <p className="mt-3 text-ink-2">
             {plantCount} {plantType} {plantCount === 1 ? "plant" : "plants"} verified. Salamat sa pagtatanim!
           </p>
           <button
             onClick={onContinue}
             autoFocus
-            className="mt-5 w-full rounded-lg bg-emerald-400 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300"
+            className="relative mt-5 w-full rounded-xl bg-emerald-400 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300"
           >
-            Continue
+            {done ? "Continue" : "Skip"}
           </button>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </MotionConfig>
   );
 }

@@ -435,6 +435,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       ) : (
         <CelebrationGate
           key={d.uncelebrated.map((q) => q.id).join(",")}
+          balance={d.user.points}
           celebrations={d.uncelebrated.map((q) => ({
             questId: q.id,
             points: q.pointsAwarded,

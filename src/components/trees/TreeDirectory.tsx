@@ -72,6 +72,17 @@ function Progress({ tree, onPhoto = false }: { tree: TreeCard; onPhoto?: boolean
 }
 
 export function Credit({ credit }: { credit: PhotoCredit }) {
+  if (credit.ai) {
+    return (
+      <p className="text-[11px] leading-relaxed text-ink-4">
+        AI-generated image (
+        <a href={credit.source} target="_blank" rel="noreferrer" className="underline decoration-ink-4/40 underline-offset-2 hover:text-ink-2">
+          {credit.author}
+        </a>
+        ) — an artist&apos;s impression; the real tree may look different.
+      </p>
+    );
+  }
   return (
     <p className="text-[11px] leading-relaxed text-ink-4">
       {credit.shows && <span className="text-ink-3">Photo shows a close relative, {credit.shows}. </span>}

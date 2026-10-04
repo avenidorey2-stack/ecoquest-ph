@@ -1,0 +1,175 @@
+{
+  "model": "Pollinations.ai (sana)",
+  "images": {
+    "app-bg": {
+      "prompt": "aerial view of a young reforestation site at dusk, neat rows of tree seedlings on green hills in the Philippines, dark moody emerald tones, low contrast, atmospheric, photorealistic, no text",
+      "seed": 667852,
+      "generatedAt": "2026-10-04T13:03:24.899Z"
+    },
+    "auth-bg": {
+      "prompt": "dark moody tropical rainforest canopy at night, faint bioluminescent emerald glow, fireflies, deep green and black, low contrast, atmospheric, photorealistic, no text",
+      "seed": 264465,
+      "generatedAt": "2026-10-04T13:01:54.733Z"
+    },
+    "grow:1": {
+      "prompt": "a single brown seed resting on the soil, centered on a small round mound of dark soil, isolated on a plain pure black background, soft rim light, glowing emerald and lime bioluminescent accents, 3D render, game asset, clean, no text",
+      "seed": 1234,
+      "generatedAt": "2026-10-04T12:02:57.865Z"
+    },
+    "grow:2": {
+      "prompt": "a tiny green sprout with two leaves emerging from the soil, centered on a small round mound of dark soil, isolated on a plain pure black background, soft rim light, glowing emerald and lime bioluminescent accents, 3D render, game asset, clean, no text",
+      "seed": 1234,
+      "generatedAt": "2026-10-04T12:03:26.852Z"
+    },
+    "grow:3": {
+      "prompt": "a young sapling with a thin stem and a few leaves growing from the soil, centered on a small round mound of dark soil, isolated on a plain pure black background, soft rim light, glowing emerald and lime bioluminescent accents, 3D render, game asset, clean, no text",
+      "seed": 1234,
+      "generatedAt": "2026-10-04T12:04:57.098Z"
+    },
+    "grow:4": {
+      "prompt": "a small young tree with a slender trunk and a round leafy crown growing from the soil, centered on a small round mound of dark soil, isolated on a plain pure black background, soft rim light, glowing emerald and lime bioluminescent accents, 3D render, game asset, clean, no text",
+      "seed": 1234,
+      "generatedAt": "2026-10-04T12:08:30.476Z"
+    },
+    "grow:5": {
+      "prompt": "a cute stylized full grown tree with a brown trunk and a big fluffy round canopy of bright lime green and emerald leaves, evenly lit, vivid colours, growing from the soil, centered on a small round mound of dark soil, isolated on a plain pure black background, soft even front lighting, glowing emerald and lime bioluminescent accents, 3D render, game asset, clean, no text",
+      "seed": 1234,
+      "generatedAt": "2026-10-04T13:17:20.144Z"
+    },
+    "hero": {
+      "prompt": "breathtaking lush Philippine tropical rainforest at golden hour, sunbeams through tall native trees, giant ferns, soft mist, cinematic wide shot, deep emerald green tones, photorealistic, no people, no text",
+      "seed": 875097,
+      "generatedAt": "2026-10-04T13:00:23.515Z"
+    },
+    "shop-hero": {
+      "prompt": "close-up of many small young tree seedlings with green leaves growing in black plastic nursery bags lined up in neat rows in a plant nursery, warm morning light, shallow depth of field, photorealistic, no people, no text",
+      "seed": 591196,
+      "generatedAt": "2026-10-04T13:09:27.237Z"
+    },
+    "tree:almaciga": {
+      "prompt": "wide shot of one whole Almaciga tree (Agathis philippinensis) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tall straight Agathis conifer with a smooth grey trunk in a misty mountain forest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 477094,
+      "generatedAt": "2026-10-04T12:39:43.474Z"
+    },
+    "tree:almon": {
+      "prompt": "wide shot of one whole Almon tree (Shorea almon) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, large lowland dipterocarp with a tall clear straight trunk and a broad crown above the forest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 213402,
+      "generatedAt": "2026-10-04T12:26:35.290Z"
+    },
+    "tree:apitong": {
+      "prompt": "wide shot of one whole Apitong tree (Dipterocarpus grandiflorus) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tall dipterocarp with a straight trunk, large leathery leaves and winged seeds, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 409409,
+      "generatedAt": "2026-10-04T12:29:34.856Z"
+    },
+    "tree:bakauan": {
+      "prompt": "wide shot of one whole Bakauan tree (Rhizophora mucronata) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, mangrove tree with arching stilt prop roots standing in shallow clear coastal water, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 842856,
+      "generatedAt": "2026-10-04T12:33:07.356Z"
+    },
+    "tree:banaba": {
+      "prompt": "wide shot of one whole Banaba tree (Lagerstroemia speciosa) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tree covered in clusters of purple-lilac crepe-myrtle flowers, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 112500,
+      "generatedAt": "2026-10-04T12:50:50.341Z"
+    },
+    "tree:bani": {
+      "prompt": "wide shot of one whole Bani tree (Pongamia pinnata) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, medium tree with a dense glossy green crown and pale pink-lavender flowers beside a rural road, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 575701,
+      "generatedAt": "2026-10-04T12:34:37.402Z"
+    },
+    "tree:benguet-pine": {
+      "prompt": "wide shot of one whole Benguet Pine tree (Pinus kesiya) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, pine trees with long needles on misty Cordillera mountain slopes, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 554296,
+      "generatedAt": "2026-10-04T12:41:13.977Z"
+    },
+    "tree:carabao-mango": {
+      "prompt": "wide shot of one whole Carabao Mango tree (Mangifera indica 'Carabao') seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, mango tree with a dense dome crown and ripe yellow mangoes hanging, in an orchard, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 484409,
+      "generatedAt": "2026-10-04T12:53:50.116Z"
+    },
+    "tree:dao": {
+      "prompt": "wide shot of one whole Dao tree (Dracontomelon dao) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, giant tree with massive plank buttress roots and a tall straight trunk in a tropical forest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 800691,
+      "generatedAt": "2026-10-04T12:44:16.107Z"
+    },
+    "tree:ipil": {
+      "prompt": "wide shot of one whole Ipil tree (Intsia bijuga) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, sturdy tree with a buttressed trunk and glossy pinnate leaves in a coastal forest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 323457,
+      "generatedAt": "2026-10-04T12:52:20.552Z"
+    },
+    "tree:kamagong": {
+      "prompt": "wide shot of one whole Kamagong tree (Diospyros blancoi) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, dense crown of dark green glossy leaves, velvety reddish-brown mabolo fruits hanging from branches, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 308810,
+      "generatedAt": "2026-10-04T12:17:53.435Z"
+    },
+    "tree:katmon": {
+      "prompt": "wide shot of one whole Katmon tree (Dillenia philippinensis) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tree with large glossy serrated leaves, big white flowers and round green fruits, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 395783,
+      "generatedAt": "2026-10-04T12:45:46.795Z"
+    },
+    "tree:mayapis": {
+      "prompt": "wide shot of one whole Mayapis tree (Shorea palosapis) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tall dipterocarp with a straight trunk and dense crown in a humid hill forest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 191595,
+      "generatedAt": "2026-10-04T12:28:05.505Z"
+    },
+    "tree:mindoro-pine": {
+      "prompt": "wide shot of one whole Mindoro Pine tree (Pinus merkusii) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tall pine conifer with long green needles, a conical crown and pine cones, in a pine forest on grassy hills, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 274182,
+      "generatedAt": "2026-10-04T13:07:57.249Z"
+    },
+    "tree:molave": {
+      "prompt": "wide shot of one whole Molave tree (Vitex parviflora) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, sturdy fluted grey trunk, dense rounded crown of compound leaves, small lavender flowers, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 529823,
+      "generatedAt": "2026-10-04T12:16:23.969Z"
+    },
+    "tree:narra": {
+      "prompt": "wide shot of one whole Narra tree (Pterocarpus indicus) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, broad umbrella-shaped spreading crown, drooping branches covered in clusters of small golden-yellow flowers, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 723007,
+      "generatedAt": "2026-10-04T12:15:08.411Z"
+    },
+    "tree:philippine-teak": {
+      "prompt": "wide shot of one whole Philippine Teak tree (Tectona philippinensis) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, small tree with very large broad leaves on a limestone hillside, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 981481,
+      "generatedAt": "2026-10-04T12:20:30.534Z"
+    },
+    "tree:pili": {
+      "prompt": "wide shot of one whole Pili tree (Canarium ovatum) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tall evergreen tree with clusters of green-purple pili nuts, Bicol countryside, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 911953,
+      "generatedAt": "2026-10-04T12:55:19.987Z"
+    },
+    "tree:red-lauan": {
+      "prompt": "wide shot of one whole Red Lauan tree (Shorea negrosensis) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, towering dipterocarp with a reddish-brown straight trunk and buttress roots, emergent rainforest crown, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 566944,
+      "generatedAt": "2026-10-04T12:23:30.803Z"
+    },
+    "tree:salingbobog": {
+      "prompt": "wide shot of one whole Salingbobog tree (Crateva religiosa) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, riverside tree with trifoliate leaves and creamy white flowers with long purple stamens, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 628094,
+      "generatedAt": "2026-10-04T12:47:17.325Z"
+    },
+    "tree:santol": {
+      "prompt": "wide shot of one whole Santol tree (Sandoricum koetjape) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, fruit tree with a dense crown and round golden-yellow santol fruits hanging from the branches, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 83568,
+      "generatedAt": "2026-10-04T12:58:53.058Z"
+    },
+    "tree:talisay": {
+      "prompt": "wide shot of one whole Talisay tree (Terminalia catappa) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, tiered pagoda-like horizontal branches with large leaves, some turning red, on a white sand beach, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 113448,
+      "generatedAt": "2026-10-04T12:38:13.387Z"
+    },
+    "tree:tangile": {
+      "prompt": "wide shot of one whole Tangile tree (Shorea polysperma) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, very tall straight dipterocarp trunk with buttress roots, high crown above a rainforest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 549047,
+      "generatedAt": "2026-10-04T12:22:00.388Z"
+    },
+    "tree:white-lauan": {
+      "prompt": "wide shot of one whole White Lauan tree (Shorea contorta) seen from a distance, the entire tree visible from the base of the trunk to the top of the crown with sky above, towering dipterocarp with a pale grey straight trunk and buttress roots, lowland rainforest, photorealistic nature photograph, in the Philippines, natural daylight, lush tropical setting, sharp focus, high detail, professional DSLR photography, no people, no text, no watermark",
+      "seed": 85982,
+      "generatedAt": "2026-10-04T12:25:05.476Z"
+    },
+    "trees-hero": {
+      "prompt": "panoramic view of a diverse Philippine native forest with tall trees, green mountains and morning mist, photorealistic, cinematic, no people, no text",
+      "seed": 129921,
+      "generatedAt": "2026-10-04T13:04:54.891Z"
+    }
+  }
+}
