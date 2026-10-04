@@ -1,6 +1,7 @@
 import type { RewardType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordTransaction } from "@/lib/transactions";
+import { MAX_COST_POINTS, MAX_VALUE_PESOS } from "@/lib/voucher";
 
 export const BRANDS: Record<RewardType, readonly string[]> = {
   EWALLET_CASH: ["GCash", "Maya"],
@@ -9,8 +10,6 @@ export const BRANDS: Record<RewardType, readonly string[]> = {
 
 /** Max redemption requests a user can have awaiting fulfilment at once. */
 export const MAX_PENDING_REDEMPTIONS = 3;
-const MAX_COST_POINTS = 1_000_000;
-const MAX_VALUE_PESOS = 100_000;
 
 export class RedeemError extends Error {
   constructor(message: string, public status: number) {
@@ -126,7 +125,7 @@ export async function redeemReward(userId: string, rewardId: string, rawEWalletN
       kind: "REWARD_REDEMPTION",
       currency: "POINTS",
       amount: reward.costPoints,
-      description: `₱${reward.valuePesos} ${reward.brand} ${reward.rewardType === "VOUCHER" ? "voucher" : "cashout"}`,
+      description: `₱${reward.valuePesos.toLocaleString("en-PH")} ${reward.brand} ${reward.rewardType === "VOUCHER" ? "voucher" : "cashout"}`,
       redemptionId: redemption.id,
     });
     return redemption;

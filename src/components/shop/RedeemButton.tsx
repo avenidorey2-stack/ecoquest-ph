@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import VoucherArt from "@/components/rewards/VoucherArt";
+import { voucherAmount } from "@/lib/voucher";
 
 export default function RedeemButton({
   reward,
@@ -21,7 +23,9 @@ export default function RedeemButton({
   const [done, setDone] = useState(false);
 
   const affordable = balance >= reward.costPoints;
-  const label = `₱${reward.valuePesos} ${reward.brand} ${reward.isCash ? "cash" : "voucher"}`;
+  const amount = voucherAmount(reward.valuePesos);
+  const label = `${amount} ${reward.brand} ${reward.isCash ? "cash" : "voucher"}`;
+  const pts = (n: number) => n.toLocaleString("en-PH");
 
   async function confirm(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +58,7 @@ export default function RedeemButton({
         disabled={!affordable}
         className="w-full rounded-lg bg-emerald-400 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:bg-card-3 disabled:text-ink-3"
       >
-        {affordable ? "Redeem" : `Need ${reward.costPoints - balance} more pts`}
+        {affordable ? "Redeem" : `Need ${pts(reward.costPoints - balance)} more pts`}
       </button>
 
       {open && (
@@ -74,8 +78,8 @@ export default function RedeemButton({
                 <p className="font-semibold">Request sent!</p>
                 <p className="text-sm text-ink-2">
                   {reward.isCash
-                    ? `We'll send ₱${reward.valuePesos} to ${number} once an admin processes it.`
-                    : "Your voucher code will appear in your history once an admin processes it."}
+                    ? `We'll send ${amount} to ${number} once our team processes it.`
+                    : "Your voucher code will appear in your history once our team processes it."}
                 </p>
                 <button onClick={close} autoFocus className="w-full rounded-lg bg-emerald-400 py-2 font-semibold text-emerald-950">
                   Done
@@ -83,10 +87,11 @@ export default function RedeemButton({
               </div>
             ) : (
               <form onSubmit={confirm} className="space-y-4">
+                <VoucherArt brand={reward.brand} valuePesos={reward.valuePesos} isCash={reward.isCash} />
                 <div>
                   <p className="font-semibold">Redeem {label}?</p>
                   <p className="text-sm text-ink-2">
-                    {reward.costPoints} points will be deducted now ({balance} → {balance - reward.costPoints}). If the
+                    {pts(reward.costPoints)} points will be deducted now ({pts(balance)} → {pts(balance - reward.costPoints)}). If the
                     request is rejected, they&apos;re refunded.
                   </p>
                 </div>

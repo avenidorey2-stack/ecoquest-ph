@@ -2,6 +2,8 @@ import { requirePageUserId } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { MAX_PENDING_REDEMPTIONS } from "@/lib/rewards";
 import RedeemButton from "@/components/shop/RedeemButton";
+import VoucherArt from "@/components/rewards/VoucherArt";
+import { CoinIcon } from "@/components/ui/icons";
 
 const STATUS_STYLES = {
   PENDING: "bg-amber-400/15 text-amber-300",
@@ -66,15 +68,17 @@ export default async function RewardsPage() {
           items.length > 0 && (
             <section key={title}>
               <h2 className="mb-2 font-semibold">{title}</h2>
-              <ul className="eq-stagger eq-spring grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+              <ul className="eq-stagger eq-spring grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {items.map((r) => (
-                  <li key={r.id} className="eq-panel flex flex-col gap-3 rounded-2xl border border-line/80 bg-card p-4 shadow-sm">
-                    <div>
-                      <p className="text-sm text-ink-3">{r.brand}</p>
-                      <p className="text-2xl font-bold">₱{r.valuePesos.toLocaleString("en-PH")}</p>
-                      <p className="text-sm font-medium text-emerald-400">{r.costPoints.toLocaleString("en-PH")} pts</p>
-                    </div>
-                    <div className="mt-auto">
+                  <li key={r.id} className="eq-panel flex flex-col gap-3 rounded-2xl border border-line/80 bg-card p-3 shadow-sm">
+                    <VoucherArt brand={r.brand} valuePesos={r.valuePesos} isCash={r.rewardType === "EWALLET_CASH"} />
+                    <div className="mt-auto flex items-center gap-3 px-1 pb-1">
+                      <p className="flex shrink-0 items-center gap-1 text-lg font-bold text-emerald-300">
+                        <CoinIcon className="h-4 w-4 text-amber-400" />
+                        {r.costPoints.toLocaleString("en-PH")}
+                        <span className="text-xs font-medium text-ink-3">pts</span>
+                      </p>
+                      <div className="min-w-0 flex-1">
                       <RedeemButton
                         balance={user.points}
                         lastNumber={lastNumber}
@@ -86,6 +90,7 @@ export default async function RewardsPage() {
                           isCash: r.rewardType === "EWALLET_CASH",
                         }}
                       />
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -104,10 +109,10 @@ export default async function RewardsPage() {
               <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-medium">
-                    ₱{h.reward.valuePesos} {h.reward.brand} {h.reward.rewardType === "EWALLET_CASH" ? "cash" : "voucher"}
+                    ₱{h.reward.valuePesos.toLocaleString("en-PH")} {h.reward.brand} {h.reward.rewardType === "EWALLET_CASH" ? "cash" : "voucher"}
                   </p>
                   <p className="text-xs text-ink-3">
-                    {fmtDate(h.createdAt)} · {h.pointsSpent} pts{h.eWalletNumber && ` · to ${h.eWalletNumber}`}
+                    {fmtDate(h.createdAt)} · {h.pointsSpent.toLocaleString("en-PH")} pts{h.eWalletNumber && ` · to ${h.eWalletNumber}`}
                   </p>
                   {h.adminNote && (
                     <p className="mt-1 break-all text-xs">
