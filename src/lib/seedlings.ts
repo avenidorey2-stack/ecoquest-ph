@@ -1,6 +1,6 @@
 import type { Currency, OrderStatus, Prisma, PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { notify } from "@/lib/notifications";
+import { notify, notifyAdmins } from "@/lib/notifications";
 import { recordTransaction } from "@/lib/transactions";
 import { formatPesos, formatPoints } from "@/lib/format";
 import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
@@ -154,6 +154,16 @@ export async function placeSeedlingOrder(
         ? `Order placed: ${what} — pay ${formatPesos(totalPrice)} cash on delivery. ${arrives}`
         : `Order placed: ${what} for ${formatPoints(totalPrice)}. ${arrives}`,
       "/transactions",
+    );
+    // Tell the team there's an order to confirm (same transaction: no notice without the order).
+    const buyer = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+    await notifyAdmins(
+      tx,
+      `New seedling order: ${buyer.name?.trim() || "A planter"} ordered ${what} (${
+        currency === "PESOS" ? `${formatPesos(totalPrice)} cash on delivery` : formatPoints(totalPrice)
+      }). Confirm it to start packing.`,
+      "/admin/shop?tab=orders",
+      userId,
     );
     return order;
   });
