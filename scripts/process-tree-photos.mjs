@@ -5,7 +5,7 @@
  *
  * Writes two optimised JPEGs per species:
  *   - public/trees/<slug>.jpg     1200x900, quality 86 (details view)
- *   - public/trees/<slug>-sm.jpg   640x480, quality 80 (card tiles)
+ *   - public/trees/<slug>-sm.jpg   640x800, quality 80 (portrait card tiles, 4:5 like the tiles)
  *
  * Existing files are never replaced silently: pass --overwrite to replace them. The first time a
  * file is replaced, the original is copied to .ai-images/backup/<same path>. Crops keep the most
@@ -73,7 +73,7 @@ export async function processTreeImage(inputPath, slug, { overwrite = false } = 
   const inputBuffer = await fs.readFile(inputPath);
   const variants = [
     { dest: fullDest, w: 1200, h: 900, quality: 86 },
-    { dest: smDest, w: 640, h: 480, quality: 80 },
+    { dest: smDest, w: 640, h: 800, quality: 80 },
   ];
   for (const { dest, w, h, quality } of variants) {
     await backupOnce(dest);

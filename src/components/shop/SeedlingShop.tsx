@@ -87,7 +87,7 @@ function OrderSheet({
         style={{ borderRadius: 28 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden">
+        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden sm:aspect-[16/10]">
           <motion.img
             layoutId={`seedling-photo-${product.id}`}
             transition={MORPH}
@@ -96,7 +96,7 @@ function OrderSheet({
             className={`absolute inset-0 h-full w-full object-cover ${soldOut ? "grayscale" : ""}`}
           />
           <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent"
+            className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-card to-transparent"
             exit={{ opacity: 0, transition: { duration: 0.12 } }}
           />
           <motion.button
@@ -211,7 +211,9 @@ function SeedlingTile({
         loading="lazy"
         className={`absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-out group-hover:scale-[1.06] ${soldOut ? "grayscale" : ""}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent via-45% to-black/85" />
+      {/* Shade only behind the text strips, so the middle of the photo stays clear. */}
+      <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/70 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/85 to-transparent" />
       <motion.div
         className="absolute inset-0"
         initial={false}
