@@ -4,7 +4,8 @@ import { AnimatePresence, LayoutGroup, MotionConfig, motion } from "motion/react
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PhotoCredit } from "@/data/tree-photos";
 import { formatPesos } from "@/lib/format";
-import OrderSeedlingForm, { type DeliveryDefaults } from "@/components/shop/OrderSeedlingForm";
+import OrderSeedlingForm, { type DeliveryDefaults, type PlacedOrder } from "@/components/shop/OrderSeedlingForm";
+import { ORDER_COOLDOWN_SECONDS } from "@/lib/delivery";
 import { Credit } from "@/components/trees/TreeDirectory";
 import { CloseIcon, CoinIcon } from "@/components/ui/icons";
 
@@ -46,12 +47,16 @@ function OrderSheet({
   balance,
   maxQuantity,
   deliveryDefaults,
+  cooldownUntil,
+  onPlaced,
   onClose,
 }: {
   product: ShopProduct;
   balance: number;
   maxQuantity: number;
   deliveryDefaults: DeliveryDefaults;
+  cooldownUntil: number;
+  onPlaced: (order: PlacedOrder) => void;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -168,6 +173,8 @@ function OrderSheet({
               balance={balance}
               maxQuantity={maxQuantity}
               deliveryDefaults={deliveryDefaults}
+              cooldownUntil={cooldownUntil}
+              onPlaced={onPlaced}
             />
           </div>
 
@@ -266,13 +273,20 @@ export default function SeedlingShop({
   balance,
   maxQuantity,
   deliveryDefaults,
+  cooldownUntil: serverCooldownUntil,
 }: {
   products: ShopProduct[];
   balance: number;
   maxQuantity: number;
-  /** Pre-fills the cash-on-delivery form (last COD order's details, else the profile). */
+  /** Pre-fills the delivery form (last order's details, else the profile). */
   deliveryDefaults: DeliveryDefaults;
+  /** Epoch ms until which ordering is paused after the planter's last order. */
+  cooldownUntil: number;
 }) {
+  // The order just placed (shows the "order complete" banner) and the cooldown it started.
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  const [localCooldownUntil, setLocalCooldownUntil] = useState(0);
+  const cooldownUntil = Math.max(serverCooldownUntil, localCooldownUntil);
   // Kept by id: ordering refreshes the page data, and the sheet should show the new stock.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [settling, setSettling] = useState<string | null>(null);
@@ -297,9 +311,55 @@ export default function SeedlingShop({
   }, [settled]);
   useEffect(() => () => window.clearTimeout(settleTimer.current), []);
 
+  // Order confirmed: back to the shop, with a banner, and a pause before the next order.
+  const onPlaced = useCallback(
+    (order: PlacedOrder) => {
+      setPlaced(order);
+      setLocalCooldownUntil(Date.now() + ORDER_COOLDOWN_SECONDS * 1000);
+      close();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [close],
+  );
+
   return (
     <MotionConfig reducedMotion="user">
       <LayoutGroup>
+        <AnimatePresence>
+          {placed && (
+            <motion.div
+              key="placed"
+              role="status"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-50"
+            >
+              <span className="text-2xl leading-none" aria-hidden>
+                🎉
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-ink">Your order is complete!</p>
+                <p className="mt-0.5 text-ink-2">
+                  {placed.quantity} × {placed.name} · {placed.total}
+                  {placed.cod ? " — pay cash on delivery" : ""}.
+                </p>
+                <p className="mt-1 text-ink-3">
+                  It&apos;s waiting for our team to confirm it. We&apos;ll notify you once it&apos;s being packed — then it
+                  arrives within 5–7 days.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPlaced(null)}
+                aria-label="Dismiss"
+                className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-ink-3 hover:bg-card-2 hover:text-ink"
+              >
+                ✕
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <ul className="eq-stagger eq-spring grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
             <li key={p.id}>
@@ -324,6 +384,8 @@ export default function SeedlingShop({
               balance={balance}
               maxQuantity={maxQuantity}
               deliveryDefaults={deliveryDefaults}
+              cooldownUntil={cooldownUntil}
+              onPlaced={onPlaced}
               onClose={close}
             />}
         </AnimatePresence>

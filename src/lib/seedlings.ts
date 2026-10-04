@@ -4,7 +4,7 @@ import { notify } from "@/lib/notifications";
 import { recordTransaction } from "@/lib/transactions";
 import { formatPesos, formatPoints } from "@/lib/format";
 import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
-import { DELIVERY_DAYS, deliveryWindow, type DeliveryDetails } from "@/lib/delivery";
+import { DELIVERY_DAYS, ORDER_COOLDOWN_SECONDS, deliveryWindow, type DeliveryDetails } from "@/lib/delivery";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -92,6 +92,15 @@ export async function placeSeedlingOrder(
   delivery: DeliveryDetails,
 ) {
   return prisma.$transaction(async (tx) => {
+    // Cooldown between orders. Locking the buyer's row makes two simultaneous requests take
+    // turns, so a double tap can't slip two orders past the check.
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
+    const last = await tx.order.findFirst({ where: { userId }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
+    const waitMs = last ? last.createdAt.getTime() + ORDER_COOLDOWN_SECONDS * 1000 - Date.now() : 0;
+    if (waitMs > 0) {
+      throw new OrderError(`You just placed an order. Please wait ${Math.ceil(waitMs / 1000)}s before ordering again.`, 429);
+    }
+
     const product = await tx.seedlingProduct.findUnique({
       where: { id: productId },
       include: { species: { select: { name: true } } },
@@ -247,7 +256,12 @@ export async function updateOrderStatus(orderId: string, action: "advance" | "ca
         "/transactions",
       );
     } else if (next === "PACKED") {
-      await notify(tx, order.userId, `Your order for ${what} is packed — expect it ${deliveryWindow(now)}.`, "/shop");
+      await notify(
+        tx,
+        order.userId,
+        `Your order for ${what} is confirmed and being packed — expect it ${deliveryWindow(now)}.`,
+        "/shop",
+      );
     } else {
       await notify(tx, order.userId, `Your order for ${what} ${STATUS_MESSAGES[next]}.`, "/transactions");
     }

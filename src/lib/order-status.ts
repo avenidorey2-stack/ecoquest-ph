@@ -3,8 +3,8 @@ import type { OrderStatus } from "@/generated/prisma/enums";
 // Display text and badge colours for seedling order statuses (server and client safe).
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: "Pending",
-  PACKED: "Packed",
+  PENDING: "Awaiting confirmation",
+  PACKED: "Packing",
   OUT_FOR_DELIVERY: "Out for delivery",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
