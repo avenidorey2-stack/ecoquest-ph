@@ -15,7 +15,7 @@ function QuestProgress({ value, pending = 0, max }: { value: number; pending?: n
   const waiting = Math.min(100 - done, pct(pending));
   return (
     <div
-      className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+      className="flex h-1.5 w-full overflow-hidden rounded-full bg-card-2"
       role="progressbar"
       aria-valuenow={Math.min(value + pending, max)}
       aria-valuemin={0}
@@ -49,7 +49,7 @@ export default function QuestList({
   return (
     <div className="space-y-4">
       {quests.length === 0 ? (
-        <p className="rounded-xl bg-emerald-50 p-4 text-center text-sm text-emerald-800">
+        <p className="rounded-xl bg-emerald-400/10 p-4 text-center text-sm text-emerald-300">
           🎉 All caught up! Claim a slot on the map to start your next quest.
         </p>
       ) : (
@@ -59,16 +59,16 @@ export default function QuestList({
               <li key={q.id}>
                 {/* Header: title + subtitle only — no fraction badge on any card. */}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {q.href ? (
-                      <Link href={q.href} className="hover:text-emerald-700">
+                      <Link href={q.href} className="hover:text-emerald-400">
                         {q.title}
                       </Link>
                     ) : (
                       q.title
                     )}
                   </p>
-                  <p className="truncate text-xs text-slate-500" title={q.detail}>
+                  <p className="truncate text-xs text-ink-3" title={q.detail}>
                     {q.detail}
                   </p>
                 </div>
@@ -79,7 +79,7 @@ export default function QuestList({
                       <QuestProgress value={q.current} pending={q.pending} max={q.target} />
                     </div>
                     {q.progressLabel && (
-                      <span className="shrink-0 text-[11px] font-semibold text-slate-600">{q.progressLabel}</span>
+                      <span className="shrink-0 text-[11px] font-semibold text-ink-2">{q.progressLabel}</span>
                     )}
                   </div>
                 )}
@@ -91,13 +91,13 @@ export default function QuestList({
       )}
 
       {completedTotal > 0 && (
-        <div className="border-t border-slate-100 pt-3">
+        <div className="border-t border-line pt-3">
           <button
             type="button"
             onClick={() => setShowCompleted((s) => !s)}
             aria-expanded={showCompleted}
             aria-controls={panelId}
-            className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+            className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold text-emerald-300 hover:bg-emerald-400/10"
           >
             <span>
               ✓ Completed ({completedTotal.toLocaleString("en-PH")})
@@ -122,16 +122,16 @@ export default function QuestList({
             <div className="overflow-hidden">
               <ul className="mt-2 max-h-72 space-y-1.5 overflow-y-auto pr-1">
                 {completed.map((t) => (
-                  <li key={t.id} className="flex items-start gap-2.5 rounded-lg bg-emerald-50/60 px-2.5 py-2">
-                    <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-600 text-[9px] font-bold text-white" aria-hidden>
+                  <li key={t.id} className="flex items-start gap-2.5 rounded-lg bg-emerald-400/[0.06] px-2.5 py-2">
+                    <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-[9px] font-bold text-emerald-950" aria-hidden>
                       ✓
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-slate-800">{t.title}</p>
-                      <p className="truncate text-[11px] text-slate-500">{t.detail}</p>
+                      <p className="truncate text-xs font-semibold text-ink">{t.title}</p>
+                      <p className="truncate text-[11px] text-ink-3">{t.detail}</p>
                     </div>
                     {t.completedAt && (
-                      <time dateTime={t.completedAt} className="shrink-0 text-[10px] text-slate-400">
+                      <time dateTime={t.completedAt} className="shrink-0 text-[10px] text-ink-4">
                         {fmtDate(t.completedAt)}
                       </time>
                     )}
@@ -139,7 +139,7 @@ export default function QuestList({
                 ))}
               </ul>
               {completed.filter((t) => t.kind === "planting").length < completedTotal - completed.filter((t) => t.kind === "milestone").length && (
-                <p className="mt-2 text-center text-[11px] text-slate-400">Showing your latest completed plantings.</p>
+                <p className="mt-2 text-center text-[11px] text-ink-4">Showing your latest completed plantings.</p>
               )}
             </div>
           </div>

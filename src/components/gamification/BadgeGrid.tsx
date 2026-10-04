@@ -30,12 +30,12 @@ export default function BadgeGrid({ badges }: { badges: BadgeView[] }) {
               whileHover={{ y: -3 }}
               className={`relative overflow-hidden rounded-2xl border p-4 ${
                 unlocked
-                  ? "border-emerald-200 bg-gradient-to-br from-white to-emerald-50/70 shadow-[0_8px_24px_-14px_rgba(5,150,105,.45)]"
-                  : "border-slate-200 bg-white/70"
+                  ? "border-emerald-400/20 bg-gradient-to-br from-card to-emerald-400/[0.07] shadow-[0_8px_24px_-14px_rgba(5,150,105,.45)]"
+                  : "border-line bg-card/70"
               }`}
             >
               {unlocked && (
-                <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                <span className="absolute right-3 top-3 rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950">
                   Unlocked
                 </span>
               )}
@@ -43,44 +43,44 @@ export default function BadgeGrid({ badges }: { badges: BadgeView[] }) {
                 <span
                   className={`relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl ${
                     unlocked
-                      ? "bg-gradient-to-br from-amber-100 to-emerald-100 ring-2 ring-amber-200"
-                      : "bg-slate-100 grayscale ring-1 ring-slate-200"
+                      ? "bg-gradient-to-br from-amber-400/10 to-emerald-400/10 ring-2 ring-amber-400/30"
+                      : "bg-card-2 grayscale ring-1 ring-line"
                   }`}
                   aria-hidden
                 >
                   <span className={unlocked ? "" : "opacity-40"}>{b.icon}</span>
                   {!unlocked && (
-                    <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-slate-500 text-[10px] text-white ring-2 ring-white">
+                    <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-line-strong text-[10px] text-white ring-2 ring-card">
                       🔒
                     </span>
                   )}
                 </span>
                 <div className="min-w-0 flex-1 pr-14">
-                  <p className={`font-semibold ${unlocked ? "text-slate-900" : "text-slate-600"}`}>{b.name}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{b.description}</p>
+                  <p className={`font-semibold ${unlocked ? "text-ink" : "text-ink-2"}`}>{b.name}</p>
+                  <p className="mt-0.5 text-xs text-ink-3">{b.description}</p>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3 text-xs">
                 {unlocked ? (
-                  <span className="text-emerald-700">Earned {fmt(b.unlockedAt!)}</span>
+                  <span className="text-emerald-400">Earned {fmt(b.unlockedAt!)}</span>
                 ) : b.progress ? (
                   <div className="flex-1">
-                    <div className="mb-1 flex justify-between text-slate-500">
+                    <div className="mb-1 flex justify-between text-ink-3">
                       <span>Progress</span>
                       <span>
                         {b.progress.current} / {b.progress.target}
                       </span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-card-2">
                       <div className="eq-fill h-full rounded-full bg-emerald-400" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 ) : (
-                  <span className="text-slate-400">Locked</span>
+                  <span className="text-ink-4">Locked</span>
                 )}
                 {b.xpReward > 0 && (
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 font-bold ${unlocked ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-500"}`}>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 font-bold ${unlocked ? "bg-amber-400/15 text-amber-300" : "bg-card-2 text-ink-3"}`}>
                     +{b.xpReward} XP
                   </span>
                 )}

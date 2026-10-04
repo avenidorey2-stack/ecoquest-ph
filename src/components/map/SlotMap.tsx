@@ -174,7 +174,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (up to 1000) from escaping above page overlays.
-    <div className={expanded ? "fixed inset-0 isolate z-[1400] m-0 bg-white" : "relative isolate h-full w-full"}>
+    <div className={expanded ? "fixed inset-0 isolate z-[1400] m-0 bg-card" : "relative isolate h-full w-full"}>
       <MapContainer
         center={PH_CENTER}
         zoom={6}
@@ -216,7 +216,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
                   {slot.barangay && `${slot.barangay}, `}
                   {slot.city}, {slot.province}
                 </p>
-                {adminView && <p className="text-xs text-slate-500">{slot.region}</p>}
+                {adminView && <p className="text-xs text-ink-3">{slot.region}</p>}
                 <p>
                   {slot.pointsPerPlant} pts / plant · quest goal: {slot.questGoal} plant{slot.questGoal === 1 ? "" : "s"}
                 </p>
@@ -230,26 +230,26 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
                     </p>
                     <a
                       href={`/admin/slots?edit=${encodeURIComponent(slot.id)}`}
-                      className="mt-1 inline-block rounded-lg bg-emerald-700 px-3 py-2 font-semibold text-white! no-underline hover:bg-emerald-800"
+                      className="mt-1 inline-block rounded-lg bg-emerald-400 px-3 py-2 font-semibold text-emerald-950! no-underline hover:bg-emerald-300"
                     >
                       Edit slot
                     </a>
                   </>
                 ) : slot.alreadyClaimed ? (
-                  <p className="text-blue-600">You have an active quest here.</p>
+                  <p className="text-blue-400">You have an active quest here.</p>
                 ) : slot.claimable ? (
                   <button
                     type="button"
                     onClick={() => claim(slot.id)}
                     disabled={claiming !== null}
-                    className="mt-2 w-full rounded-lg bg-emerald-700 px-3 py-2.5 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                    className="mt-2 w-full rounded-lg bg-emerald-400 px-3 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
                   >
                     {claiming === slot.id ? "Claiming…" : "Claim slot"}
                   </button>
                 ) : slot.status === "OPEN" && slot.spotsLeft === 0 ? (
-                  <p className="text-slate-500">This slot is full right now.</p>
+                  <p className="text-ink-3">This slot is full right now.</p>
                 ) : (
-                  <p className="text-slate-500">Only claimable by residents of {slot.city}.</p>
+                  <p className="text-ink-3">Only claimable by residents of {slot.city}.</p>
                 )}
               </div>
             </Popup>
@@ -262,7 +262,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-label={expanded ? "Close full-screen map" : "Expand map to full screen"}
-        className="absolute right-3 top-3 z-[1000] flex h-11 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-md ring-1 ring-slate-900/10 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600 active:bg-slate-100"
+        className="absolute right-3 top-3 z-[1000] flex h-11 items-center gap-1.5 rounded-xl bg-card px-3 text-sm font-semibold text-ink-2 shadow-md ring-1 ring-white/10 hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-emerald-400 active:bg-card-2"
       >
         {expanded ? <CloseIcon className="h-4 w-4" /> : <ExpandIcon className="h-4 w-4" />}
         {expanded ? "Close" : "Expand"}
@@ -272,10 +272,10 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
       {message && (
         <div
           role="status"
-          className="absolute inset-x-14 top-16 z-[1000] mx-auto flex w-fit max-w-sm items-start gap-2 rounded-lg bg-white px-4 py-2 text-sm shadow-md ring-1 ring-slate-900/10"
+          className="absolute inset-x-14 top-16 z-[1000] mx-auto flex w-fit max-w-sm items-start gap-2 rounded-lg bg-card px-4 py-2 text-sm shadow-md ring-1 ring-white/10"
         >
           <span>{message}</span>
-          <button type="button" className="-my-1 -mr-2 px-2 py-1 text-slate-500" onClick={() => setMessage(null)} aria-label="Dismiss">
+          <button type="button" className="-my-1 -mr-2 px-2 py-1 text-ink-3" onClick={() => setMessage(null)} aria-label="Dismiss">
             ×
           </button>
         </div>
@@ -283,8 +283,8 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
 
       {/* The dashboard card's legend sits outside the map, so repeat it in full screen. */}
       {expanded && (
-        <div className="pointer-events-none absolute bottom-8 left-3 z-[1000] max-w-[calc(100%-1.5rem)] rounded-xl bg-white/95 px-3 py-2 text-xs text-slate-600 shadow-md ring-1 ring-slate-900/10">
-          {areaLabel && <p className="font-semibold text-slate-800">{areaLabel}</p>}
+        <div className="pointer-events-none absolute bottom-8 left-3 z-[1000] max-w-[calc(100%-1.5rem)] rounded-xl bg-card/95 px-3 py-2 text-xs text-ink-2 shadow-md ring-1 ring-white/10">
+          {areaLabel && <p className="font-semibold text-ink">{areaLabel}</p>}
           <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {legend.map(([label, color]) => (
               <li key={label} className="flex items-center gap-1.5">

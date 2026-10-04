@@ -187,9 +187,9 @@ export default function SlotForm({
       <div>
         <h2 className="font-semibold">{isNew ? "Add planting slot" : "Edit slot rules"}</h2>
         {isNew ? (
-          <p className="text-xs text-slate-500">Pin captured from the map — adjust the coordinates if needed.</p>
+          <p className="text-xs text-ink-3">Pin captured from the map — adjust the coordinates if needed.</p>
         ) : (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-ink-3">
             {slot.latitude.toFixed(5)}, {slot.longitude.toFixed(5)} · {slot.activeQuests} active quest(s)
           </p>
         )}
@@ -221,43 +221,43 @@ export default function SlotForm({
             />
           </label>
           {!coordsValid && (
-            <p className="col-span-2 text-xs text-red-600">Coordinates must be numbers inside the Philippines.</p>
+            <p className="col-span-2 text-xs text-red-400">Coordinates must be numbers inside the Philippines.</p>
           )}
         </fieldset>
       )}
 
       {locating ? (
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-busy="true">
-          <p className="text-xs font-semibold text-slate-600">📍 Detecting location from the pin…</p>
+        <div className="space-y-2 rounded-xl border border-line bg-card-2 p-3" aria-busy="true">
+          <p className="text-xs font-semibold text-ink-2">📍 Detecting location from the pin…</p>
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className="block h-4 animate-pulse rounded bg-slate-200" style={{ width: `${85 - i * 12}%` }} />
+            <span key={i} className="block h-4 animate-pulse rounded bg-card-3" style={{ width: `${85 - i * 12}%` }} />
           ))}
         </div>
       ) : isNew && located?.place && !manualPlace ? (
-        <section aria-label="Detected location" className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+        <section aria-label="Detected location" className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.07] p-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-emerald-800">📍 Auto-filled from pin</p>
+            <p className="text-xs font-semibold text-emerald-300">📍 Auto-filled from pin</p>
             <button
               type="button"
               onClick={() => setManualPlace(true)}
-              className="text-xs font-medium text-emerald-700 underline-offset-2 hover:underline"
+              className="text-xs font-medium text-emerald-400 underline-offset-2 hover:underline"
             >
               Change
             </button>
           </div>
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-            <dt className="text-slate-500">Region</dt>
-            <dd className="font-medium text-slate-900">{located.place.region}</dd>
-            <dt className="text-slate-500">Province</dt>
-            <dd className="font-medium text-slate-900">{located.place.province}</dd>
-            <dt className="text-slate-500">City / Mun.</dt>
-            <dd className="font-medium text-slate-900">{located.place.city}</dd>
+            <dt className="text-ink-3">Region</dt>
+            <dd className="font-medium text-ink">{located.place.region}</dd>
+            <dt className="text-ink-3">Province</dt>
+            <dd className="font-medium text-ink">{located.place.province}</dd>
+            <dt className="text-ink-3">City / Mun.</dt>
+            <dd className="font-medium text-ink">{located.place.city}</dd>
           </dl>
         </section>
       ) : (
         <>
           {isNew && !located?.place && (
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-300">
               {located?.failed
                 ? "Couldn't reach the location service. "
                 : `Couldn't match this pin to a PSGC city${located?.osmName ? ` (map says “${located.osmName}”)` : ""}. `}
@@ -285,7 +285,7 @@ export default function SlotForm({
 
       {!locating && (
         <label className="block text-sm">
-          Barangay <span className="text-xs text-slate-500">(optional)</span>
+          Barangay <span className="text-xs text-ink-3">(optional)</span>
           <input
             className={input}
             value={barangay}
@@ -294,7 +294,7 @@ export default function SlotForm({
             placeholder="e.g. Poblacion"
           />
           {isNew && located?.place && (
-            <span className="text-xs text-slate-500">Detected from OpenStreetMap. Double-check it.</span>
+            <span className="text-xs text-ink-3">Detected from OpenStreetMap. Double-check it.</span>
           )}
         </label>
       )}
@@ -320,7 +320,7 @@ export default function SlotForm({
             </optgroup>
           ))}
         </select>
-        <span className="text-xs text-slate-500">Approved plantings count toward this species in the Tree Directory.</span>
+        <span className="text-xs text-ink-3">Approved plantings count toward this species in the Tree Directory.</span>
       </label>
 
       <label className="block text-sm">
@@ -348,7 +348,7 @@ export default function SlotForm({
           onChange={(e) => set("questGoal", e.target.value)}
           required
         />
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-ink-3">
           Approved plants needed to complete one quest. Planters can submit proof in several batches.
           {!isNew && " Applies to quests claimed after saving."}
         </span>
@@ -366,7 +366,7 @@ export default function SlotForm({
           onChange={(e) => set("maxParticipants", e.target.value)}
           required
         />
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-ink-3">
           Planters who can work this slot at once (active or awaiting review).
           {!isNew && slot.activeQuests > 0 && ` Currently ${slot.activeQuests}.`}
         </span>
@@ -381,7 +381,7 @@ export default function SlotForm({
             <option value="CLOSED">Closed (hidden from map)</option>
           </select>
           {values.status === "CLOSED" && slot.status !== "CLOSED" && (
-            <span role="note" className="mt-1 block rounded bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+            <span role="note" className="mt-1 block rounded bg-amber-400/10 px-2 py-1.5 text-xs text-amber-200">
               Closing stops new claims and proof.
               {slot.activeQuests > 0 &&
                 ` ${slot.activeQuests} planter(s) with a quest here will be notified and their quests end (approved plants and points are kept; proof already submitted can still be reviewed).`}
@@ -390,17 +390,17 @@ export default function SlotForm({
         </label>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={saving || locating}
-          className="rounded bg-emerald-700 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded bg-emerald-400 px-4 py-1.5 text-sm font-medium text-emerald-950 disabled:opacity-50"
         >
           {saving ? "Saving…" : isNew ? "Create slot" : "Save changes"}
         </button>
-        <button type="button" onClick={onCancel} className="rounded px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
+        <button type="button" onClick={onCancel} className="rounded px-4 py-1.5 text-sm text-ink-2 hover:bg-card-2">
           Cancel
         </button>
       </div>

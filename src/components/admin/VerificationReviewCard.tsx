@@ -44,7 +44,7 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
   }
 
   return (
-    <li className="overflow-hidden rounded-xl border bg-white shadow-sm">
+    <li className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="bg-black">
         {item.mediaType.startsWith("video/") ? (
           <video src={item.mediaUrl} controls className="mx-auto max-h-80 w-full" />
@@ -57,10 +57,10 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
       <div className="space-y-3 p-4 text-sm">
         <div>
           <p className="font-medium">{item.user.name ?? item.user.email ?? "Unknown user"}</p>
-          <p className="text-slate-600">
+          <p className="text-ink-2">
             {item.slot.requiredPlantType} · {item.slot.city}, {item.slot.province}
           </p>
-          <p className="text-xs text-slate-500">Submitted {new Date(item.submittedAt).toLocaleString("en-PH")}</p>
+          <p className="text-xs text-ink-3">Submitted {new Date(item.submittedAt).toLocaleString("en-PH")}</p>
         </div>
 
         <div className="flex items-end gap-3">
@@ -75,12 +75,12 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
               className="mt-1 block w-24 rounded border px-2 py-1"
             />
           </label>
-          <p className="pb-1 text-slate-600">
-            = <span className="font-semibold text-emerald-700">{points} pts</span>
+          <p className="pb-1 text-ink-2">
+            = <span className="font-semibold text-emerald-400">{points} pts</span>
             {count !== item.plantCount && <span className="ml-1 text-xs">(claimed {item.plantCount})</span>}
           </p>
         </div>
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+        <p className="rounded-lg bg-emerald-400/10 px-3 py-2 text-xs text-emerald-200">
           Quest progress: <span className="font-semibold">{item.quest.progress}/{item.quest.target}</span> planted
           {points > 0 &&
             (item.quest.progress + count >= item.quest.target
@@ -95,20 +95,20 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
           className="block w-full rounded border px-2 py-1"
         />
 
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-red-400">{error}</p>}
 
         <div className="flex gap-2">
           <button
             onClick={() => review("approve")}
             disabled={busy || points === 0}
-            className="flex-1 rounded bg-emerald-700 py-2 font-medium text-white disabled:opacity-50"
+            className="flex-1 rounded bg-emerald-400 py-2 font-medium text-emerald-950 disabled:opacity-50"
           >
             Approve
           </button>
           <button
             onClick={() => review("reject")}
             disabled={busy}
-            className="flex-1 rounded bg-red-50 py-2 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+            className="flex-1 rounded bg-red-400/10 py-2 font-medium text-red-300 hover:bg-red-400/15 disabled:opacity-50"
           >
             Reject
           </button>

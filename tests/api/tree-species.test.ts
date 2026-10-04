@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
 import { POST as review } from "@/app/api/admin/verifications/[id]/review/route";
 import { POST as createSlotRoute } from "@/app/api/admin/slots/route";
@@ -7,6 +8,8 @@ import { GET as artRoute } from "@/app/api/trees/art/[slug]/route";
 import { getPlantingImpact } from "@/lib/impact";
 import { prisma } from "@/lib/prisma";
 import { seedTreeData, syncTreeSpecies } from "@/lib/species";
+import { TREE_SPECIES } from "@/data/tree-species";
+import { treePhoto } from "@/data/tree-photos";
 import { CODES, createSlot, createUser, ctx, jsonRequest, resetDb, signInAs } from "../helpers";
 
 beforeEach(async () => {
@@ -155,12 +158,20 @@ describe("admin slots with species", () => {
 });
 
 describe("GET /api/trees/art/:slug", () => {
-  it("serves a cacheable SVG illustration", async () => {
-    const res = await artRoute(new Request("http://test.local"), ctx({ slug: "narra" }));
-    expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toContain("image/svg+xml");
+  it("redirects to the species photo, cacheably", async () => {
+    const res = await artRoute(new Request("http://test.local/api/trees/art/narra"), ctx({ slug: "narra" }));
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("http://test.local/trees/narra-sm.jpg");
     expect(res.headers.get("Cache-Control")).toContain("public");
-    expect(await res.text()).toMatch(/^<svg/);
+  });
+
+  it("every catalogue species has a photo file and a credit", () => {
+    for (const s of TREE_SPECIES) {
+      const photo = treePhoto(s.slug);
+      expect(photo, s.slug).not.toBeNull();
+      for (const file of [photo!.card, photo!.full]) expect(existsSync(`public${file}`), file).toBe(true);
+      expect(photo!.credit.author && photo!.credit.license && photo!.credit.source.startsWith("https://commons.wikimedia.org/"), s.slug).toBeTruthy();
+    }
   });
 
   it("404s for unknown species", async () => {

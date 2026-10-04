@@ -45,7 +45,7 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
           📬
         </p>
         <h2 className="font-semibold">Check your inbox</h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-ink-2">
           If <strong>{sentTo}</strong> can be registered, we&apos;ve sent it a link to confirm your email and set your
           password. It expires in 24 hours — check your spam folder too.
         </p>
@@ -53,27 +53,27 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
           <a
             href="/dev/mailbox"
             target="_blank"
-            className="block rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 hover:bg-amber-100"
+            className="block rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200 hover:bg-amber-400/15"
           >
             <strong>Development mode:</strong> no real email is sent. Open the dev mailbox
           </a>
         )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
         <button
           onClick={send}
           disabled={busy || cooldown > 0}
-          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-medium transition hover:bg-slate-50 motion-safe:active:scale-[0.98] disabled:text-slate-400"
+          className="w-full rounded-xl border border-line-strong bg-card py-2.5 text-sm font-medium transition hover:bg-card-2 motion-safe:active:scale-[0.98] disabled:text-ink-4"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : busy ? "Sending…" : "Resend email"}
         </button>
-        <button onClick={() => setSentTo(null)} className="text-sm text-emerald-700">
+        <button onClick={() => setSentTo(null)} className="text-sm text-emerald-400">
           Use a different email
         </button>
       </div>
     );
   }
 
-  const input = "mt-1.5 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 sm:text-sm";
+  const input = "mt-1.5 block w-full rounded-xl border border-line-strong bg-card px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-ink-4 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/20 sm:text-sm";
   return (
     <form
       onSubmit={(e) => {
@@ -82,11 +82,11 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
       }}
       className="space-y-3"
     >
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Name
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="name" required className={input} />
       </label>
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink-2">
         Email
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required className={input} />
       </label>
@@ -98,17 +98,17 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
         </label>
       </div>
       {error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
       )}
       <button
         disabled={busy}
-        className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-800 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
         {busy ? "Sending…" : "Email me a confirmation link"}
       </button>
-      <p className="text-xs text-slate-500">You&apos;ll set your password after confirming your email.</p>
+      <p className="text-xs text-ink-3">You&apos;ll set your password after confirming your email.</p>
     </form>
   );
 }

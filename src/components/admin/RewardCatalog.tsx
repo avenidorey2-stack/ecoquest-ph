@@ -39,10 +39,10 @@ function RewardRow({ reward }: { reward: AdminReward }) {
 
   const num = "w-24 rounded border px-2 py-1 text-right";
   return (
-    <tr className={reward.isActive ? "" : "bg-slate-50 text-slate-500"}>
+    <tr className={reward.isActive ? "" : "bg-card-2 text-ink-3"}>
       <td className="px-3 py-2">
         <p className="font-medium">{reward.brand}</p>
-        <p className="text-xs text-slate-500">{TYPE_LABELS[reward.rewardType]}</p>
+        <p className="text-xs text-ink-3">{TYPE_LABELS[reward.rewardType]}</p>
       </td>
       <td className="px-3 py-2">
         ₱ <input className={num} type="number" min={1} value={value} onChange={(e) => setValue(e.target.value)} />
@@ -56,7 +56,7 @@ function RewardRow({ reward }: { reward: AdminReward }) {
           <button
             disabled={busy}
             onClick={() => save({ costPoints: Number(cost), valuePesos: Number(value) })}
-            className="rounded bg-emerald-700 px-3 py-1 text-white disabled:opacity-50"
+            className="rounded bg-emerald-400 px-3 py-1 text-emerald-950 disabled:opacity-50"
           >
             Save
           </button>
@@ -64,11 +64,11 @@ function RewardRow({ reward }: { reward: AdminReward }) {
         <button
           disabled={busy}
           onClick={() => save({ isActive: !reward.isActive })}
-          className="rounded border px-3 py-1 hover:bg-slate-100 disabled:opacity-50"
+          className="rounded border px-3 py-1 hover:bg-card-2 disabled:opacity-50"
         >
           {reward.isActive ? "Hide" : "Show"}
         </button>
-        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
       </td>
     </tr>
   );
@@ -99,7 +99,7 @@ function NewRewardForm({ brands }: { brands: Record<RewardType, readonly string[
 
   const field = "mt-1 block rounded border px-2 py-1.5 text-sm";
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 rounded-xl border bg-white p-4 text-sm">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 text-sm">
       <label>
         Type
         <select
@@ -134,10 +134,10 @@ function NewRewardForm({ brands }: { brands: Record<RewardType, readonly string[
         Cost (points)
         <input className={`${field} w-28`} type="number" min={1} value={cost} onChange={(e) => setCost(e.target.value)} required />
       </label>
-      <button disabled={busy} className="rounded bg-emerald-700 px-4 py-2 font-medium text-white disabled:opacity-50">
+      <button disabled={busy} className="rounded bg-emerald-400 px-4 py-2 font-medium text-emerald-950 disabled:opacity-50">
         Add reward
       </button>
-      {error && <p className="w-full text-red-600">{error}</p>}
+      {error && <p className="w-full text-red-400">{error}</p>}
     </form>
   );
 }
@@ -153,11 +153,11 @@ export default function RewardCatalog({
     <div className="space-y-4">
       <NewRewardForm brands={brands} />
       {rewards.length === 0 ? (
-        <p className="text-sm text-slate-500">No rewards yet. Add one above.</p>
+        <p className="text-sm text-ink-3">No rewards yet. Add one above.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full text-sm">
-            <thead className="border-b bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <thead className="border-b bg-card-2 text-left text-xs uppercase text-ink-3">
               <tr>
                 <th className="px-3 py-2">Reward</th>
                 <th className="px-3 py-2">Value</th>

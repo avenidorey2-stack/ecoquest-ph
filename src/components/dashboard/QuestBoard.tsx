@@ -41,30 +41,30 @@ function MissionRow({ m }: { m: MissionView }) {
   }
 
   return (
-    <li className={`rounded-xl p-3 ring-1 ${m.status === "claimed" ? "bg-slate-50 ring-slate-100" : m.status === "ready" ? "bg-amber-50/70 ring-amber-200" : "bg-white ring-slate-200"}`}>
+    <li className={`rounded-xl p-3 ring-1 ${m.status === "claimed" ? "bg-card-2 ring-line" : m.status === "ready" ? "bg-amber-400/[0.07] ring-amber-400/30" : "bg-card ring-line"}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className={`truncate text-sm font-semibold ${m.status === "claimed" ? "text-slate-500" : "text-slate-900"}`}>
+          <p className={`truncate text-sm font-semibold ${m.status === "claimed" ? "text-ink-3" : "text-ink"}`}>
             {m.status === "claimed" && "✓ "}
             {m.title}
           </p>
-          <p className="truncate text-xs text-slate-500" title={m.description ?? undefined}>
+          <p className="truncate text-xs text-ink-3" title={m.description ?? undefined}>
             {m.description || meta.describe(m.target)}
             {m.kind === "SIDE" && m.endsAt && ` · ends ${fmtDay(m.endsAt)}`}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+        <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-bold text-amber-300">
           +{m.rewardPoints.toLocaleString("en-PH")} pts{m.rewardXp > 0 && ` · ${m.rewardXp} XP`}
         </span>
       </div>
       <div className="mt-2 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={m.target}>
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-2" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={m.target}>
           <div
-            className={`eq-fill h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-slate-300" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
+            className={`eq-fill h-full rounded-full transition-[width] duration-700 ${m.status === "claimed" ? "bg-line-strong" : "bg-gradient-to-r from-emerald-500 to-emerald-600"}`}
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className="shrink-0 text-[11px] font-semibold text-slate-600">
+        <span className="shrink-0 text-[11px] font-semibold text-ink-2">
           {shown}/{m.target} {meta.unit}
         </span>
       </div>
@@ -78,14 +78,14 @@ function MissionRow({ m }: { m: MissionView }) {
             {busy ? "Claiming…" : `Claim +${m.rewardPoints.toLocaleString("en-PH")} pts`}
           </button>
         ) : m.status === "claimed" ? (
-          <span className="text-xs font-medium text-emerald-700">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & claimed"}</span>
+          <span className="text-xs font-medium text-emerald-400">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & claimed"}</span>
         ) : (
-          <Link href={meta.href} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800">
+          <Link href={meta.href} className="rounded-lg border border-line px-3 py-1 text-xs font-medium text-ink-2 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300">
             {meta.action}
           </Link>
         )}
         {message && (
-          <span role="status" className={`text-xs ${message.ok ? "text-emerald-700" : "text-red-600"}`}>
+          <span role="status" className={`text-xs ${message.ok ? "text-emerald-400" : "text-red-400"}`}>
             {message.text}
           </span>
         )}
@@ -95,7 +95,7 @@ function MissionRow({ m }: { m: MissionView }) {
 }
 
 function MissionList({ missions, empty }: { missions: MissionView[]; empty: string }) {
-  if (!missions.length) return <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">{empty}</p>;
+  if (!missions.length) return <p className="rounded-xl bg-card-2 p-4 text-center text-sm text-ink-3">{empty}</p>;
   // Claimable first, then in progress, then already claimed.
   const order = { ready: 0, active: 1, claimed: 2 } as const;
   return (
@@ -132,7 +132,7 @@ export default function QuestBoard({
 
   return (
     <div className="space-y-4">
-      <div role="tablist" aria-label="Quest types" className="flex gap-1 rounded-xl bg-slate-100 p-1">
+      <div role="tablist" aria-label="Quest types" className="flex gap-1 rounded-xl bg-card-2 p-1">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -142,13 +142,13 @@ export default function QuestBoard({
             aria-controls={`quest-panel-${t.id}`}
             onClick={() => setTab(t.id)}
             className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
-              tab === t.id ? "text-emerald-800" : "text-slate-500 hover:text-slate-800"
+              tab === t.id ? "text-emerald-300" : "text-ink-3 hover:text-ink"
             }`}
           >
-            {tab === t.id && <ActivePill id="quest-tab" className="inset-0 rounded-lg bg-white shadow-sm ring-1 ring-slate-200" />}
+            {tab === t.id && <ActivePill id="quest-tab" className="inset-0 rounded-lg bg-card shadow-sm ring-1 ring-line" />}
             <span className="relative">{t.label}</span>
             {t.badge > 0 && (
-              <span className={`relative grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] ${t.id === "planting" ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"}`}>
+              <span className={`relative grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] ${t.id === "planting" ? "bg-emerald-400 text-emerald-950" : "bg-amber-500 text-amber-950"}`}>
                 {t.badge}
               </span>
             )}
@@ -159,7 +159,7 @@ export default function QuestBoard({
       <div role="tabpanel" id={`quest-panel-${tab}`} aria-labelledby={`quest-tab-${tab}`}>
         {tab === "daily" && (
           <div className="space-y-3">
-            <p className="flex items-center justify-between text-xs text-slate-500">
+            <p className="flex items-center justify-between text-xs text-ink-3">
               <span>
                 {dailyDone}/{missions.daily.length} done today
               </span>

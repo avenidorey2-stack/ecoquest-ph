@@ -34,13 +34,13 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-        <p className="mt-1 text-sm text-slate-500">Sign in to continue your planting quests.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Welcome back</h1>
+        <p className="mt-1 text-sm text-ink-3">Sign in to continue your planting quests.</p>
       </div>
 
-      {notice && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+      {notice && <p className="rounded-lg bg-emerald-400/10 p-3 text-sm text-emerald-300">{notice}</p>}
       {error && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
+        <p className="rounded-lg bg-red-400/10 p-3 text-sm text-red-300" role="alert">
           {error}
         </p>
       )}
@@ -51,8 +51,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <GoogleButton label="Continue with Google" />
           </form>
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            <span className="h-px flex-1 bg-slate-200" /> or <span className="h-px flex-1 bg-slate-200" />
+          <div className="flex items-center gap-3 text-xs text-ink-4">
+            <span className="h-px flex-1 bg-card-3" /> or <span className="h-px flex-1 bg-card-3" />
           </div>
         </>
       )}
@@ -60,14 +60,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <PasswordLoginForm callbackUrl={callbackUrl} email={email} />
 
       <p className="text-center text-sm">
-        <Link href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"} className="text-emerald-700">
+        <Link href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"} className="text-emerald-400">
           Forgot your password?
         </Link>
       </p>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-center text-sm text-ink-2">
         New here?{" "}
-        <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-emerald-700">
+        <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-emerald-400">
           Create an account
         </Link>
       </p>

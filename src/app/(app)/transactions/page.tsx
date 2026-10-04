@@ -11,9 +11,9 @@ export const metadata = { title: "Transactions · EcoQuest PH" };
 const HISTORY_SIZE = 100;
 
 const REDEMPTION_STATUS = {
-  PENDING: { label: "Processing", style: "bg-amber-50 text-amber-800 ring-amber-200" },
-  FULFILLED: { label: "Fulfilled", style: "bg-emerald-50 text-emerald-800 ring-emerald-200" },
-  REJECTED: { label: "Declined", style: "bg-red-50 text-red-700 ring-red-200" },
+  PENDING: { label: "Processing", style: "bg-amber-400/10 text-amber-300 ring-amber-400/30" },
+  FULFILLED: { label: "Fulfilled", style: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" },
+  REJECTED: { label: "Declined", style: "bg-red-400/10 text-red-300 ring-red-400/30" },
 } as const;
 
 const fmtDateTime = (d: Date) =>
@@ -52,32 +52,32 @@ export default async function TransactionsPage() {
 
       <ul className="eq-stagger eq-spring grid grid-cols-1 gap-3 sm:grid-cols-3">
         {summary.map((s) => (
-          <li key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{s.label}</p>
-            <p className="mt-1 text-xl font-bold text-slate-900">{s.value}</p>
+          <li key={s.label} className="eq-panel rounded-2xl border border-line/80 bg-card p-4 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">{s.label}</p>
+            <p className="mt-1 text-xl font-bold text-ink">{s.value}</p>
           </li>
         ))}
       </ul>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">History</h2>
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+      <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card shadow-sm">
+        <header className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">History</h2>
+          <span className="flex items-center gap-1.5 text-xs text-ink-4">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden /> Live status
           </span>
         </header>
 
         {history.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-slate-500">
+          <div className="px-5 py-10 text-center text-sm text-ink-3">
             <p>No transactions yet.</p>
             <p className="mt-1">
               Order seedlings in the{" "}
-              <Link href="/shop" className="font-medium text-emerald-700 hover:underline">Shop</Link> or redeem{" "}
-              <Link href="/rewards" className="font-medium text-emerald-700 hover:underline">Rewards</Link>.
+              <Link href="/shop" className="font-medium text-emerald-400 hover:underline">Shop</Link> or redeem{" "}
+              <Link href="/rewards" className="font-medium text-emerald-400 hover:underline">Rewards</Link>.
             </p>
           </div>
         ) : (
-          <ol className="eq-stagger divide-y divide-slate-100">
+          <ol className="eq-stagger divide-y divide-line">
             {history.map((t) => {
               const isRefund = t.kind === "REFUND";
               const Icon = t.kind === "SEEDLING_ORDER" ? SproutIcon : t.kind === "REWARD_REDEMPTION" ? GiftIcon : WalletIcon;
@@ -89,7 +89,7 @@ export default async function TransactionsPage() {
                 <li key={t.id} className="flex gap-3 px-5 py-4">
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ring-1 ${
-                      isRefund ? "bg-sky-50 text-sky-700 ring-sky-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                      isRefund ? "bg-sky-400/10 text-sky-300 ring-sky-400/30" : "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -98,14 +98,14 @@ export default async function TransactionsPage() {
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900">{t.description}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-medium text-ink">{t.description}</p>
+                        <p className="text-xs text-ink-3">
                           {fmtDateTime(t.createdAt)} ·{" "}
                           {t.kind === "SEEDLING_ORDER" ? "Seedling order" : t.kind === "REWARD_REDEMPTION" ? "Reward" : "Refund"}
                           {t.kind === "SEEDLING_ORDER" && t.currency === "PESOS" && " · cash on delivery"}
                         </p>
                       </div>
-                      <p className={`text-sm font-semibold ${isRefund ? "text-sky-700" : "text-slate-900"}`}>
+                      <p className={`text-sm font-semibold ${isRefund ? "text-sky-300" : "text-ink"}`}>
                         {isRefund ? "+" : t.currency === "POINTS" ? "−" : ""}
                         {formatAmount(t.amount, t.currency)}
                       </p>
@@ -122,7 +122,7 @@ export default async function TransactionsPage() {
                               <li
                                 key={step}
                                 title={ORDER_STATUS_LABELS[step]}
-                                className={`h-1.5 flex-1 rounded-full ${i <= stepIndex ? "bg-emerald-500" : "bg-slate-200"}`}
+                                className={`h-1.5 flex-1 rounded-full ${i <= stepIndex ? "bg-emerald-500" : "bg-card-3"}`}
                               />
                             ))}
                           </ol>
@@ -135,9 +135,9 @@ export default async function TransactionsPage() {
                         <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${REDEMPTION_STATUS[redemptionStatus].style}`}>
                           {REDEMPTION_STATUS[redemptionStatus].label}
                         </span>
-                        {t.redemption?.eWalletNumber && <p className="text-xs text-slate-500">To {t.redemption.eWalletNumber}</p>}
+                        {t.redemption?.eWalletNumber && <p className="text-xs text-ink-3">To {t.redemption.eWalletNumber}</p>}
                         {redemptionStatus === "FULFILLED" && t.redemption?.adminNote && (
-                          <p className="break-all text-xs text-slate-600">
+                          <p className="break-all text-xs text-ink-2">
                             {t.redemption.reward.rewardType === "VOUCHER" ? "Voucher code: " : "Reference no.: "}
                             <span className="font-mono font-medium">{t.redemption.adminNote}</span>
                           </p>
@@ -153,7 +153,7 @@ export default async function TransactionsPage() {
       </section>
 
       {history.length === HISTORY_SIZE && (
-        <p className="text-center text-xs text-slate-500">Showing your latest {HISTORY_SIZE} transactions.</p>
+        <p className="text-center text-xs text-ink-3">Showing your latest {HISTORY_SIZE} transactions.</p>
       )}
     </div>
   );

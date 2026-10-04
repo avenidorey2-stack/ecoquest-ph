@@ -34,7 +34,7 @@ export default async function SeedlingShopPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-900/10 bg-gradient-to-br from-emerald-800 to-emerald-950 p-5 text-white shadow-sm sm:p-6">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-400/10 bg-gradient-to-br from-emerald-800 to-emerald-950 p-5 text-white shadow-sm sm:p-6">
         <div className="max-w-xl">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
             <SproutIcon className="h-4 w-4" /> Seedling shop
@@ -55,7 +55,7 @@ export default async function SeedlingShopPage() {
       </section>
 
       {products.length === 0 ? (
-        <p className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        <p className="eq-panel rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-3">
           No seedlings are in stock right now. Check back soon!
         </p>
       ) : (
@@ -65,9 +65,9 @@ export default async function SeedlingShopPage() {
             return (
               <li
                 key={p.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,.04),0_8px_24px_-12px_rgba(15,23,42,.08)]"
+                className="eq-panel flex flex-col overflow-hidden rounded-2xl border border-line/80 bg-card shadow-[0_1px_2px_rgba(15,23,42,.04),0_8px_24px_-12px_rgba(15,23,42,.08)]"
               >
-                <div className="relative aspect-[4/3] bg-cream-100">
+                <div className="relative aspect-[4/3] bg-card-2">
                   {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG illustration */}
                   <img
                     src={p.species.imageUrl}
@@ -75,38 +75,38 @@ export default async function SeedlingShopPage() {
                     loading="lazy"
                     className={`h-full w-full object-cover ${soldOut ? "opacity-50 grayscale" : ""}`}
                   />
-                  <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 shadow-sm">
+                  <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-full bg-card/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300 shadow-sm">
                     {p.species.category}
                   </span>
                 </div>
 
                 <div className="flex flex-1 flex-col gap-3 p-4">
                   <div>
-                    <h3 className="font-semibold text-slate-900">{p.species.name}</h3>
-                    <p className="text-xs italic text-slate-500">{p.species.scientificName}</p>
+                    <h3 className="font-semibold text-ink">{p.species.name}</h3>
+                    <p className="text-xs italic text-ink-3">{p.species.scientificName}</p>
                   </div>
 
                   <div className="flex items-end justify-between gap-2">
                     <div>
-                      <p className="flex items-center gap-1 text-lg font-bold text-emerald-800">
+                      <p className="flex items-center gap-1 text-lg font-bold text-emerald-300">
                         <CoinIcon className="h-4 w-4 text-amber-500" />
                         {p.priceInPoints.toLocaleString("en-PH")}
-                        <span className="text-xs font-medium text-slate-500">pts each</span>
+                        <span className="text-xs font-medium text-ink-3">pts each</span>
                       </p>
                       {p.priceInPesos > 0 && (
-                        <p className="text-xs font-medium text-slate-600">or {formatPesos(p.priceInPesos)} cash on delivery</p>
+                        <p className="text-xs font-medium text-ink-2">or {formatPesos(p.priceInPesos)} cash on delivery</p>
                       )}
                     </div>
                     <p
                       className={`text-right text-xs font-medium ${
-                        soldOut ? "text-red-600" : p.stockQuantity <= LOW_STOCK ? "text-amber-700" : "text-slate-500"
+                        soldOut ? "text-red-400" : p.stockQuantity <= LOW_STOCK ? "text-amber-300" : "text-ink-3"
                       }`}
                     >
                       {soldOut ? "Out of stock" : `${p.stockQuantity.toLocaleString("en-PH")} available`}
                     </p>
                   </div>
 
-                  <div className="mt-auto border-t border-slate-100 pt-3">
+                  <div className="mt-auto border-t border-line pt-3">
                     <OrderSeedlingForm
                       product={{
                         id: p.id,
@@ -126,24 +126,24 @@ export default async function SeedlingShopPage() {
         </ul>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-        <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">My seedling orders</h2>
-          <Link href="/transactions" className="text-xs font-medium text-emerald-700 hover:text-emerald-900">
+      <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">
+        <header className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">My seedling orders</h2>
+          <Link href="/transactions" className="text-xs font-medium text-emerald-400 hover:text-emerald-200">
             Full history
           </Link>
         </header>
         {orders.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-500">No orders yet — pick a seedling above to get started.</p>
+          <p className="px-5 py-6 text-sm text-ink-3">No orders yet — pick a seedling above to get started.</p>
         ) : (
-          <ul className="eq-stagger divide-y divide-slate-100 text-sm">
+          <ul className="eq-stagger divide-y divide-line text-sm">
             {orders.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                 <div className="min-w-0">
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-ink">
                     {o.quantity} × {o.product.species.name}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-3">
                     {fmtDate(o.createdAt)} · {formatAmount(o.totalPrice, o.currencyUsed)}
                     {o.currencyUsed === "PESOS" && " · cash on delivery"}
                   </p>
@@ -156,6 +156,14 @@ export default async function SeedlingShopPage() {
           </ul>
         )}
       </section>
+
+      <p className="text-center text-xs text-ink-4">
+        Seedling photos: Wikimedia Commons contributors, credited on each tree in the{" "}
+        <Link href="/trees" className="underline underline-offset-2 hover:text-ink-2">
+          Tree Directory
+        </Link>
+        .
+      </p>
     </div>
   );
 }

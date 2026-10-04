@@ -39,7 +39,7 @@ export default function PatronBanner({ ads }: { ads: Ad[] }) {
         {/* eslint-disable-next-line @next/next/no-img-element -- external sponsor banner */}
         <img src={ad.imageUrl} alt={`${ad.companyName} — sponsor`} className="aspect-[4/1] w-full object-cover" />
       </a>
-      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+      <div className="mt-1 flex items-center justify-between text-[11px] text-ink-3">
         <span>Sponsored · {ad.companyName}</span>
         {ads.length > 1 && (
           <span className="flex gap-1">
@@ -49,7 +49,7 @@ export default function PatronBanner({ ads }: { ads: Ad[] }) {
                 onClick={() => setIndex(i)}
                 aria-label={`Show ${a.companyName}`}
                 aria-current={i === index % ads.length}
-                className={`h-1.5 w-1.5 rounded-full ${i === index % ads.length ? "bg-emerald-700" : "bg-slate-300"}`}
+                className={`h-1.5 w-1.5 rounded-full ${i === index % ads.length ? "bg-emerald-400" : "bg-line-strong"}`}
               />
             ))}
           </span>

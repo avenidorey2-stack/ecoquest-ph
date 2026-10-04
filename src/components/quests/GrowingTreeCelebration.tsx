@@ -62,7 +62,7 @@ export default function GrowingTreeCelebration({
       aria-modal="true"
       aria-label="Quest verified"
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center text-slate-900 shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl bg-card p-6 text-center text-ink shadow-2xl">
         <svg viewBox="0 0 200 220" className="mx-auto h-64 w-64" aria-hidden>
           {/* soil */}
           <rect x="0" y="140" width="200" height="80" rx="8" fill="#a16207" opacity="0.15" />
@@ -147,14 +147,14 @@ export default function GrowingTreeCelebration({
         </svg>
 
         <div className="eq-fade-up" style={{ animationDelay: "2.1s" }}>
-          <p className="text-4xl font-extrabold text-emerald-700">+{shownPoints} pts</p>
-          <p className="mt-2 text-slate-600">
+          <p className="text-4xl font-extrabold text-emerald-400">+{shownPoints} pts</p>
+          <p className="mt-2 text-ink-2">
             {plantCount} {plantType} {plantCount === 1 ? "plant" : "plants"} verified. Salamat sa pagtatanim!
           </p>
           <button
             onClick={onContinue}
             autoFocus
-            className="mt-5 w-full rounded-lg bg-emerald-700 py-2.5 font-semibold text-white hover:bg-emerald-800"
+            className="mt-5 w-full rounded-lg bg-emerald-400 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300"
           >
             Continue
           </button>

@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
-/* The portal is designed for a light canvas only: keep it light even when the phone is in
-   dark mode (otherwise the page edges turn black and uncoloured text turns near-white). */
+/* Dark "eco tech" theme: deep forest canvas, glassy green-tinted cards, bright green accents.
+   Native controls (inputs, scrollbars, date pickers) follow via color-scheme. */
 :root {
-  --background: #fbfaf6;
-  --foreground: #171717;
-  color-scheme: light;
+  --background: #04100b;
+  --foreground: #ecfdf3;
+  color-scheme: dark;
   /* Motion tokens: quick feedback, standard reveals, long ambient loops. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -15,19 +15,26 @@
   --dur-reveal: 560ms;
 }
 
-/* Tailwind v4 borders default to currentColor (black outlines on plain `border`);
-   give them the portal's soft slate instead. Explicit border-* colors still win. */
+/* Tailwind v4 borders default to currentColor; give them the theme's soft line instead.
+   Explicit border-* colors still win. */
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-slate-200, currentColor);
+    border-color: var(--color-line, currentColor);
   }
   :focus-visible {
-    outline: 2px solid var(--color-emerald-500);
+    outline: 2px solid var(--color-emerald-400);
     outline-offset: 2px;
+  }
+  ::selection {
+    background: rgb(52 211 153 / 0.35);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-ink-4);
   }
 }
 
@@ -38,11 +45,58 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Earthy portal palette: cream canvas alongside Tailwind's emerald + slate. */
+/* Theme palette. Surfaces: canvas < card < card-2 < card-3. Text: ink (headings) → ink-4 (hints). */
 @theme {
-  --color-cream-50: #fbfaf6;
-  --color-cream-100: #f5f2ea;
-  --color-cream-200: #ebe5d6;
+  --color-canvas: #04100b;
+  --color-card: #0a1c15;
+  --color-card-2: #0f261d;
+  --color-card-3: #153126;
+  --color-line: #1a3a2d;
+  --color-line-strong: #29513f;
+  --color-ink: #ecfdf3;
+  --color-ink-2: #bcd6c8;
+  --color-ink-3: #86a797;
+  --color-ink-4: #5e7f70;
+  /* Legacy names (cream canvas) map onto the dark surfaces. */
+  --color-cream-50: #0a1c15;
+  --color-cream-100: #0f261d;
+  --color-cream-200: #153126;
+}
+
+/* Glass panel: a soft top highlight and depth; the edge lights up green on hover. */
+.eq-panel {
+  background-image: linear-gradient(180deg, rgb(167 243 208 / 0.045), rgb(167 243 208 / 0) 38%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 20px 44px -28px rgb(0 0 0 / 0.9);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.eq-panel:hover {
+  border-color: rgb(52 211 153 / 0.22);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 24px 52px -26px rgb(16 185 129 / 0.32);
+}
+
+/* Bright green actions glow, like a lit button. */
+:is(a, button)[class~="bg-emerald-400"]:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgb(110 231 183 / 0.35),
+    0 10px 28px -10px rgb(52 211 153 / 0.65);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+:is(a, button)[class~="bg-emerald-400"]:not(:disabled):hover {
+  box-shadow:
+    0 0 0 1px rgb(167 243 208 / 0.5),
+    0 14px 34px -10px rgb(52 211 153 / 0.85);
+}
+:is(a, button)[class~="bg-emerald-400"]:not(:disabled):active {
+  transform: scale(0.98);
 }
 
 html {
@@ -223,7 +277,17 @@ body {
   z-index: -10;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(180deg, #fbfaf6 0%, #f6f8f0 55%, #eef5ea 100%);
+  background:
+    radial-gradient(120% 70% at 50% -10%, #0b3322 0%, rgb(11 51 34 / 0) 60%),
+    linear-gradient(180deg, #04100b 0%, #051710 60%, #071d14 100%);
+}
+/* Faint dot grid, fading out toward the bottom: the "eco tech" texture. */
+.eq-eco-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(110 231 183 / 0.09) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.5) 55%, transparent 85%);
 }
 .eq-eco-glow {
   position: absolute;
@@ -235,7 +299,7 @@ body {
   right: -12vmax;
   width: 52vmax;
   height: 52vmax;
-  background: radial-gradient(closest-side, rgb(253 230 138 / 0.42), rgb(253 230 138 / 0));
+  background: radial-gradient(closest-side, rgb(16 185 129 / 0.2), rgb(16 185 129 / 0));
   animation: eq-drift-a 38s ease-in-out infinite alternate;
 }
 .eq-eco-glow--leaf {
@@ -243,7 +307,7 @@ body {
   left: -16vmax;
   width: 60vmax;
   height: 60vmax;
-  background: radial-gradient(closest-side, rgb(167 243 208 / 0.4), rgb(167 243 208 / 0));
+  background: radial-gradient(closest-side, rgb(34 197 94 / 0.14), rgb(34 197 94 / 0));
   animation: eq-drift-b 46s ease-in-out infinite alternate;
 }
 .eq-eco-glow--moss {
@@ -251,7 +315,7 @@ body {
   left: 38%;
   width: 40vmax;
   height: 40vmax;
-  background: radial-gradient(closest-side, rgb(217 249 157 / 0.22), rgb(217 249 157 / 0));
+  background: radial-gradient(closest-side, rgb(132 204 22 / 0.07), rgb(132 204 22 / 0));
   animation: eq-drift-a 54s ease-in-out -12s infinite alternate-reverse;
 }
 .eq-eco-contours {
@@ -259,7 +323,7 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  color: rgb(4 120 87 / 0.07);
+  color: rgb(52 211 153 / 0.07);
 }
 .eq-eco-hills {
   position: absolute;
@@ -366,5 +430,84 @@ body {
   }
   .eq-eco-leaf {
     display: none;
+  }
+}
+
+/* ─── Maps (Leaflet) on the dark theme ─────────────────────────────────────
+   OSM tiles get a night-mode filter (same map data, inverted lightness, hues kept);
+   popups, tooltips and controls use the card surfaces. Higher specificity than
+   leaflet.css, which loads after this file. */
+.leaflet-container {
+  background: #0a1c15;
+}
+.leaflet-container .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+}
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  background: var(--color-card-2);
+  color: var(--color-ink);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+}
+.leaflet-container .leaflet-popup-content-wrapper {
+  border: 1px solid var(--color-line-strong);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-ink-3);
+}
+.leaflet-container .leaflet-tooltip {
+  background: var(--color-card-2);
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
+}
+.leaflet-container .leaflet-tooltip-top::before {
+  border-top-color: var(--color-card-2);
+}
+.leaflet-container .leaflet-bar a {
+  background: var(--color-card-2);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-line);
+}
+.leaflet-container .leaflet-bar a:hover {
+  background: var(--color-card-3);
+}
+.leaflet-container .leaflet-control-attribution {
+  background: rgb(4 16 11 / 0.75);
+  color: var(--color-ink-3);
+}
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-emerald-400);
+}
+
+/* Sign-in hero: slow zoom on the photo, flowing gradient headline, glowing form card. */
+.eq-kenburns {
+  transform-origin: 60% 40%;
+  animation: eq-kenburns 32s ease-in-out infinite alternate;
+}
+@keyframes eq-kenburns {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to { transform: scale(1.16) translate3d(-2%, -1.5%, 0); }
+}
+.eq-gradient-text {
+  background: linear-gradient(90deg, #6ee7b7, #bef264, #34d399, #a7f3d0, #6ee7b7);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: eq-gradient-flow 9s linear infinite;
+}
+@keyframes eq-gradient-flow {
+  to { background-position: 300% 0; }
+}
+.eq-auth-card {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 0 0 1px rgb(52 211 153 / 0.05),
+    0 30px 80px -30px rgb(16 185 129 / 0.35);
+}
+@media (prefers-reduced-motion: reduce) {
+  .eq-kenburns,
+  .eq-gradient-text {
+    animation: none;
   }
 }

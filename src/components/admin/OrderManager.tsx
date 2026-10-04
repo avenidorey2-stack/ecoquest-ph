@@ -54,7 +54,7 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
   }
 
   if (orders.length === 0) {
-    return <p className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">No orders here.</p>;
+    return <p className="eq-panel rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-3">No orders here.</p>;
   }
 
   return (
@@ -63,17 +63,17 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
         const next = NEXT_ACTION[o.status];
         const cancellable = CANCELLABLE.includes(o.status);
         return (
-          <li key={o.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <li key={o.id} className="eq-panel rounded-2xl border border-line/80 bg-card p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-ink">
                   {o.quantity} × {o.productName}
                 </p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-ink-2">
                   {o.customerName}
-                  {o.customerEmail && <span className="text-slate-400"> · {o.customerEmail}</span>}
+                  {o.customerEmail && <span className="text-ink-4"> · {o.customerEmail}</span>}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ink-3">
                   {fmtDate(o.createdAt)}
                   {o.customerCity && ` · ${o.customerCity}`} · #{o.id.slice(-6)}
                 </p>
@@ -82,25 +82,25 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
                 <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${ORDER_STATUS_STYLES[o.status]}`}>
                   {ORDER_STATUS_LABELS[o.status]}
                 </span>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{formatAmount(o.totalPrice, o.currencyUsed)}</p>
-                <p className="text-xs text-slate-500">{o.currencyUsed === "PESOS" ? "Cash on delivery" : "Paid with points"}</p>
+                <p className="mt-1 text-sm font-semibold text-ink">{formatAmount(o.totalPrice, o.currencyUsed)}</p>
+                <p className="text-xs text-ink-3">{o.currencyUsed === "PESOS" ? "Cash on delivery" : "Paid with points"}</p>
               </div>
             </div>
 
             {(next || cancellable) && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
                 {next && (
                   <button
                     onClick={() => act(o.id, "advance")}
                     disabled={busy === o.id}
-                    className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                    className="rounded-lg bg-emerald-400 px-3 py-1.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
                   >
                     {busy === o.id ? "Updating…" : next}
                   </button>
                 )}
                 {cancellable &&
                   (confirmCancel === o.id ? (
-                    <span className="flex flex-wrap items-center gap-2 text-xs text-red-800">
+                    <span className="flex flex-wrap items-center gap-2 text-xs text-red-300">
                       Cancel and restock{o.currencyUsed === "POINTS" ? " (points are refunded)" : ""}?
                       <button
                         onClick={() => act(o.id, "cancel")}
@@ -109,19 +109,19 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
                       >
                         Yes, cancel
                       </button>
-                      <button onClick={() => setConfirmCancel(null)} className="rounded-md px-2.5 py-1 hover:bg-red-50">
+                      <button onClick={() => setConfirmCancel(null)} className="rounded-md px-2.5 py-1 hover:bg-red-400/10">
                         No
                       </button>
                     </span>
                   ) : (
                     <button
                       onClick={() => setConfirmCancel(o.id)}
-                      className="rounded-lg px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+                      className="rounded-lg px-3 py-1.5 text-sm text-red-300 hover:bg-red-400/10"
                     >
                       Cancel order
                     </button>
                   ))}
-                {error?.id === o.id && <span className="text-xs text-red-600">{error.text}</span>}
+                {error?.id === o.id && <span className="text-xs text-red-400">{error.text}</span>}
               </div>
             )}
           </li>

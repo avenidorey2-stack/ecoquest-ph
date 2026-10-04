@@ -15,22 +15,22 @@ export default async function DevMailboxPage() {
   const emails = await readDevMailbox();
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 text-slate-900">
+    <div className="min-h-screen bg-card-2 p-4 text-ink">
       <div className="mx-auto max-w-3xl space-y-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">📬 Dev mailbox</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-ink-3">
               Emails the app would have sent. Development only — set <code>EMAIL_SERVER</code> to send real email.
             </p>
           </div>
           <div className="flex gap-2">
-            <a href="/dev/mailbox" className="rounded-lg border bg-white px-3 py-1.5 text-sm hover:bg-slate-50">
+            <a href="/dev/mailbox" className="rounded-lg border bg-card px-3 py-1.5 text-sm hover:bg-card-2">
               Refresh
             </a>
             {emails.length > 0 && (
               <form action={clearMailbox}>
-                <button className="rounded-lg border bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
+                <button className="rounded-lg border bg-card px-3 py-1.5 text-sm text-red-300 hover:bg-red-400/10">
                   Clear all
                 </button>
               </form>
@@ -39,25 +39,25 @@ export default async function DevMailboxPage() {
         </header>
 
         {emails.length === 0 ? (
-          <p className="rounded-xl border bg-white p-8 text-center text-sm text-slate-500">
-            No emails yet. Sign up at <a href="/signup" className="text-emerald-700 underline">/signup</a> and refresh.
+          <p className="rounded-xl border bg-card p-8 text-center text-sm text-ink-3">
+            No emails yet. Sign up at <a href="/signup" className="text-emerald-400 underline">/signup</a> and refresh.
           </p>
         ) : (
           <ul className="space-y-4">
             {emails.map((email) => {
               const links = [...new Set(email.text.match(/https?:\/\/\S+/g) ?? [])];
               return (
-                <li key={email.id} className="overflow-hidden rounded-xl border bg-white">
+                <li key={email.id} className="overflow-hidden rounded-xl border bg-card">
                   <div className="border-b px-4 py-3 text-sm">
                     <p className="font-semibold">{email.subject}</p>
-                    <p className="text-slate-500">
+                    <p className="text-ink-3">
                       To {email.to} · {new Date(email.sentAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" })}
                     </p>
                     {links.map((link) => (
                       <a
                         key={link}
                         href={link}
-                        className="mt-2 mr-2 inline-block rounded-lg bg-emerald-700 px-3 py-1.5 font-medium text-white hover:bg-emerald-800"
+                        className="mt-2 mr-2 inline-block rounded-lg bg-emerald-400 px-3 py-1.5 font-medium text-emerald-950 hover:bg-emerald-300"
                       >
                         Open link
                       </a>

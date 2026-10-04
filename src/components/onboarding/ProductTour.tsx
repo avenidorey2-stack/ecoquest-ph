@@ -496,7 +496,7 @@ function TourLayer({
             <motion.rect rx={14} fill="black" width={sw} height={sh} style={{ x: sx, y: sy }} />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="rgb(2 44 34 / 0.62)" mask={`url(#${maskId})`} />
+        <rect width="100%" height="100%" fill="rgb(1 8 5 / 0.74)" mask={`url(#${maskId})`} />
         <motion.rect
           rx={14}
           fill="none"
@@ -514,7 +514,7 @@ function TourLayer({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute left-0 top-0 rounded-2xl bg-white text-slate-900 shadow-[0_24px_60px_-20px_rgba(2,44,34,.55)] ring-1 ring-emerald-900/10"
+        className="absolute left-0 top-0 rounded-2xl bg-card text-ink shadow-[0_24px_60px_-20px_rgba(2,44,34,.55)] ring-1 ring-emerald-400/10"
         style={{ x: cx, y: cy, width: view?.w ?? CARD_MAX_W, opacity: shown, scale: cardScale, visibility: view ? "visible" : "hidden" }}
       >
         <AnimatePresence initial={false}>
@@ -522,7 +522,7 @@ function TourLayer({
             <motion.span
               key={arrow}
               aria-hidden
-              className="absolute h-3.5 w-3.5 rotate-45 rounded-[3px] bg-white"
+              className="absolute h-3.5 w-3.5 rotate-45 rounded-[3px] bg-card"
               style={arrowStyle}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -535,7 +535,7 @@ function TourLayer({
           type="button"
           onClick={() => onClose()}
           aria-label="Close tour"
-          className="absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full text-ink-4 transition-colors hover:bg-card-2 hover:text-ink-2"
         >
           <CloseIcon className="h-4 w-4" />
         </button>
@@ -554,26 +554,26 @@ function TourLayer({
                 aria-live="polite"
               >
                 <div className="flex items-center gap-3 pr-8">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-50 to-lime-50 text-emerald-700 ring-1 ring-emerald-100">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-400/10 to-lime-400/10 text-emerald-400 ring-1 ring-emerald-400/20">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
                     Step {index + 1} of {total}
                   </p>
                 </div>
                 {index === 0 && invitedBy && (
-                  <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs text-emerald-800">
+                  <p className="mt-3 rounded-lg bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">
                     You were invited by <strong>{invitedBy}</strong>
                   </p>
                 )}
-                <h2 id={titleId} className="mt-3 text-[17px] font-bold leading-snug text-slate-900">
+                <h2 id={titleId} className="mt-3 text-[17px] font-bold leading-snug text-ink">
                   {step.title}
                 </h2>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{step.body}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{step.body}</p>
                 {step.bullets && (
                   <ul className="mt-3 space-y-1.5">
                     {step.bullets.map((b) => (
-                      <li key={b} className="flex gap-2.5 text-sm text-slate-700">
+                      <li key={b} className="flex gap-2.5 text-sm text-ink-2">
                         <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
                         {b}
                       </li>
@@ -581,7 +581,7 @@ function TourLayer({
                   </ul>
                 )}
                 {view?.fallback && (
-                  <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-100">
+                  <p className="mt-3 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/30">
                     On this screen, find it in the menu (☰) at the top left.
                   </p>
                 )}
@@ -596,7 +596,7 @@ function TourLayer({
               <button
                 type="button"
                 onClick={() => go(-1)}
-                className="h-11 flex-1 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                className="h-11 flex-1 rounded-full border border-line text-sm font-semibold text-ink-2 transition-colors hover:bg-card-2"
               >
                 Back
               </button>
@@ -604,7 +604,7 @@ function TourLayer({
               <button
                 type="button"
                 onClick={() => onClose()}
-                className="h-11 flex-1 rounded-full text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+                className="h-11 flex-1 rounded-full text-sm font-medium text-ink-3 transition-colors hover:bg-card-2 hover:text-ink-2"
               >
                 Skip tour
               </button>
@@ -614,7 +614,7 @@ function TourLayer({
                 ref={primaryRef}
                 type="button"
                 onClick={() => go(1)}
-                className="h-11 flex-1 rounded-full bg-emerald-700 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800"
+                className="h-11 flex-1 rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
                 {index === 0 ? "Show me around" : "Next"}
               </button>
@@ -623,7 +623,7 @@ function TourLayer({
                 ref={primaryRef}
                 type="button"
                 onClick={() => onClose()}
-                className="h-11 flex-1 rounded-full bg-emerald-700 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800"
+                className="h-11 flex-1 rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
                 Start planting
               </button>
@@ -632,13 +632,13 @@ function TourLayer({
                 ref={primaryRef}
                 href="/profile"
                 onClick={() => onClose(true)}
-                className="grid h-11 flex-1 place-items-center rounded-full bg-emerald-700 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800"
+                className="grid h-11 flex-1 place-items-center rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
                 Set my city
               </Link>
             )}
           </div>
-          <div className="mt-4 h-1 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+          <div className="mt-4 h-1 overflow-hidden rounded-full bg-card-2" aria-hidden>
             <motion.div
               className="h-full origin-left rounded-full bg-gradient-to-r from-lime-400 to-emerald-600"
               initial={false}

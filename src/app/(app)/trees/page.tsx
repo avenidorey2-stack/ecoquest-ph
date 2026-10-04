@@ -2,6 +2,7 @@ import { requirePageUserId } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { resolveCity } from "@/lib/psgc";
 import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
+import { TREE_PHOTOS, treePhoto } from "@/data/tree-photos";
 import TreeDirectory, { type TreeCard } from "@/components/trees/TreeDirectory";
 
 export const metadata = { title: "Tree Directory · EcoQuest PH" };
@@ -26,6 +27,7 @@ export default async function TreeDirectoryPage() {
   const cards: TreeCard[] = species.map((s) => {
     const openSlotsInCity = slotsBySpecies.get(s.id) ?? 0;
     const localPlanted = localBySpecies.get(s.id) ?? 0;
+    const photo = treePhoto(s.slug);
     return {
       id: s.id,
       slug: s.slug,
@@ -34,7 +36,9 @@ export default async function TreeDirectoryPage() {
       category: s.category,
       description: s.description,
       benefits: s.benefits,
-      imageUrl: s.imageUrl,
+      cardImage: photo?.card ?? s.imageUrl,
+      fullImage: photo?.full ?? s.imageUrl,
+      credit: photo?.credit ?? null,
       totalPlanted: s.totalPlanted,
       plantingGoal: s.plantingGoal,
       localPlanted,
@@ -57,10 +61,15 @@ export default async function TreeDirectoryPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-6 sm:px-6 lg:px-8">
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 p-6 text-white sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl p-6 text-white ring-1 ring-white/10 sm:p-10">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static decorative photo */}
+        <img src="/trees/dao.jpg" alt="" className="eq-kenburns absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#04100b] via-[#04100b]/80 to-[#04100b]/20" />
         <div className="relative max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Philippine Tree Encyclopedia</p>
-          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Plant native. Plant for the future.</h2>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Plant native. <span className="eq-gradient-text">Plant for the future.</span>
+          </h2>
           <p className="mt-2 text-sm text-emerald-100/80">
             {species.length} species tracked · {planted.toLocaleString("en-PH")} verified plants so far. Tap a tree to learn
             what it gives back.
@@ -69,16 +78,17 @@ export default async function TreeDirectoryPage() {
       </section>
 
       {categories.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-          The tree directory is empty. Run <code className="rounded bg-slate-100 px-1.5 py-0.5">npm run db:seed</code> to load the
+        <p className="eq-panel rounded-2xl border border-dashed border-line-strong bg-card p-8 text-center text-sm text-ink-3">
+          The tree directory is empty. Run <code className="rounded bg-card-2 px-1.5 py-0.5">npm run db:seed</code> to load the
           species catalogue.
         </p>
       ) : (
         <TreeDirectory categories={categories} city={city} />
       )}
 
-      <p className="text-center text-xs text-slate-400">
-        Illustrations are placeholders. Always check with your local DENR or LGU office before planting in public spaces.
+      <p className="text-center text-xs text-ink-4">
+        Photos from Wikimedia Commons contributors, credited on each tree (header: Dao by {TREE_PHOTOS.dao.author},{" "}
+        {TREE_PHOTOS.dao.license}). Always check with your local DENR or LGU office before planting in public spaces.
       </p>
     </div>
   );

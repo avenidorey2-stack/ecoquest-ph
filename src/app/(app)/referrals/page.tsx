@@ -30,19 +30,19 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
   const pendingCode = typeof code === "string" && code !== user.referralCode ? code : "";
 
   return (
-    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-slate-900 sm:px-6 lg:py-8">
+    <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-ink sm:px-6 lg:py-8">
       <header>
         <h1 className="text-xl font-semibold">Referral Hub</h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink-3">
           Invite friends to plant with you. You earn <strong>{REFERRAL_BONUS_POINTS} bonus points</strong> when each
           friend&apos;s first planting is verified.
         </p>
       </header>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
+      <section className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-5">
         <h2 className="mb-3 font-semibold">Your invite link</h2>
         <InviteLink url={inviteUrl} />
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-ink-3">
           Invite code: <span className="font-mono">{user.referralCode}</span>
         </p>
       </section>
@@ -53,22 +53,22 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
           ["Planted", summary.qualified],
           ["Bonus pts", summary.pointsEarned],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-3">
-            <p className="text-2xl font-bold text-emerald-700">{value}</p>
-            <p className="text-xs text-slate-500">{label}</p>
+          <div key={label} className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-3">
+            <p className="text-2xl font-bold text-emerald-400">{value}</p>
+            <p className="text-xs text-ink-3">{label}</p>
           </div>
         ))}
       </section>
 
       {user.referredBy ? (
-        <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+        <p className="rounded-lg bg-emerald-400/10 p-3 text-sm text-emerald-300">
           You joined with an invite from <strong>{user.referredBy.name ?? "a fellow planter"}</strong>. 🌱
         </p>
       ) : (
         canClaim && (
-          <section className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-5">
+          <section className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-5">
             <h2 className="font-semibold">Got an invite code?</h2>
-            <p className="mb-3 text-sm text-slate-500">
+            <p className="mb-3 text-sm text-ink-3">
               Enter it before your first verified planting so your friend gets their bonus.
             </p>
             <ClaimCodeForm initialCode={pendingCode} />
@@ -79,21 +79,21 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
       <section>
         <h2 className="mb-2 font-semibold">Friends you invited</h2>
         {summary.referrals.length === 0 ? (
-          <p className="text-sm text-slate-500">No one yet — share your link to get started.</p>
+          <p className="text-sm text-ink-3">No one yet — share your link to get started.</p>
         ) : (
-          <ul className="eq-stagger divide-y rounded-2xl border border-slate-200/80 bg-white shadow-sm text-sm">
+          <ul className="eq-panel eq-stagger divide-y rounded-2xl border border-line/80 bg-card shadow-sm text-sm">
             {summary.referrals.map((r) => (
               <li key={r.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <p className="font-medium">{r.name}</p>
-                  <p className="text-xs text-slate-500">Joined {fmtDate(r.joinedAt)}</p>
+                  <p className="text-xs text-ink-3">Joined {fmtDate(r.joinedAt)}</p>
                 </div>
                 {r.bonusAwarded ? (
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                  <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
                     +{REFERRAL_BONUS_POINTS} pts
                   </span>
                 ) : (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Waiting for first planting</span>
+                  <span className="rounded-full bg-card-2 px-2 py-0.5 text-xs text-ink-2">Waiting for first planting</span>
                 )}
               </li>
             ))}

@@ -11,11 +11,11 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
-  PENDING: "bg-amber-50 text-amber-800 ring-amber-200",
-  PACKED: "bg-sky-50 text-sky-800 ring-sky-200",
+  PENDING: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  PACKED: "bg-sky-400/10 text-sky-300 ring-sky-400/30",
   OUT_FOR_DELIVERY: "bg-indigo-50 text-indigo-800 ring-indigo-200",
-  DELIVERED: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-  CANCELLED: "bg-slate-100 text-slate-600 ring-slate-200",
+  DELIVERED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
+  CANCELLED: "bg-card-2 text-ink-2 ring-line",
 };
 
 /** The fulfilment steps a customer sees, in order (CANCELLED is shown separately). */

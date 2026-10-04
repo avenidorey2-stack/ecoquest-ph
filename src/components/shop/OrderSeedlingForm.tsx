@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatPesos, formatPoints } from "@/lib/format";
+import ActivePill from "@/components/ui/ActivePill";
 
 type Currency = "POINTS" | "PESOS";
 
@@ -63,7 +64,7 @@ export default function OrderSeedlingForm({
   }
 
   const stepBtn =
-    "grid h-9 w-9 place-items-center text-lg font-semibold text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent";
+    "grid h-9 w-9 place-items-center text-lg font-semibold text-ink-2 transition-colors hover:bg-emerald-400/10 hover:text-emerald-300 disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
   const option = (value: Currency, label: string, disabled = false) => (
     <button
       type="button"
@@ -74,26 +75,27 @@ export default function OrderSeedlingForm({
         setMessage(null);
         setCurrency(value);
       }}
-      className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
-        currency === value ? "bg-white text-emerald-800 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800"
-      } disabled:cursor-not-allowed disabled:text-slate-300`}
+      className={`relative flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
+        currency === value ? "text-emerald-300" : "text-ink-3 hover:text-ink"
+      } disabled:cursor-not-allowed disabled:text-ink-4`}
     >
-      {label}
+      {currency === value && <ActivePill id={`pay-${product.id}`} className="inset-0 rounded-md bg-card shadow-sm ring-1 ring-line" />}
+      <span className="relative">{label}</span>
     </button>
   );
 
   return (
     <form onSubmit={order} className="space-y-2.5">
-      <div role="radiogroup" aria-label="Pay with" className="flex gap-1 rounded-lg bg-slate-100 p-1">
+      <div role="radiogroup" aria-label="Pay with" className="flex gap-1 rounded-lg bg-card-2 p-1">
         {option("POINTS", "Points")}
         {option("PESOS", pesosAvailable ? "Pesos (COD)" : "Pesos —", !pesosAvailable)}
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor={`qty-${product.id}`} className="text-xs font-medium text-slate-500">
+        <label htmlFor={`qty-${product.id}`} className="text-xs font-medium text-ink-3">
           Quantity
         </label>
-        <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="flex items-center overflow-hidden rounded-lg border border-line bg-card">
           <button type="button" onClick={() => change(quantity - 1)} disabled={soldOut || quantity <= 1 || busy} aria-label="Decrease quantity" className={stepBtn}>
             −
           </button>
@@ -107,7 +109,7 @@ export default function OrderSeedlingForm({
             value={quantity || ""}
             onChange={(e) => change(e.target.valueAsNumber)}
             disabled={soldOut || busy}
-            className="h-9 w-12 border-x border-slate-200 text-center text-sm font-semibold text-slate-900 [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="h-9 w-12 border-x border-line text-center text-sm font-semibold text-ink [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <button type="button" onClick={() => change(quantity + 1)} disabled={soldOut || quantity >= limit || busy} aria-label="Increase quantity" className={stepBtn}>
             +
@@ -118,7 +120,7 @@ export default function OrderSeedlingForm({
       <button
         type="submit"
         disabled={soldOut || !valid || !affordable || busy}
-        className="w-full rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none"
+        className="w-full rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4 disabled:shadow-none"
       >
         {soldOut
           ? "Out of stock"
@@ -130,11 +132,11 @@ export default function OrderSeedlingForm({
       </button>
 
       {currency === "PESOS" && !soldOut && (
-        <p className="text-[11px] leading-snug text-slate-500">Pay cash when your seedlings arrive — no points used.</p>
+        <p className="text-[11px] leading-snug text-ink-3">Pay cash when your seedlings arrive — no points used.</p>
       )}
 
       {message && (
-        <p role="status" className={`text-xs ${message.ok ? "text-emerald-700" : "text-red-600"}`}>
+        <p role="status" className={`text-xs ${message.ok ? "text-emerald-400" : "text-red-400"}`}>
           {message.text}
         </p>
       )}

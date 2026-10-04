@@ -53,9 +53,9 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
       onClose={onClose}
       // Clicking the backdrop (the dialog element itself, outside the panel) closes it.
       onClick={(e) => e.target === e.currentTarget && dialogRef.current?.close()}
-      className="m-auto max-h-[92vh] w-[calc(100%-1.5rem)] max-w-lg overflow-hidden rounded-3xl bg-transparent p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
+      className="m-auto max-h-[92vh] w-[calc(100%-1.5rem)] max-w-lg overflow-hidden rounded-3xl bg-transparent p-0 text-ink shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm open:animate-[profile-in_200ms_ease-out]"
     >
-      <div className="flex max-h-[92vh] flex-col bg-cream-50">
+      <div className="flex max-h-[92vh] flex-col bg-card-2">
         {/* Header band */}
         <div className="relative bg-gradient-to-br from-emerald-800 to-emerald-950 px-5 pb-5 pt-6 text-white sm:px-6">
           <button
@@ -72,7 +72,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                 // eslint-disable-next-line @next/next/no-img-element -- uploaded avatar or OAuth photo
                 <img src={profile.image} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-4 ring-white/15" />
               ) : (
-                <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-3xl font-bold ring-4 ring-white/15">
+                <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-emerald-400 text-3xl font-bold ring-4 ring-white/15">
                   {profile.name.slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -127,7 +127,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
         {/* Body */}
         <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
           {state.status === "error" && (
-            <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+            <p role="alert" className="rounded-xl bg-red-400/10 p-4 text-sm text-red-300">
               {state.message}
             </p>
           )}
@@ -135,7 +135,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
           {state.status === "loading" && (
             <div className="grid grid-cols-3 gap-2" aria-label="Loading">
               {Array.from({ length: 6 }, (_, i) => (
-                <span key={i} className="aspect-square animate-pulse rounded-xl bg-slate-200/70" />
+                <span key={i} className="aspect-square animate-pulse rounded-xl bg-card-3/70" />
               ))}
             </div>
           )}
@@ -143,11 +143,11 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
           {profile && (
             <>
               <section aria-label="Proof gallery">
-                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
                   Proof gallery {profile.totalProofs > 0 && `· ${profile.totalProofs}`}
                 </h3>
                 {profile.proofs.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500">
+                  <p className="rounded-xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">
                     No approved plantings yet.
                   </p>
                 ) : (
@@ -162,7 +162,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                             onClick={() => setViewing(i)}
                             title={caption}
                             aria-label={`View proof: ${caption}`}
-                            className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-slate-200 ring-1 ring-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-card-3 ring-1 ring-line focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                           >
                             {p.mediaType.startsWith("video/") ? (
                               <>
@@ -187,19 +187,19 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                 )}
               </section>
 
-              <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+              <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">
                 <h3>
                   <button
                     type="button"
                     onClick={() => setAchievementsOpen((o) => !o)}
                     aria-expanded={achievementsOpen}
                     aria-controls={panelId}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-card-2"
                   >
-                    <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                      <MedalIcon className="h-4 w-4 text-amber-600" />
+                    <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                      <MedalIcon className="h-4 w-4 text-amber-400" />
                       Achievements
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+                      <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/20">
                         {profile.achievements.length}
                       </span>
                     </span>
@@ -207,7 +207,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                       viewBox="0 0 20 20"
                       fill="currentColor"
                       aria-hidden
-                      className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${achievementsOpen ? "rotate-180" : ""}`}
+                      className={`h-5 w-5 text-ink-4 transition-transform duration-300 ${achievementsOpen ? "rotate-180" : ""}`}
                     >
                       <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
                     </svg>
@@ -223,18 +223,18 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                 >
                   <div className="overflow-hidden">
                     {profile.achievements.length === 0 ? (
-                      <p className="border-t border-slate-100 px-4 py-4 text-sm text-slate-500">No badges unlocked yet.</p>
+                      <p className="border-t border-line px-4 py-4 text-sm text-ink-3">No badges unlocked yet.</p>
                     ) : (
-                      <ul className="grid grid-cols-1 gap-2 border-t border-slate-100 p-3 sm:grid-cols-2">
+                      <ul className="grid grid-cols-1 gap-2 border-t border-line p-3 sm:grid-cols-2">
                         {profile.achievements.map((a) => (
-                          <li key={a.key} className="flex items-start gap-3 rounded-xl bg-cream-50 p-2.5 ring-1 ring-slate-100">
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-xl shadow-sm" aria-hidden>
+                          <li key={a.key} className="flex items-start gap-3 rounded-xl bg-card-2 p-2.5 ring-1 ring-line">
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-card text-xl shadow-sm" aria-hidden>
                               {a.icon}
                             </span>
                             <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-slate-900">{a.name}</span>
-                              <span className="block text-xs text-slate-500">{a.description}</span>
-                              <span className="block text-[11px] font-medium text-amber-700">Acquired on {fmtDate(a.unlockedAt)}</span>
+                              <span className="block text-sm font-semibold text-ink">{a.name}</span>
+                              <span className="block text-xs text-ink-3">{a.description}</span>
+                              <span className="block text-[11px] font-medium text-amber-300">Acquired on {fmtDate(a.unlockedAt)}</span>
                             </span>
                           </li>
                         ))}
@@ -244,11 +244,11 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                 </div>
               </section>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-4">
-                <p className="text-xs text-slate-400">Planting since {fmtDate(profile.memberSince)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+                <p className="text-xs text-ink-4">Planting since {fmtDate(profile.memberSince)}</p>
                 <Link
                   href={`/planters/${profile.id}`}
-                  className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+                  className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-300"
                 >
                   View full profile
                 </Link>

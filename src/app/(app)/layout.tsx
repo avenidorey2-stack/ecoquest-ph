@@ -53,7 +53,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               ✉️
             </p>
             <h2 className="mt-3 text-lg font-semibold">Please verify your email</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-ink-2">
               To keep EcoQuest PH free of spam, every account needs a verified email. Log out from the menu, then sign
               in with Google or create an account with your email to confirm it.
             </p>

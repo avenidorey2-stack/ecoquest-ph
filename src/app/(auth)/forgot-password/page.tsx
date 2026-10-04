@@ -8,12 +8,12 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps<"/f
   return (
     <div className="space-y-5">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Forgot your password?</h1>
-        <p className="mt-1 text-sm text-slate-500">We&apos;ll email you a link to choose a new one.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Forgot your password?</h1>
+        <p className="mt-1 text-sm text-ink-3">We&apos;ll email you a link to choose a new one.</p>
       </div>
       <ForgotPasswordForm initialEmail={typeof email === "string" ? email : ""} devMailbox={isDevMailboxEnabled()} />
       <p className="text-center text-sm">
-        <Link href="/login" className="text-emerald-700">
+        <Link href="/login" className="text-emerald-400">
           Back to sign in
         </Link>
       </p>
