@@ -47,6 +47,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const [d, origin, viewer, query] = await Promise.all([getDashboardData(userId, now), getAppOrigin(), getCurrentUser(), searchParams]);
   // "Take the tour" in the menu replays the guided tour for anyone.
   const replayTour = query.tour === "1";
+  // "New slot" notifications link here with ?slot=<id>: the map zooms to it with its popup open.
+  const focusSlotId = typeof query.slot === "string" ? query.slot : undefined;
   // Admins see every slot nationwide on the dashboard map (not just their home city).
   const isAdmin = viewer?.role === "ADMIN";
 
@@ -275,7 +277,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         >
           {/* Taller on phones (full-width card); the map's Expand button goes full screen. */}
           <div className="relative h-[380px] w-full md:h-[340px]">
-            {isAdmin ? <SlotMap adminView /> : <SlotMap cityOnly />}
+            {isAdmin ? <SlotMap adminView focusSlotId={focusSlotId} /> : <SlotMap cityOnly focusSlotId={focusSlotId} />}
             {!city && !isAdmin && (
               <div className="absolute inset-0 z-[500] grid place-items-center bg-card/70 p-6 text-center backdrop-blur-[2px]">
                 <div>

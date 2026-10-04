@@ -26,8 +26,15 @@ type SlotDTO = {
   questGoal: number;
   spotsLeft: number;
   alreadyClaimed: boolean;
+  /** ISO deadline of the viewer's own claim here (when alreadyClaimed). */
+  claimExpiresAt: string | null;
+  /** The viewer's claim here ran out: they can't claim this slot again. */
+  claimExpired: boolean;
   claimable: boolean;
 };
+
+const fmtDeadline = (iso: string) =>
+  new Date(iso).toLocaleString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 function FitToBoundary({ geometry }: { geometry: Geometry }) {
   const map = useMap();
@@ -49,6 +56,22 @@ function FitToSlots({ slots }: { slots: SlotDTO[] }) {
     // Re-fit only when the set of slots changes, not on every re-render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, map]);
+  return null;
+}
+
+/**
+ * Zooms to one slot and opens its popup (e.g. from a "new slot" notification), and scrolls the map
+ * into view. Runs again only when a different slot is focused, not when the slot list reloads.
+ */
+function FocusSlot({ slot, markers, container }: { slot: SlotDTO; markers: Map<string, L.CircleMarker>; container: HTMLElement | null }) {
+  const map = useMap();
+  const { id, latitude, longitude } = slot;
+  useEffect(() => {
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    container?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
+    map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate: false });
+    markers.get(id)?.openPopup();
+  }, [id, latitude, longitude, markers, container, map]);
   return null;
 }
 
@@ -92,6 +115,7 @@ const BOUNDARY_STYLE = { color: MAP_BOUNDARY, weight: 2, fillOpacity: 0.08 };
 function markerColor(slot: SlotDTO, adminView: boolean) {
   if (adminView) return STATUS_COLORS[slot.status];
   if (slot.alreadyClaimed) return PLANTER_COLORS.yours;
+  if (slot.claimExpired) return PLANTER_COLORS.other;
   if (slot.claimable) return PLANTER_COLORS.claimable;
   return PLANTER_COLORS.other; // outside your city or full
 }
@@ -99,9 +123,18 @@ function markerColor(slot: SlotDTO, adminView: boolean) {
 /**
  * `cityOnly`: show just the slots in the user's home city (dashboard card).
  * `adminView`: every slot nationwide (closed included) with links to edit them; no claiming.
+ * `focusSlotId`: zoom to this slot and open its popup once loaded (from a new-slot notification).
  * The Expand button switches to a full-screen map with bigger room to tap markers on phones.
  */
-export default function SlotMap({ cityOnly = false, adminView = false }: { cityOnly?: boolean; adminView?: boolean }) {
+export default function SlotMap({
+  cityOnly = false,
+  adminView = false,
+  focusSlotId,
+}: {
+  cityOnly?: boolean;
+  adminView?: boolean;
+  focusSlotId?: string;
+}) {
   const router = useRouter();
   const [slots, setSlots] = useState<SlotDTO[]>([]);
   const [boundary, setBoundary] = useState<Geometry | null>(null);
@@ -113,16 +146,23 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
   const [touch] = useState(() => window.matchMedia("(pointer: coarse)").matches);
   // Canvas renderer with a click tolerance: fingertips get a ~46px hit area around each marker.
   const [renderer] = useState(() => L.canvas({ tolerance: touch ? 10 : 2 }));
+  const [markers] = useState(() => new Map<string, L.CircleMarker>());
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   const loadSlots = useCallback(async () => {
     try {
       const res = await fetch(adminView ? "/api/slots?scope=all" : cityOnly ? "/api/slots?scope=city" : "/api/slots");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setSlots((await res.json()).slots);
+      const list: SlotDTO[] = (await res.json()).slots;
+      setSlots(list);
+      if (focusSlotId && !list.some((s) => s.id === focusSlotId)) {
+        setMessage("That slot isn't on the map anymore — it may have been filled or closed.");
+      }
     } catch {
       setMessage("Couldn't load planting slots. Please refresh the page.");
     }
-  }, [cityOnly, adminView]);
+  }, [cityOnly, adminView, focusSlotId]);
+  const focusSlot = focusSlotId ? slots.find((s) => s.id === focusSlotId) : undefined;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
@@ -155,7 +195,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
     try {
       const res = await fetch(`/api/slots/${slotId}/claim`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
-      setMessage(res.ok ? "Slot claimed! Your quest has started." : (data.error ?? "Claim failed."));
+      setMessage(res.ok ? "Slot claimed! You have 7 days to plant and send your proof." : (data.error ?? "Claim failed."));
       if (res.ok) {
         loadSlots();
         router.refresh(); // update the dashboard's quest list
@@ -172,7 +212,7 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (up to 1000) from escaping above page overlays.
-    <div className={expanded ? "fixed inset-0 isolate z-[1400] m-0 bg-card" : "relative isolate h-full w-full"}>
+    <div ref={setContainer} className={expanded ? "fixed inset-0 isolate z-[1400] m-0 bg-card" : "relative isolate h-full w-full"}>
       <MapContainer
         center={PH_CENTER}
         zoom={6}
@@ -193,15 +233,20 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
           <>
             {/* Non-interactive so taps inside the city outline fall through to the markers. */}
             <GeoJSON data={boundary} style={BOUNDARY_STYLE} interactive={false} />
-            <FitToBoundary geometry={boundary} />
+            {/* A focused slot sets the view itself; the outline mustn't zoom back out after it. */}
+            {!focusSlot && <FitToBoundary geometry={boundary} />}
           </>
         )}
         {/* Admins: fit every slot. City map without an OSM outline: at least zoom to the city's slots. */}
-        {(adminView || (cityOnly && !boundary)) && <FitToSlots slots={slots} />}
+        {!focusSlot && (adminView || (cityOnly && !boundary)) && <FitToSlots slots={slots} />}
 
         {slots.map((slot) => (
           <CircleMarker
             key={slot.id}
+            ref={(marker) => {
+              if (marker) markers.set(slot.id, marker);
+              else markers.delete(slot.id);
+            }}
             center={[slot.latitude, slot.longitude]}
             radius={touch ? 12 : 9}
             pathOptions={{ color: markerColor(slot, adminView), fillColor: markerColor(slot, adminView), fillOpacity: 0.8 }}
@@ -234,16 +279,24 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
                     </a>
                   </>
                 ) : slot.alreadyClaimed ? (
-                  <p className="text-blue-400">You have an active quest here.</p>
+                  <p className="text-blue-400">
+                    You have an active quest here.
+                    {slot.claimExpiresAt && ` Plant by ${fmtDeadline(slot.claimExpiresAt)}.`}
+                  </p>
+                ) : slot.claimExpired ? (
+                  <p className="text-rose-300">Your claim here has expired. Ask our team if you need more time.</p>
                 ) : slot.claimable ? (
-                  <button
-                    type="button"
-                    onClick={() => claim(slot.id)}
-                    disabled={claiming !== null}
-                    className="mt-2 w-full rounded-lg bg-emerald-400 px-3 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
-                  >
-                    {claiming === slot.id ? "Claiming…" : "Claim slot"}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => claim(slot.id)}
+                      disabled={claiming !== null}
+                      className="mt-2 w-full rounded-lg bg-emerald-400 px-3 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
+                    >
+                      {claiming === slot.id ? "Claiming…" : "Claim slot"}
+                    </button>
+                    <p className="text-xs text-ink-3">You&apos;ll have 7 days to plant once you claim.</p>
+                  </>
                 ) : slot.status === "OPEN" && slot.spotsLeft === 0 ? (
                   <p className="text-ink-3">This slot is full right now.</p>
                 ) : (
@@ -253,6 +306,8 @@ export default function SlotMap({ cityOnly = false, adminView = false }: { cityO
             </Popup>
           </CircleMarker>
         ))}
+        {/* After the markers: their layers (and popups) are on the map by the time this runs. */}
+        {focusSlot && <FocusSlot slot={focusSlot} markers={markers} container={container} />}
       </MapContainer>
 
       <button

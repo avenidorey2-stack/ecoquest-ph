@@ -9,7 +9,7 @@ import {
   verifyDirectUpload,
   type StoredMedia,
 } from "@/lib/storage";
-import { isSlotOpen, MAX_PLANTS_PER_SUBMISSION, SLOT_CLOSED } from "@/lib/quests";
+import { CLAIM_EXPIRED, claimNotExpired, isClaimExpired, isSlotOpen, MAX_PLANTS_PER_SUBMISSION, SLOT_CLOSED } from "@/lib/quests";
 import { notifyAdmins } from "@/lib/notifications";
 
 function plantCountError(plantCount: number) {
@@ -21,7 +21,7 @@ function plantCountError(plantCount: number) {
 async function activeQuest(questId: string, userId: string) {
   const quest = await prisma.quest.findUnique({
     where: { id: questId },
-    select: { userId: true, status: true, slot: { select: { status: true, deletedAt: true } } },
+    select: { userId: true, status: true, expiresAt: true, slot: { select: { status: true, deletedAt: true } } },
   });
   if (!quest || quest.userId !== userId) {
     return { response: NextResponse.json({ error: "Quest not found." }, { status: 404 }) };
@@ -31,6 +31,9 @@ async function activeQuest(questId: string, userId: string) {
   }
   if (quest.status !== "ACTIVE") {
     return { response: NextResponse.json({ error: "This quest is not awaiting proof." }, { status: 409 }) };
+  }
+  if (isClaimExpired(quest)) {
+    return { response: NextResponse.json({ error: CLAIM_EXPIRED }, { status: 409 }) };
   }
   return { response: null };
 }
@@ -44,10 +47,10 @@ async function createVerification(questId: string, media: StoredMedia, plantCoun
       await tx.$queryRaw`
         SELECT 1 FROM "Slot" s JOIN "Quest" q ON q."slotId" = s."id" WHERE q."id" = ${questId} FOR SHARE OF s`;
       // Guarded transition so concurrent submissions can't both succeed, and none land on a
-      // closed slot. The quest's own plantCount is its approved progress; this submission's count
+      // closed slot or past the claim's deadline. The quest's own plantCount is its approved progress; this submission's count
       // is stored on the verification and added to the progress when it's approved.
       const { count } = await tx.quest.updateMany({
-        where: { id: questId, status: "ACTIVE", slot: { status: { not: "CLOSED" }, deletedAt: null } },
+        where: { id: questId, status: "ACTIVE", ...claimNotExpired(), slot: { status: { not: "CLOSED" }, deletedAt: null } },
         data: { status: "PENDING_VERIFICATION" },
       });
       if (count === 0) return null;

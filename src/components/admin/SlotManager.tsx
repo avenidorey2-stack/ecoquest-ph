@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { PsgcRegion } from "@/lib/psgc";
 import SlotForm, { closedNotice, type SpeciesOption } from "./SlotForm";
+import SlotClaims from "./SlotClaims";
 
 export type AdminSlot = {
   id: string;
@@ -125,7 +126,7 @@ export default function SlotManager({
 
       <aside className="bg-card lg:w-[26rem] lg:overflow-y-auto lg:border-l lg:border-line">
         {selection && (draft || selectedSlot) ? (
-          <div className="p-4">
+          <div className="space-y-4 p-4">
             <SlotForm
               // One form instance per new pin session, so typed coordinates don't remount it.
               key={selection.kind === "new" ? "new" : selection.id}
@@ -141,6 +142,8 @@ export default function SlotManager({
                 router.refresh();
               }}
             />
+            {/* Separate from the form: changing a claim's end date saves on its own. */}
+            {selectedSlot && <SlotClaims key={selectedSlot.id} slotId={selectedSlot.id} />}
           </div>
         ) : (
           <div className="flex flex-col">

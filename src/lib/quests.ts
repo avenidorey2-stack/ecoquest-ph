@@ -105,10 +105,19 @@ function approveInTransaction(verificationId: string, reviewerId: string, plantC
     }
 
     // Quest chaining: completing a quest immediately unlocks the next one on the same slot.
+    // It continues the same claim, so it keeps the claim's deadline — even a passed one, which
+    // keeps the planter from simply re-claiming the slot until an admin extends it.
     const nextQuest =
       goalReached && slotOpen && quest.slot.status === "OPEN"
         ? await tx.quest.create({
-            data: { userId: quest.userId, slotId: quest.slotId, status: "ACTIVE", targetPlants: quest.slot.questGoal },
+            data: {
+              userId: quest.userId,
+              slotId: quest.slotId,
+              status: "ACTIVE",
+              targetPlants: quest.slot.questGoal,
+              expiresAt: quest.expiresAt,
+              expiryRemindedAt: quest.expiryRemindedAt,
+            },
           })
         : null;
 
@@ -160,6 +169,83 @@ export async function rejectVerification(verificationId: string, reviewerId: str
     );
     return tx.quest.update({ where: { id: questId }, data: { status: slotOpen ? "ACTIVE" : "CANCELLED" } });
   });
+}
+
+/** Days a claim lasts: planters can plant any time within it; admins can move the date. */
+export const CLAIM_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const CLAIM_EXPIRED =
+  "Your claim on this slot has expired, so it no longer accepts proof. Ask our team if you need more time.";
+
+/** When a claim made at `from` expires. */
+export function claimExpiry(from = new Date()) {
+  return new Date(from.getTime() + CLAIM_DAYS * DAY_MS);
+}
+
+/** Past its deadline (quests without one never expire). */
+export function isClaimExpired(quest: { expiresAt: Date | null }, now = new Date()) {
+  return !!quest.expiresAt && quest.expiresAt <= now;
+}
+
+/** Quests still accepting proof by their deadline (no deadline, or one still ahead). */
+export function claimNotExpired(now = new Date()): Prisma.QuestWhereInput {
+  return { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] };
+}
+
+/**
+ * Quests holding one of a slot's spots: active claims that haven't expired, plus proof awaiting
+ * review (the planter submitted in time, so it's still theirs until reviewed).
+ */
+export function holdsSpot(now = new Date()): Prisma.QuestWhereInput {
+  return { OR: [{ status: "PENDING_VERIFICATION" }, { status: "ACTIVE", ...claimNotExpired(now) }] };
+}
+
+/** A claim gets one "less than a day left" reminder this long before it ends. */
+export const CLAIM_REMINDER_MS = DAY_MS;
+
+/**
+ * Sends the planter's "less than a day left" reminders for active claims ending within
+ * CLAIM_REMINDER_MS — once per deadline (an admin changing the date allows a new one). Run when
+ * the planter's app loads notifications, so it needs no scheduled job. Never throws.
+ */
+export async function remindExpiringClaims(userId: string, now = new Date()) {
+  try {
+    const due = await prisma.quest.findMany({
+      where: {
+        userId,
+        status: "ACTIVE",
+        expiryRemindedAt: null,
+        expiresAt: { gt: now, lte: new Date(now.getTime() + CLAIM_REMINDER_MS) },
+      },
+      select: { id: true, expiresAt: true, slot: { select: { requiredPlantType: true, city: true } } },
+    });
+    for (const quest of due) {
+      await prisma.$transaction(async (tx) => {
+        // Guarded: two tabs loading at once still send a single reminder.
+        const { count } = await tx.quest.updateMany({
+          where: { id: quest.id, expiryRemindedAt: null },
+          data: { expiryRemindedAt: now },
+        });
+        if (!count) return;
+        const ends = quest.expiresAt!.toLocaleString("en-PH", {
+          timeZone: "Asia/Manila",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        await notify(
+          tx,
+          userId,
+          `Less than a day left! Your claim on the ${quest.slot.requiredPlantType} slot in ${quest.slot.city} ends ${ends}. Plant and send your proof before then.`,
+          "/dashboard",
+        );
+      });
+    }
+  } catch (err) {
+    console.error("Claim reminders failed:", err);
+  }
 }
 
 export const SLOT_CLOSED = "This slot has been closed, so it no longer accepts proof.";

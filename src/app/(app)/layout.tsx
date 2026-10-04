@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveCity } from "@/lib/psgc";
 import { displayAvatar } from "@/lib/avatar-url";
 import AppShell from "@/components/layout/AppShell";
+import { remindExpiringClaims } from "@/lib/quests";
 
 /** Seeds the header clock so the first paint already shows the right time. */
 function serverNowIso() {
@@ -14,6 +15,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  // Any due "less than a day left" claim reminder lands before the bell's unread count is read.
+  await remindExpiringClaims(session.user.id);
   // Read from the DB (not the session) so role, points and location are always current.
   const [user, unreadNotifications] = await Promise.all([
     prisma.user.findUnique({

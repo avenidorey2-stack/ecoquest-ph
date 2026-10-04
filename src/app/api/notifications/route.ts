@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { NOTIFICATION_LIST_SIZE } from "@/lib/notifications";
+import { remindExpiringClaims } from "@/lib/quests";
 
 // GET /api/notifications — the signed-in user's recent notifications and unread count.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // "Less than a day left" claim reminders are created as the app checks for notifications.
+  await remindExpiringClaims(user.id);
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: user.id },

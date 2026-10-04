@@ -169,22 +169,27 @@ model Slot {
 }
 
 model Quest {
-  id            String      @id @default(cuid())
-  userId        String
-  slotId        String
-  status        QuestStatus @default(ACTIVE)
+  id               String      @id @default(cuid())
+  userId           String
+  slotId           String
+  status           QuestStatus @default(ACTIVE)
   // Progress: plants approved so far. Each approved submission adds its plant count; the quest
   // completes automatically once plantCount reaches targetPlants.
-  plantCount    Int         @default(0)
+  plantCount       Int         @default(0)
   // Goal for this quest (the slot's questGoal when it was claimed).
-  targetPlants  Int         @default(1)
+  targetPlants     Int         @default(1)
   // Total points awarded across this quest's approved submissions.
-  pointsAwarded Int         @default(0)
-  completedAt   DateTime?
+  pointsAwarded    Int         @default(0)
+  completedAt      DateTime?
   // Set once the user has seen the growing-tree celebration for this quest.
-  celebratedAt  DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  celebratedAt     DateTime?
+  // End of the planter's claim (7 days after claiming; admins can change it). Past it, no new
+  // proof is accepted here and the claim no longer holds a spot. Null = no deadline (legacy).
+  expiresAt        DateTime?
+  // When the planter got the "less than a day left" reminder for the current deadline.
+  expiryRemindedAt DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   slot          Slot           @relation(fields: [slotId], references: [id], onDelete: Cascade)
