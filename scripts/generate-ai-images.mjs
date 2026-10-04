@@ -3,10 +3,11 @@
  * EcoQuest PH - AI image generator (Pollinations.ai, free tier, no API key).
  *
  * Generates every AI image the app uses and writes optimised JPEGs into public/:
- *   - one photo per tree species (read from src/data/tree-species.ts, so new species are picked up)
- *       public/trees/<slug>.jpg (1200x900) + public/trees/<slug>-sm.jpg (640x480)
- *   - sign-in hero + page background, in-app background, Tree Directory and Seedling Shop banners
- *   - five growth stages (seed -> full tree) for the points celebration, on black for screen blending
+ *   - sign-in hero + page background, in-app background
+ *   - five growth stages (seed -> full tree) for the points celebration, drawn on black
+ *   - only with --include-trees: one image per tree species (read from src/data/tree-species.ts)
+ *       public/trees/<slug>.jpg (1200x900) + public/trees/<slug>-sm.jpg (640x480). Off by default:
+ *       the Tree Directory and Seedling Shop use the real photo collection (process-tree-photos.mjs).
  *
  * Safe to re-run:
  *   - raw downloads are cached in .ai-images/raw/, so a re-run only generates what is missing
@@ -21,6 +22,7 @@
  *   node scripts/generate-ai-images.mjs                 generate whatever is missing
  *   node scripts/generate-ai-images.mjs --only tree:narra,hero
  *   node scripts/generate-ai-images.mjs --force         regenerate (re-download) the selected images
+ *   node scripts/generate-ai-images.mjs --include-trees also generate AI tree images (replaces photos)
  *   node scripts/generate-ai-images.mjs --list          print the job keys and exit
  */
 
@@ -82,9 +84,9 @@ const STAGES = [
 ];
 
 /** Every image the app uses: a prompt, the size to request, and the files to write from it. */
-function buildJobs() {
+function buildJobs({ includeTrees }) {
   const jobs = [];
-  for (const s of TREE_SPECIES) {
+  for (const s of includeTrees ? TREE_SPECIES : []) {
     const look = TREE_LOOKS[s.slug] ?? "healthy mature native tree with a full green crown";
     jobs.push({
       key: `tree:${s.slug}`,
@@ -118,20 +120,6 @@ function buildJobs() {
         "aerial view of a young reforestation site at dusk, neat rows of tree seedlings on green hills in the Philippines, dark moody emerald tones, low contrast, atmospheric, photorealistic, no text",
       size: [1216, 832],
       outputs: [{ file: "public/images/app-bg.jpg", w: 1600, h: 1000, quality: 72 }],
-    },
-    {
-      key: "trees-hero",
-      prompt:
-        "panoramic view of a diverse Philippine native forest with tall trees, green mountains and morning mist, photorealistic, cinematic, no people, no text",
-      size: [1216, 640],
-      outputs: [{ file: "public/images/trees-hero.jpg", w: 1600, h: 760, quality: 80 }],
-    },
-    {
-      key: "shop-hero",
-      prompt:
-        "close-up of many small young tree seedlings with green leaves growing in black plastic nursery bags lined up in neat rows in a plant nursery, warm morning light, shallow depth of field, photorealistic, no people, no text",
-      size: [1216, 640],
-      outputs: [{ file: "public/images/shop-hero.jpg", w: 1600, h: 760, quality: 80 }],
     },
   );
   STAGES.forEach((stage, i) =>
@@ -223,7 +211,7 @@ async function readManifest() {
 
 async function main() {
   const args = process.argv.slice(2);
-  const all = buildJobs();
+  const all = buildJobs({ includeTrees: args.includes("--include-trees") });
   if (args.includes("--list")) {
     for (const j of all) console.log(j.key);
     return;

@@ -1,32 +1,43 @@
 #!/usr/bin/env node
 /**
- * EcoQuest PH - Tree photo processor for images you already have (e.g. AI images made elsewhere).
- * For automatic AI generation use scripts/generate-ai-images.mjs instead.
+ * EcoQuest PH - Tree photo processor: turns the tree photo collection into the files the
+ * Tree Directory and Seedling Shop use.
  *
  * Writes two optimised JPEGs per species:
  *   - public/trees/<slug>.jpg     1200x900, quality 86 (details view)
  *   - public/trees/<slug>-sm.jpg   640x480, quality 80 (card tiles)
  *
  * Existing files are never replaced silently: pass --overwrite to replace them. The first time a
- * file is replaced, the original is copied to .ai-images/backup/<same path>. Processed images are
- * recorded in src/data/ai-images.json so the app credits them as AI-generated.
+ * file is replaced, the original is copied to .ai-images/backup/<same path>. Crops keep the most
+ * interesting part of the photo (sharp's "attention" strategy). Any AI record for the species in
+ * src/data/ai-images.json is removed, so the app credits the photo to the collection.
+ *
+ * In --batch mode file names are matched to species loosely ("Mindoro Pine.jpg" -> mindoro-pine).
  *
  * Usage:
  *   node scripts/process-tree-photos.mjs <input-image-file> <species-slug> [--overwrite]
- *   node scripts/process-tree-photos.mjs --batch <folder-of-slug-named-images> [--overwrite]
+ *   node scripts/process-tree-photos.mjs --batch <folder-of-species-named-images> [--overwrite]
  */
 
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { TREE_SPECIES } from "../src/data/tree-species.ts";
 
 const ROOT = process.cwd();
 const TARGET_DIR = path.join(ROOT, "public/trees");
 const BACKUP_DIR = path.join(ROOT, ".ai-images/backup");
 const MANIFEST = path.join(ROOT, "src/data/ai-images.json");
 const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
+const SLUGS = new Set(TREE_SPECIES.map((s) => s.slug));
 
 const exists = (p) => fs.access(p).then(() => true, () => false);
+
+/** "Mindoro Pine" -> "mindoro-pine"; null when it matches no species. */
+export function slugFromFileName(name) {
+  const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return SLUGS.has(slug) ? slug : null;
+}
 
 async function backupOnce(dest) {
   const backup = path.join(BACKUP_DIR, path.relative(ROOT, dest));
@@ -35,20 +46,21 @@ async function backupOnce(dest) {
   await fs.copyFile(dest, backup);
 }
 
-async function recordInManifest(slug, inputPath) {
+/** The species now has a real photo: drop any AI record so it isn't credited as AI. */
+async function forgetAiImage(slug) {
   let manifest;
   try {
     manifest = JSON.parse(await fs.readFile(MANIFEST, "utf8"));
   } catch {
-    manifest = { model: "Pollinations.ai (sana)", images: {} };
+    return;
   }
-  manifest.images[`tree:${slug}`] = { prompt: `Supplied image: ${path.basename(inputPath)}`, generatedAt: new Date().toISOString() };
-  manifest.images = Object.fromEntries(Object.entries(manifest.images).sort(([a], [b]) => a.localeCompare(b)));
+  if (!Object.hasOwn(manifest.images, `tree:${slug}`)) return;
+  delete manifest.images[`tree:${slug}`];
   await fs.writeFile(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
 export async function processTreeImage(inputPath, slug, { overwrite = false } = {}) {
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || slug.endsWith("-sm")) throw new Error(`invalid slug "${slug}"`);
+  if (!SLUGS.has(slug)) throw new Error(`unknown species slug "${slug}"`);
   await fs.mkdir(TARGET_DIR, { recursive: true });
 
   const fullDest = path.join(TARGET_DIR, `${slug}.jpg`);
@@ -68,12 +80,12 @@ export async function processTreeImage(inputPath, slug, { overwrite = false } = 
     const tmp = `${dest}.tmp`;
     await sharp(inputBuffer)
       .rotate() // auto-orient from EXIF
-      .resize(w, h, { fit: "cover", position: "centre" })
+      .resize(w, h, { fit: "cover", position: "attention" })
       .jpeg({ quality, mozjpeg: true })
       .toFile(tmp);
     await fs.rename(tmp, dest);
   }
-  await recordInManifest(slug, inputPath);
+  await forgetAiImage(slug);
 
   console.log(`✓ Processed ${slug}: public/trees/${slug}.jpg + ${slug}-sm.jpg`);
   return true;
@@ -86,11 +98,11 @@ async function main() {
     console.log(`
 Usage:
   node scripts/process-tree-photos.mjs <input-file> <species-slug> [--overwrite]
-  node scripts/process-tree-photos.mjs --batch <folder-with-slug-named-images> [--overwrite]
+  node scripts/process-tree-photos.mjs --batch <folder-with-species-named-images> [--overwrite]
 
 Examples:
-  node scripts/process-tree-photos.mjs my-narra-raw.png narra --overwrite
-  node scripts/process-tree-photos.mjs --batch ./raw-ai-trees/
+  node scripts/process-tree-photos.mjs my-narra.jpg narra --overwrite
+  node scripts/process-tree-photos.mjs --batch ./trees/ --overwrite
 `);
     process.exit(1);
   }
@@ -100,9 +112,15 @@ Examples:
     let failures = 0;
     for (const file of await fs.readdir(dir)) {
       const ext = path.extname(file).toLowerCase();
-      const slug = path.basename(file, path.extname(file)).toLowerCase();
+      const base = path.basename(file, path.extname(file));
       // Only originals: "<slug>-sm" files are outputs (or duplicates), never inputs.
-      if (!IMAGE_EXTS.includes(ext) || slug.endsWith("-sm")) continue;
+      if (!IMAGE_EXTS.includes(ext) || base.toLowerCase().endsWith("-sm")) continue;
+      const slug = slugFromFileName(base);
+      if (!slug) {
+        failures++;
+        console.error(`Skipped ${file}: no species matches "${base}" (rename it to the species name, e.g. red-lauan.jpg)`);
+        continue;
+      }
       try {
         await processTreeImage(path.join(dir, file), slug, { overwrite });
       } catch (err) {
