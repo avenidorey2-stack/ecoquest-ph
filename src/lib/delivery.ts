@@ -1,6 +1,9 @@
 // Cash-on-delivery details for seedling orders, and the delivery promise shown to planters.
 // Client and server safe (no database access).
 
+/** After placing an order, a planter waits this long before the next one (stops accidental repeats). */
+export const ORDER_COOLDOWN_SECONDS = 30;
+
 /** Planters are promised delivery this many days after our team packs the order. */
 export const DELIVERY_DAYS = { min: 5, max: 7 } as const;
 

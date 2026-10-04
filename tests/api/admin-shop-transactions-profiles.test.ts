@@ -126,7 +126,7 @@ describe("POST /api/admin/orders/:id", () => {
     expect(messages).toHaveLength(4); // order placed + three status updates
     expect(messages).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("is packed"),
+        expect.stringContaining("is confirmed and being packed"),
         expect.stringContaining("is out for delivery"),
         expect.stringContaining("was delivered"),
       ]),

@@ -1,9 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatPesos, formatPoints } from "@/lib/format";
-import { DELIVERY_DAYS, MAX_INSTRUCTIONS, parseDeliveryDetails, type DeliveryDetails } from "@/lib/delivery";
+import {
+  DELIVERY_DAYS,
+  MAX_INSTRUCTIONS,
+  formatBarangay,
+  formatPhMobile,
+  parseDeliveryDetails,
+  type DeliveryDetails,
+} from "@/lib/delivery";
 import ActivePill from "@/components/ui/ActivePill";
 
 type Currency = "POINTS" | "PESOS";
@@ -15,17 +23,148 @@ type DeliveryForm = Record<keyof DeliveryDetails, string>;
 
 const DELIVERY_PROMISE = `Delivered within ${DELIVERY_DAYS.min}–${DELIVERY_DAYS.max} days after our team packs your order.`;
 
-/** Pay-with toggle, delivery details, quantity and "Order Seedling" button. */
+/** What was just ordered, for the "order complete" banner. */
+export type PlacedOrder = { name: string; quantity: number; total: string; cod: boolean };
+
+/** Seconds left until `until` (epoch ms), ticking down; 0 when there's no cooldown. */
+function useSecondsLeft(until: number) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (until <= Date.now()) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(timer);
+  }, [until]);
+  return Math.max(0, Math.ceil((until - now) / 1000));
+}
+
+/** Last check before an order is placed: what, how much, how it's paid, and where it goes. */
+function ConfirmOrderDialog({
+  product,
+  quantity,
+  total,
+  cod,
+  delivery,
+  busy,
+  error,
+  onConfirm,
+  onBack,
+}: {
+  product: { name: string };
+  quantity: number;
+  total: string;
+  cod: boolean;
+  delivery: DeliveryDetails;
+  busy: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onBack: () => void;
+}) {
+  const back = useRef<HTMLButtonElement>(null);
+  useEffect(() => back.current?.focus({ preventScroll: true }), []);
+  const row = "flex justify-between gap-4";
+  // Portalled to <body>: the order sheet animates with transforms, which would otherwise trap
+  // this full-screen overlay inside the sheet.
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[2200] m-0 flex items-end justify-center bg-canvas/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!busy) onBack();
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape") return;
+        e.stopPropagation(); // close only this dialog, not the order sheet behind it
+        if (!busy) onBack();
+      }}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-order-title"
+        aria-describedby="confirm-order-summary"
+        className="eq-rise w-full max-w-sm rounded-t-3xl border border-line-strong bg-card p-5 shadow-2xl sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="confirm-order-title" className="text-lg font-bold text-ink">
+          Confirm your order
+        </h3>
+        <div id="confirm-order-summary" className="mt-3 space-y-3 text-sm">
+          <dl className="space-y-1.5 rounded-xl bg-card-2 p-3 text-ink-2">
+            <div className={row}>
+              <dt>Seedling</dt>
+              <dd className="font-semibold text-ink">
+                {quantity} × {product.name}
+              </dd>
+            </div>
+            <div className={row}>
+              <dt>Total</dt>
+              <dd className="font-semibold text-emerald-300">{total}</dd>
+            </div>
+            <div className={row}>
+              <dt>Payment</dt>
+              <dd className="text-right text-ink">{cod ? "Cash on delivery" : "Points (deducted now)"}</dd>
+            </div>
+          </dl>
+          <div className="rounded-xl bg-card-2 p-3 text-ink-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Deliver to</p>
+            <p className="mt-1 font-medium text-ink">
+              {delivery.recipientName} · {formatPhMobile(delivery.contactNumber)}
+            </p>
+            <p>
+              {delivery.streetAddress}, {formatBarangay(delivery.barangay)}, {delivery.cityProvince}
+            </p>
+            <p className="text-ink-3">Landmark: {delivery.landmark}</p>
+            {delivery.instructions && <p className="text-ink-3">Note: {delivery.instructions}</p>}
+          </div>
+          <p className="text-xs text-ink-3">{DELIVERY_PROMISE}</p>
+        </div>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-red-400">
+            {error}
+          </p>
+        )}
+        <div className="mt-4 flex gap-2">
+          <button
+            ref={back}
+            type="button"
+            onClick={onBack}
+            disabled={busy}
+            className="min-h-12 flex-1 rounded-xl border border-line-strong text-sm font-semibold text-ink-2 transition-colors hover:bg-card-2 disabled:opacity-50"
+          >
+            Edit order
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className="min-h-12 flex-1 rounded-xl bg-emerald-400 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-300 disabled:opacity-60"
+          >
+            {busy ? "Placing order…" : "Confirm order"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/** Pay-with toggle, delivery details, quantity and "Order Seedling" button (then a confirmation). */
 export default function OrderSeedlingForm({
   product,
   balance,
   maxQuantity,
   deliveryDefaults = {},
+  cooldownUntil = 0,
+  onPlaced,
 }: {
   product: { id: string; name: string; priceInPoints: number; priceInPesos: number; stockQuantity: number };
   balance: number;
   maxQuantity: number;
   deliveryDefaults?: DeliveryDefaults;
+  /** Epoch ms until which ordering is paused after the last order. */
+  cooldownUntil?: number;
+  /** Called once an order is placed (the shop closes the sheet and shows a banner). */
+  onPlaced?: (order: PlacedOrder) => void;
 }) {
   const router = useRouter();
   const pesosAvailable = product.priceInPesos > 0;
@@ -43,6 +182,10 @@ export default function OrderSeedlingForm({
   }));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // Checked details waiting for the planter to confirm (the confirmation dialog is open).
+  const [review, setReview] = useState<DeliveryDetails | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const cooldown = useSecondsLeft(cooldownUntil);
 
   const soldOut = product.stockQuantity < 1;
   const cod = currency === "PESOS";
@@ -61,36 +204,47 @@ export default function OrderSeedlingForm({
     setDelivery((d) => ({ ...d, [key]: value }));
   }
 
-  async function order(e: React.FormEvent) {
+  const total = cod ? formatPesos(pesosTotal) : formatPoints(pointsTotal);
+
+  /** "Order Seedling": check everything, then ask the planter to confirm. */
+  function startReview(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid || !affordable) return;
+    if (!valid || !affordable || cooldown > 0) return;
     // Same checks as the server, so mistakes show before anything is sent.
     const details = parseDeliveryDetails(delivery);
     if (!details.ok) {
       setMessage({ ok: false, text: details.error });
       return;
     }
-    setBusy(true);
     setMessage(null);
+    setConfirmError(null);
+    setReview(details.data);
+  }
+
+  /** "Confirm order": place it. */
+  async function confirm() {
+    if (!review || busy) return;
+    setBusy(true);
+    setConfirmError(null);
     const res = await fetch("/api/shop/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id, quantity, currency, delivery: details.data }),
+      body: JSON.stringify({ productId: product.id, quantity, currency, delivery: review }),
     }).catch(() => null);
     setBusy(false);
     if (!res?.ok) {
       const error = res ? (await res.json().catch(() => ({}))).error : null;
-      setMessage({ ok: false, text: error ?? "Order failed. Please try again." });
+      setConfirmError(error ?? "Order failed. Please try again.");
       return;
     }
-    setMessage({
-      ok: true,
-      text: cod
-        ? `Ordered ${quantity} × ${product.name} — pay ${formatPesos(pesosTotal)} on delivery. ${DELIVERY_PROMISE}`
-        : `Ordered ${quantity} × ${product.name}! ${DELIVERY_PROMISE}`,
-    });
-    setQuantity(1);
-    router.refresh(); // updates stock, balance and order history
+    setReview(null);
+    router.refresh(); // updates stock, balance, order history and the cooldown
+    if (onPlaced) {
+      onPlaced({ name: product.name, quantity, total, cod });
+    } else {
+      setMessage({ ok: true, text: `Ordered ${quantity} × ${product.name}! ${DELIVERY_PROMISE}` });
+      setQuantity(1);
+    }
   }
 
   const stepBtn =
@@ -135,7 +289,7 @@ export default function OrderSeedlingForm({
   );
 
   return (
-    <form onSubmit={order} className="space-y-2.5">
+    <form onSubmit={startReview} className="space-y-2.5">
       <div role="radiogroup" aria-label="Pay with" className="flex gap-1 rounded-lg bg-card-2 p-1">
         {option("POINTS", "Points")}
         {option("PESOS", pesosAvailable ? "Pesos (COD)" : "Pesos —", !pesosAvailable)}
@@ -213,17 +367,31 @@ export default function OrderSeedlingForm({
 
       <button
         type="submit"
-        disabled={soldOut || !valid || !affordable || busy}
+        disabled={soldOut || !valid || !affordable || busy || cooldown > 0}
         className="min-h-12 w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4 disabled:shadow-none"
       >
         {soldOut
           ? "Out of stock"
-          : busy
-            ? "Ordering…"
+          : cooldown > 0
+            ? `You can order again in ${cooldown}s`
             : valid && !affordable
               ? `Need ${formatPoints(pointsTotal - balance)} more`
-              : `Order Seedling${valid ? ` · ${cod ? formatPesos(pesosTotal) : formatPoints(pointsTotal)}` : ""}`}
+              : `Order Seedling${valid ? ` · ${total}` : ""}`}
       </button>
+
+      {review && (
+        <ConfirmOrderDialog
+          product={product}
+          quantity={quantity}
+          total={total}
+          cod={cod}
+          delivery={review}
+          busy={busy}
+          error={confirmError}
+          onConfirm={confirm}
+          onBack={() => setReview(null)}
+        />
+      )}
 
       {message && (
         <p role="status" className={`text-xs ${message.ok ? "text-emerald-400" : "text-red-400"}`}>

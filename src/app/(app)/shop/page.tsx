@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MAX_ORDER_QUANTITY } from "@/lib/seedlings";
 import { formatAmount } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/order-status";
-import { DELIVERY_DAYS, deliveryWindow } from "@/lib/delivery";
+import { DELIVERY_DAYS, ORDER_COOLDOWN_SECONDS, deliveryWindow } from "@/lib/delivery";
 import { imageSourcesNote, treePhoto } from "@/data/tree-photos";
 import SeedlingShop, { type ShopProduct } from "@/components/shop/SeedlingShop";
 import { CoinIcon, SproutIcon } from "@/components/ui/icons";
@@ -85,7 +85,13 @@ export default async function SeedlingShopPage() {
           No seedlings are in stock right now. Check back soon!
         </p>
       ) : (
-        <SeedlingShop products={items} balance={user.points} maxQuantity={MAX_ORDER_QUANTITY} deliveryDefaults={deliveryDefaults} />
+        <SeedlingShop
+          products={items}
+          balance={user.points}
+          maxQuantity={MAX_ORDER_QUANTITY}
+          deliveryDefaults={deliveryDefaults}
+          cooldownUntil={orders[0] ? orders[0].createdAt.getTime() + ORDER_COOLDOWN_SECONDS * 1000 : 0}
+        />
       )}
 
       <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">

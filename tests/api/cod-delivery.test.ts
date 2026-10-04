@@ -78,12 +78,48 @@ describe("order delivery details", () => {
     expect(Date.now() - packed.packedAt!.getTime()).toBeLessThan(60_000);
 
     const packedNote = await prisma.notification.findFirstOrThrow({ where: { userId: buyer.id }, orderBy: { createdAt: "desc" } });
-    expect(packedNote.message).toContain(`is packed — expect it ${deliveryWindow(packed.packedAt!)}`);
+    expect(packedNote.message).toContain(`is confirmed and being packed — expect it ${deliveryWindow(packed.packedAt!)}`);
     expect(packedNote.message).not.toMatch(/admin/i);
 
     // Later steps keep the original packing time.
     await adminOrder(created.id, "advance");
     expect((await prisma.order.findUniqueOrThrow({ where: { id: created.id } })).packedAt).toEqual(packed.packedAt);
+  });
+
+  it("pauses ordering for 30 seconds after an order, without charging the refused one", async () => {
+    const p = await seedShop();
+    const buyer = await createUser({ points: 10_000 });
+    signInAs(buyer);
+    expect((await order({ productId: p.id, quantity: 1, currency: "POINTS", delivery: DELIVERY })).status).toBe(201);
+    const afterFirst = { points: (await prisma.user.findUniqueOrThrow({ where: { id: buyer.id } })).points, stock: await stock(p.id) };
+
+    const again = await order({ productId: p.id, quantity: 1, currency: "PESOS", delivery: DELIVERY });
+    expect(again.status).toBe(429);
+    expect((await again.json()).error).toMatch(/Please wait \d+s before ordering again/);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: buyer.id } })).points).toBe(afterFirst.points);
+    expect(await stock(p.id)).toBe(afterFirst.stock);
+    expect(await prisma.order.count()).toBe(1);
+
+    // Once the 30 seconds have passed, ordering works again.
+    await prisma.order.updateMany({ data: { createdAt: new Date(Date.now() - 31_000) } });
+    expect((await order({ productId: p.id, quantity: 1, currency: "POINTS", delivery: DELIVERY })).status).toBe(201);
+  });
+
+  it("lets only one of two simultaneous orders (a double tap) through", async () => {
+    const p = await seedShop();
+    signInAs(await createUser({ points: 10_000 }));
+    const body = { productId: p.id, quantity: 1, currency: "POINTS", delivery: DELIVERY };
+    const statuses = (await Promise.all([order(body), order(body)])).map((r) => r.status).sort();
+    expect(statuses).toEqual([201, 429]);
+    expect(await prisma.order.count()).toBe(1);
+  });
+
+  it("the cooldown is per planter", async () => {
+    const p = await seedShop();
+    signInAs(await createUser());
+    expect((await order({ productId: p.id, quantity: 1, currency: "PESOS", delivery: DELIVERY })).status).toBe(201);
+    signInAs(await createUser());
+    expect((await order({ productId: p.id, quantity: 1, currency: "PESOS", delivery: DELIVERY })).status).toBe(201);
   });
 
   it("deletes the delivery details with the order's owner", async () => {

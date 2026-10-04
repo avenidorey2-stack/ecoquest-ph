@@ -71,7 +71,7 @@ function DeliveryCard({ d, packedAt, status }: { d: DeliveryDetails; packedAt: s
 
 /** Label of the button that moves an order to its next status. */
 const NEXT_ACTION: Partial<Record<OrderStatus, string>> = {
-  PENDING: "📦 Pack It Up",
+  PENDING: "✅ Confirm & pack",
   PACKED: "🚚 Send out for delivery",
   OUT_FOR_DELIVERY: "✅ Mark delivered",
 };
