@@ -72,6 +72,9 @@ function Progress({ tree, onPhoto = false }: { tree: TreeCard; onPhoto?: boolean
 }
 
 export function Credit({ credit }: { credit: PhotoCredit }) {
+  if (credit.collection) {
+    return <p className="text-[11px] leading-relaxed text-ink-4">Photo: {credit.author}</p>;
+  }
   if (credit.ai) {
     return (
       <p className="text-[11px] leading-relaxed text-ink-4">

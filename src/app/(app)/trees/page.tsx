@@ -2,7 +2,7 @@ import { requirePageUserId } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { resolveCity } from "@/lib/psgc";
 import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
-import { TREE_PHOTOS, imageSourcesNote, isAiImage, treePhoto } from "@/data/tree-photos";
+import { imageSourcesNote, treePhoto } from "@/data/tree-photos";
 import TreeDirectory, { type TreeCard } from "@/components/trees/TreeDirectory";
 
 export const metadata = { title: "Tree Directory · EcoQuest PH" };
@@ -57,14 +57,13 @@ export default async function TreeDirectoryPage() {
   const categories = categoryTitles
     .map((title) => ({ title, trees: cards.filter((c) => c.category === title) }))
     .filter((c) => c.trees.length > 0);
-  const aiHeader = isAiImage("trees-hero");
   const planted = cards.reduce((sum, c) => sum + c.totalPlanted, 0);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-6 sm:px-6 lg:px-8">
       <section className="relative overflow-hidden rounded-3xl p-6 text-white ring-1 ring-white/10 sm:p-10">
         {/* eslint-disable-next-line @next/next/no-img-element -- static decorative photo */}
-        <img src={aiHeader ? "/images/trees-hero.jpg" : "/trees/dao.jpg"} alt="" className="eq-kenburns absolute inset-0 h-full w-full object-cover" />
+        <img src="/trees/narra.jpg" alt="" className="eq-kenburns absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/80 to-canvas/20" />
         <div className="relative max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Philippine Tree Encyclopedia</p>
@@ -88,8 +87,7 @@ export default async function TreeDirectoryPage() {
       )}
 
       <p className="text-center text-xs text-ink-4">
-        {imageSourcesNote(cards.map((c) => c.credit))}, credited on each tree (header:{" "}
-        {aiHeader ? "AI-generated with Pollinations.ai" : `Dao by ${TREE_PHOTOS.dao.author}, ${TREE_PHOTOS.dao.license}`}). Always check with your local DENR or LGU office before planting in public spaces.
+        {imageSourcesNote(cards.map((c) => c.credit))}, credited on each tree (header: Narra). Always check with your local DENR or LGU office before planting in public spaces.
       </p>
     </div>
   );

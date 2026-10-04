@@ -9,7 +9,7 @@ import { getPlantingImpact } from "@/lib/impact";
 import { prisma } from "@/lib/prisma";
 import { seedTreeData, syncTreeSpecies } from "@/lib/species";
 import { TREE_SPECIES } from "@/data/tree-species";
-import { treePhoto } from "@/data/tree-photos";
+import { COLLECTION_CREDIT, treePhoto } from "@/data/tree-photos";
 import { CODES, createSlot, createUser, ctx, jsonRequest, resetDb, signInAs } from "../helpers";
 
 beforeEach(async () => {
@@ -170,11 +170,8 @@ describe("GET /api/trees/art/:slug", () => {
       const photo = treePhoto(s.slug);
       expect(photo, s.slug).not.toBeNull();
       for (const file of [photo!.card, photo!.full]) expect(existsSync(`public${file}`), file).toBe(true);
-      const { credit } = photo!;
-      // AI images credit the generator; the rest are Wikimedia Commons photos.
-      const source = credit.ai ? "https://pollinations.ai" : "https://commons.wikimedia.org/";
-      expect(credit.author && credit.license && credit.source.startsWith(source), s.slug).toBeTruthy();
-      if (credit.ai) expect(credit.shows, s.slug).toBeUndefined(); // "close relative" notes are for real photos only
+      // Every species shows a collection photo (never an AI image or a stale Wikimedia credit).
+      expect(photo!.credit, s.slug).toEqual(COLLECTION_CREDIT);
     }
   });
 

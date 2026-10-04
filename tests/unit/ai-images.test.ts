@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import AI_IMAGES from "@/data/ai-images.json";
-import { AI_CREDIT, HERO_PHOTO, imageSourcesNote, isAiImage, treePhoto } from "@/data/tree-photos";
+import { AI_CREDIT, COLLECTION_CREDIT, HERO_PHOTO, imageSourcesNote, isAiImage, treePhoto } from "@/data/tree-photos";
 import { TREE_SPECIES } from "@/data/tree-species";
 
 // Files each generator key writes (mirrors scripts/generate-ai-images.mjs).
@@ -19,7 +19,7 @@ describe("AI image manifest", () => {
 
   it("only lists images the app knows, and every one exists on disk", () => {
     const slugs = new Set(TREE_SPECIES.map((s) => s.slug));
-    const known = new Set(["hero", "auth-bg", "app-bg", "trees-hero", "shop-hero", "grow:1", "grow:2", "grow:3", "grow:4", "grow:5"]);
+    const known = new Set(["hero", "auth-bg", "app-bg", "grow:1", "grow:2", "grow:3", "grow:4", "grow:5"]);
     for (const key of keys) {
       expect(key.startsWith("tree:") ? slugs.has(key.slice(5)) : known.has(key), key).toBe(true);
       for (const file of filesFor(key)) expect(existsSync(file), file).toBe(true);
@@ -30,9 +30,9 @@ describe("AI image manifest", () => {
     for (const key of ["grow:1", "grow:2", "grow:3", "grow:4", "grow:5", "auth-bg", "app-bg"]) expect(isAiImage(key), key).toBe(true);
   });
 
-  it("credits AI tree images as AI, never as a Wikimedia photographer", () => {
+  it("credits each tree image by where it came from", () => {
     for (const s of TREE_SPECIES) {
-      if (isAiImage(`tree:${s.slug}`)) expect(treePhoto(s.slug)?.credit).toEqual(AI_CREDIT);
+      expect(treePhoto(s.slug)?.credit).toEqual(isAiImage(`tree:${s.slug}`) ? AI_CREDIT : COLLECTION_CREDIT);
     }
     if (isAiImage("hero")) expect(HERO_PHOTO).toEqual(AI_CREDIT);
   });
@@ -40,9 +40,12 @@ describe("AI image manifest", () => {
 
 describe("imageSourcesNote", () => {
   const wiki = { author: "A", license: "CC0", source: "https://commons.wikimedia.org/x" };
-  it("names who made a page's images", () => {
-    expect(imageSourcesNote([AI_CREDIT, AI_CREDIT, null])).toBe("AI-generated with Pollinations.ai");
-    expect(imageSourcesNote([wiki, null])).toBe("Photos from Wikimedia Commons contributors");
-    expect(imageSourcesNote([AI_CREDIT, wiki])).toBe("AI-generated (Pollinations.ai) and photos from Wikimedia Commons contributors");
+  it("names where a page's images come from", () => {
+    expect(imageSourcesNote([COLLECTION_CREDIT, COLLECTION_CREDIT, null])).toBe("Photos from the EcoQuest PH tree photo collection");
+    expect(imageSourcesNote([AI_CREDIT, null])).toBe("AI-generated with Pollinations.ai");
+    expect(imageSourcesNote([wiki])).toBe("Photos from Wikimedia Commons contributors");
+    expect(imageSourcesNote([COLLECTION_CREDIT, AI_CREDIT])).toBe(
+      "Photos from the EcoQuest PH tree photo collection and AI-generated with Pollinations.ai",
+    );
   });
 });
