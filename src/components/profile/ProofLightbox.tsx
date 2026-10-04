@@ -71,7 +71,7 @@ export default function ProofLightbox({
         if (e.key === "ArrowLeft") go(-1);
         if (e.key === "ArrowRight") go(1);
       }}
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overscroll-none bg-slate-950 p-0 text-white backdrop:bg-transparent"
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overscroll-none bg-canvas p-0 text-white backdrop:bg-transparent"
     >
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-5">

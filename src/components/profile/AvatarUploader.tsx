@@ -85,7 +85,7 @@ export default function AvatarUploader({
             <span className="grid h-full w-full place-items-center bg-emerald-400 text-3xl font-bold text-emerald-950">{initials}</span>
           )}
         </AnimatePresence>
-        <span className="absolute inset-0 grid place-items-center bg-slate-950/45 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+        <span className="absolute inset-0 grid place-items-center bg-black/50 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           {busy ? "Uploading…" : "Change"}
         </span>
         {busy && <span className="absolute inset-0 animate-pulse bg-white/30" aria-hidden />}

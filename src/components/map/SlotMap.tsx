@@ -7,6 +7,7 @@ import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from "r
 import L from "leaflet";
 import type { Geometry } from "geojson";
 import { PH_BOUNDS, PH_CENTER } from "@/lib/geo";
+import { MAP_BOUNDARY, PLANTER_PIN_COLORS as PLANTER_COLORS, SLOT_STATUS_COLORS as STATUS_COLORS } from "@/lib/palette";
 import { CloseIcon, ExpandIcon } from "@/components/ui/icons";
 
 type SlotDTO = {
@@ -75,9 +76,6 @@ function Panning({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-const STATUS_COLORS = { OPEN: "#16a34a", FULL: "#f59e0b", CLOSED: "#6b7280" } as const;
-const PLANTER_COLORS = { claimable: "#16a34a", yours: "#2563eb", other: "#9ca3af" } as const;
-
 const ADMIN_LEGEND: [label: string, color: string][] = [
   ["Open", STATUS_COLORS.OPEN],
   ["Full", STATUS_COLORS.FULL],
@@ -89,7 +87,7 @@ const PLANTER_LEGEND: [label: string, color: string][] = [
   ["Full", PLANTER_COLORS.other],
 ];
 
-const BOUNDARY_STYLE = { color: "#16a34a", weight: 2, fillOpacity: 0.08 };
+const BOUNDARY_STYLE = { color: MAP_BOUNDARY, weight: 2, fillOpacity: 0.08 };
 
 function markerColor(slot: SlotDTO, adminView: boolean) {
   if (adminView) return STATUS_COLORS[slot.status];

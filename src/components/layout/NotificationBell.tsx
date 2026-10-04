@@ -90,7 +90,7 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
         aria-label={unread ? `Notifications (${unread} unread)` : "Notifications"}
         aria-expanded={open}
         aria-haspopup="true"
-        className="relative grid h-10 w-10 place-items-center rounded-full text-ink-2 transition-colors hover:bg-white/5 hover:text-emerald-300 hover:shadow-sm"
+        className="eq-hit relative grid h-10 w-10 place-items-center rounded-full text-ink-2 transition-colors hover:bg-white/5 hover:text-emerald-300 hover:shadow-sm"
       >
         <BellIcon className="h-5 w-5" />
         {unread > 0 && (

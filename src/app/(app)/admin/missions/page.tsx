@@ -26,7 +26,7 @@ export default async function AdminMissionsPage({ searchParams }: PageProps<"/ad
       <Link
         href={`/admin/missions?tab=${value}`}
         aria-current={active ? "page" : undefined}
-        className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active ? "text-emerald-300" : "text-ink-2 hover:text-ink"}`}
+        className={`relative inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-medium transition-colors ${active ? "text-emerald-300" : "text-ink-2 hover:text-ink"}`}
       >
         {active && <ActivePill id="admin-missions-tab" className="inset-0 rounded-lg bg-card shadow-sm ring-1 ring-line" />}
         <span className="relative">{label}</span>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { CANVAS } from "@/lib/palette";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 
 // Dark-only design: dark form controls/scrollbars, and tint the mobile browser bar to the canvas.
 export const viewport: Viewport = {
-  themeColor: "#04100b",
+  themeColor: CANVAS,
   colorScheme: "dark",
 };
 

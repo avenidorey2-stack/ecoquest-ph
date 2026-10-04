@@ -80,7 +80,7 @@ export default async function SeedlingShopPage() {
       <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">
         <header className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">My seedling orders</h2>
-          <Link href="/transactions" className="text-xs font-medium text-emerald-400 hover:text-emerald-200">
+          <Link href="/transactions" className="eq-hit relative text-xs font-medium text-emerald-400 hover:text-emerald-200">
             Full history
           </Link>
         </header>

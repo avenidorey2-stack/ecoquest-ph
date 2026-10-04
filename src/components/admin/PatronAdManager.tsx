@@ -143,7 +143,7 @@ export default function PatronAdManager({ ads }: { ads: AdminPatronAd[] }) {
           <AdForm onDone={() => setAdding(false)} />
         </div>
       ) : (
-        <button onClick={() => setAdding(true)} className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-medium text-emerald-950">
+        <button onClick={() => setAdding(true)} className="min-h-11 rounded-lg bg-emerald-400 px-4 text-sm font-bold text-emerald-950">
           + New banner
         </button>
       )}

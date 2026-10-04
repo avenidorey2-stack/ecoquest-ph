@@ -110,7 +110,7 @@ export default function SlotManager({
 
   // Desktop height = viewport − 4rem app header − 2.75rem admin tabs.
   return (
-    <div className="flex flex-1 flex-col lg:h-[calc(100vh-6.75rem)] lg:flex-row">
+    <div className="flex flex-1 flex-col lg:h-[calc(100dvh-6.75rem)] lg:flex-row">
       {/* Mobile: fixed 55vh. Desktop: stretches to the row's height (h-auto + flex stretch);
           percentage heights don't resolve here, so the map is absolutely positioned to fill it. */}
       <div className="relative h-[55vh] min-h-[320px] lg:h-auto lg:min-h-0 lg:flex-1">

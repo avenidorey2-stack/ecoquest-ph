@@ -102,7 +102,7 @@ function RewardRow({ reward }: { reward: AdminReward }) {
           <button
             disabled={busy || hint !== null}
             onClick={() => save({ costPoints, valuePesos })}
-            className="rounded bg-emerald-400 px-3 py-1 text-emerald-950 disabled:opacity-50"
+            className="rounded bg-emerald-400 px-3 py-1 text-emerald-950 pointer-coarse:min-h-11 disabled:opacity-50"
           >
             Save
           </button>
@@ -110,7 +110,7 @@ function RewardRow({ reward }: { reward: AdminReward }) {
         <button
           disabled={busy}
           onClick={() => save({ isActive: !reward.isActive })}
-          className="rounded border border-line px-3 py-1 hover:bg-card-2 disabled:opacity-50"
+          className="rounded border border-line px-3 py-1 hover:bg-card-2 pointer-coarse:min-h-11 disabled:opacity-50"
         >
           {reward.isActive ? "Hide" : "Show"}
         </button>
@@ -207,7 +207,7 @@ function NewRewardForm({ brands }: { brands: Record<RewardType, readonly string[
             required
           />
         </label>
-        <button disabled={busy || hint !== null} className="rounded bg-emerald-400 px-4 py-2 font-medium text-emerald-950 disabled:opacity-50">
+        <button disabled={busy || hint !== null} className="min-h-11 rounded-lg bg-emerald-400 px-4 font-bold text-emerald-950 disabled:opacity-50">
           Add reward
         </button>
         {hint && <p className="w-full text-amber-300">{hint}</p>}

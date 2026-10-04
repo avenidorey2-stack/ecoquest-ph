@@ -31,7 +31,7 @@ export default function Card({
           {title}
         </h2>
         {action && (
-          <Link href={action.href} className="text-xs font-medium text-emerald-400 hover:text-emerald-200">
+          <Link href={action.href} className="eq-hit relative text-xs font-medium text-emerald-400 hover:text-emerald-200">
             {action.label}
           </Link>
         )}
@@ -45,7 +45,7 @@ export function ProgressBar({ value, max, tone = "emerald" }: { value: number; m
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
-      className="h-1.5 w-full overflow-hidden rounded-full bg-card-2"
+      className="h-2 w-full overflow-hidden rounded-full bg-card-2"
       role="progressbar"
       aria-valuenow={value}
       aria-valuemin={0}

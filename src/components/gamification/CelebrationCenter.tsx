@@ -28,7 +28,7 @@ function CountUp({ from, to }: { from: number; to: number }) {
 function Modal({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label: string }) {
   return (
     <motion.div
-      className="fixed inset-0 z-[2100] m-0 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[2100] m-0 flex items-center justify-center bg-canvas/70 p-4 backdrop-blur-[2px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -165,7 +165,7 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
             See leaderboard
           </Link>
         </div>
-        <button onClick={onClose} aria-label="Dismiss" className="rounded-lg p-1 text-ink-4 hover:bg-card-2">
+        <button onClick={onClose} aria-label="Dismiss" className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-ink-3 hover:bg-card-2 hover:text-ink">
           ✕
         </button>
       </div>

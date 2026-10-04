@@ -64,7 +64,7 @@ export default function OrderSeedlingForm({
   }
 
   const stepBtn =
-    "grid h-9 w-9 place-items-center text-lg font-semibold text-ink-2 transition-colors hover:bg-emerald-400/10 hover:text-emerald-300 disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
+    "grid h-11 w-11 place-items-center text-lg font-semibold text-ink-2 transition-colors hover:bg-emerald-400/10 hover:text-emerald-300 disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
   const option = (value: Currency, label: string, disabled = false) => (
     <button
       type="button"
@@ -75,7 +75,7 @@ export default function OrderSeedlingForm({
         setMessage(null);
         setCurrency(value);
       }}
-      className={`relative flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
+      className={`relative min-h-11 flex-1 rounded-md px-2 text-sm font-semibold transition-colors ${
         currency === value ? "text-emerald-300" : "text-ink-3 hover:text-ink"
       } disabled:cursor-not-allowed disabled:text-ink-4`}
     >
@@ -109,7 +109,7 @@ export default function OrderSeedlingForm({
             value={quantity || ""}
             onChange={(e) => change(e.target.valueAsNumber)}
             disabled={soldOut || busy}
-            className="h-9 w-12 border-x border-line text-center text-sm font-semibold text-ink [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="h-11 w-14 border-x border-line text-center text-sm font-semibold text-ink [appearance:textfield] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <button type="button" onClick={() => change(quantity + 1)} disabled={soldOut || quantity >= limit || busy} aria-label="Increase quantity" className={stepBtn}>
             +
@@ -120,7 +120,7 @@ export default function OrderSeedlingForm({
       <button
         type="submit"
         disabled={soldOut || !valid || !affordable || busy}
-        className="w-full rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4 disabled:shadow-none"
+        className="min-h-12 w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4 disabled:shadow-none"
       >
         {soldOut
           ? "Out of stock"

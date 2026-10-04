@@ -85,8 +85,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 />
                 <defs>
                   <linearGradient id="impact" x1="0" x2="1">
-                    <stop offset="0" stopColor="#10b981" />
-                    <stop offset="1" stopColor="#047857" />
+                    <stop offset="0" stopColor="currentColor" className="text-emerald-500" />
+                    <stop offset="1" stopColor="currentColor" className="text-emerald-700" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -190,7 +190,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <Card title="Latest submission" icon={<CameraIcon className="h-4 w-4" />} bodyClassName="p-4">
           {latest ? (
             <figure className="space-y-3">
-              <div className="overflow-hidden rounded-xl bg-slate-900">
+              <div className="overflow-hidden rounded-xl bg-canvas">
                 {latest.mediaType.startsWith("video/") ? (
                   <video src={latest.mediaUrl} controls className="aspect-[4/3] w-full object-cover" />
                 ) : (
@@ -406,7 +406,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 <dt className="text-[11px] text-ink-3">Planted</dt>
               </div>
             </dl>
-            <Link href="/referrals" className="mt-3 inline-block text-xs font-medium text-emerald-400 hover:text-emerald-200">
+            <Link href="/referrals" className="eq-hit relative mt-3 inline-block text-xs font-medium text-emerald-400 hover:text-emerald-200">
               Open Referral Hub
             </Link>
           </div>

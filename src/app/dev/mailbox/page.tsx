@@ -15,7 +15,7 @@ export default async function DevMailboxPage() {
   const emails = await readDevMailbox();
 
   return (
-    <div className="min-h-screen bg-card-2 p-4 text-ink">
+    <div className="min-h-dvh bg-card-2 p-4 text-ink">
       <div className="mx-auto max-w-3xl space-y-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>

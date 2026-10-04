@@ -40,10 +40,10 @@ function FilePreview({ file }: { file: File }) {
   }, [file, isVideo]);
 
   return isVideo ? (
-    <video ref={videoRef} controls playsInline muted preload="metadata" className="max-h-60 w-full rounded-xl bg-slate-900 object-contain" />
+    <video ref={videoRef} controls playsInline muted preload="metadata" className="max-h-60 w-full rounded-xl bg-canvas object-contain" />
   ) : (
     // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimisable asset
-    <img ref={imgRef} alt="Selected proof" className="max-h-60 w-full rounded-xl bg-slate-900 object-contain" />
+    <img ref={imgRef} alt="Selected proof" className="max-h-60 w-full rounded-xl bg-canvas object-contain" />
   );
 }
 

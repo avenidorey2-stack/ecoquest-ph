@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VoucherArt from "@/components/rewards/VoucherArt";
 import { voucherAmount } from "@/lib/voucher";
 
@@ -51,25 +51,37 @@ export default function RedeemButton({
     setError(null);
   }
 
+  // Escape closes the dialog wherever focus is.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      setDone(false);
+      setError(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <>
       <button
         onClick={() => setOpen(true)}
         disabled={!affordable}
-        className="w-full rounded-lg bg-emerald-400 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:bg-card-3 disabled:text-ink-3"
+        className="min-h-11 w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-emerald-950 hover:bg-emerald-300 disabled:bg-card-3 disabled:text-ink-3"
       >
         {affordable ? "Redeem" : `Need ${pts(reward.costPoints - balance)} more pts`}
       </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-[2000] m-0 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[2000] m-0 flex items-center justify-center bg-canvas/80 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label={`Redeem ${label}`}
-          onKeyDown={(e) => e.key === "Escape" && close()}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-card p-5 text-ink shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-line-strong bg-card p-5 text-ink shadow-xl">
             {done ? (
               <div className="space-y-3 text-center">
                 <p className="text-3xl" aria-hidden>
@@ -81,7 +93,7 @@ export default function RedeemButton({
                     ? `We'll send ${amount} to ${number} once our team processes it.`
                     : "Your voucher code will appear in your history once our team processes it."}
                 </p>
-                <button onClick={close} autoFocus className="w-full rounded-lg bg-emerald-400 py-2 font-semibold text-emerald-950">
+                <button onClick={close} autoFocus className="min-h-11 w-full rounded-xl bg-emerald-400 py-3 font-bold text-emerald-950">
                   Done
                 </button>
               </div>
@@ -107,7 +119,7 @@ export default function RedeemButton({
                       placeholder="0917 123 4567"
                       required
                       autoFocus
-                      className="mt-1 block w-full rounded border px-2 py-1.5"
+                      className="mt-1 block w-full rounded-xl border border-line-strong bg-card-2 px-3 py-2.5 text-ink"
                     />
                     <span className="text-xs text-ink-3">Double-check it — cash sent to a wrong number can&apos;t be recovered.</span>
                   </label>
@@ -119,11 +131,11 @@ export default function RedeemButton({
                   <button
                     type="submit"
                     disabled={busy}
-                    className="flex-1 rounded-lg bg-emerald-400 py-2 font-semibold text-emerald-950 disabled:opacity-50"
+                    className="min-h-11 flex-1 rounded-xl bg-emerald-400 py-3 font-bold text-emerald-950 disabled:opacity-50"
                   >
                     {busy ? "Redeeming…" : "Confirm"}
                   </button>
-                  <button type="button" onClick={close} className="flex-1 rounded-lg border py-2">
+                  <button type="button" onClick={close} className="min-h-11 flex-1 rounded-xl border border-line py-3 font-medium text-ink-2 hover:bg-card-2">
                     Cancel
                   </button>
                 </div>

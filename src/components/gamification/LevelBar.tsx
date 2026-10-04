@@ -18,7 +18,7 @@ export default function LevelBar({ xp, compact = false, dark = false }: { xp: nu
       aria-valuemax={p.xpForLevel}
     >
       <div
-        className="eq-fill h-full rounded-full bg-gradient-to-r from-lime-400 via-emerald-500 to-emerald-600 transition-[width] duration-1000 ease-out"
+        className="eq-fill h-full rounded-full bg-gradient-to-r from-lime-400 via-emerald-500 to-emerald-600 shadow-[0_0_10px_rgba(52,211,153,.5)] transition-[width] duration-1000 ease-out"
         style={{ width: `${Math.max(p.pct, 3)}%` }}
       />
     </div>
@@ -52,7 +52,7 @@ export default function LevelBar({ xp, compact = false, dark = false }: { xp: nu
         </p>
       </div>
       {bar}
-      <p className={`mt-1 text-[11px] ${dark ? "text-emerald-100/70" : "text-ink-4"}`}>
+      <p className={`mt-1 text-[11px] ${dark ? "text-emerald-100/70" : "text-ink-3"}`}>
         {p.xpToNext.toLocaleString("en-PH")} XP to level {p.level + 1}
       </p>
     </div>

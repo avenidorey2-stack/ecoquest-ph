@@ -1,9 +1,11 @@
 import FallingLeaves, { makeLeaves, type Leaf } from "./FallingLeaves";
+import Fireflies, { makeFireflies } from "./Fireflies";
+import { TREELINE } from "@/lib/palette";
 
 // Decorative, fixed backdrop behind every portal and sign-in page: a soft sky, drifting
-// sunlight, faint terrain contours, rolling hills with a tree line, and falling leaves —
-// a few in the portal, many more (`lush`) on the sign-in pages. Pure SVG + CSS (see
-// globals.css "Eco background"); motion stops under prefers-reduced-motion.
+// sunlight, faint terrain contours, rolling hills with a tree line, falling leaves, and
+// living bioluminescent fireflies and canopy light sweeps — pure SVG + CSS.
+// Motion stops under prefers-reduced-motion.
 
 const BLOB = "M0-60C34-62 66-38 64-4 62 30 38 58 2 60-34 62-64 36-62 0-60-34-34-58 0-60Z";
 const RINGS = [1, 1.6, 2.25, 2.95, 3.7, 4.5];
@@ -50,13 +52,17 @@ const LUSH_LEAVES = makeLeaves(26, 7, [
   "rgb(251 191 36 / 0.4)",
 ]);
 
+const LUSH_FIREFLIES = makeFireflies(28, 77);
+
 export default function EcoBackground({ lush = false }: { lush?: boolean }) {
   return (
     <div className="eq-eco-bg" aria-hidden>
       <div className="eq-eco-grid" />
+      <div className="eq-eco-sweep" />
       <div className="eq-eco-glow eq-eco-glow--sun" />
       <div className="eq-eco-glow eq-eco-glow--leaf" />
       <div className="eq-eco-glow eq-eco-glow--moss" />
+      <Fireflies fireflies={lush ? LUSH_FIREFLIES : undefined} />
 
       <svg className="eq-eco-contours" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
         <defs>
@@ -80,17 +86,17 @@ export default function EcoBackground({ lush = false }: { lush?: boolean }) {
 
       <svg className="eq-eco-hills" viewBox="0 0 1440 220" preserveAspectRatio="xMidYMax slice">
         <path fill="#081f16" d="M0 120C180 70 330 64 520 98s370 40 560-6 260-44 360-30V220H0Z" />
-        <Pine x={210} y={102} s={0.9} tone="#0b281c" />
-        <Tree x={300} y={92} s={1} tone="#0b281c" />
-        <Pine x={1120} y={88} s={1.05} tone="#0b281c" />
-        <Tree x={1200} y={86} s={0.85} tone="#0b281c" />
+        <Pine x={210} y={102} s={0.9} tone={TREELINE.far} />
+        <Tree x={300} y={92} s={1} tone={TREELINE.far} />
+        <Pine x={1120} y={88} s={1.05} tone={TREELINE.far} />
+        <Tree x={1200} y={86} s={0.85} tone={TREELINE.far} />
         <path fill="#0a2419" d="M0 160C150 128 290 118 440 136s300 36 470 12 330-52 530-30V220H0Z" />
-        <Tree x={120} y={150} s={1.15} tone="#0e3123" />
-        <Pine x={175} y={150} s={1.2} tone="#0e3123" />
-        <Tree x={640} y={152} s={1.25} tone="#0e3123" />
-        <Pine x={700} y={150} s={1} tone="#0e3123" />
-        <Tree x={985} y={140} s={1.05} tone="#0e3123" />
-        <Pine x={1360} y={124} s={1.25} tone="#0e3123" />
+        <Tree x={120} y={150} s={1.15} tone={TREELINE.near} />
+        <Pine x={175} y={150} s={1.2} tone={TREELINE.near} />
+        <Tree x={640} y={152} s={1.25} tone={TREELINE.near} />
+        <Pine x={700} y={150} s={1} tone={TREELINE.near} />
+        <Tree x={985} y={140} s={1.05} tone={TREELINE.near} />
+        <Pine x={1360} y={124} s={1.25} tone={TREELINE.near} />
         <path fill="#0c2b1f" d="M0 196C220 172 420 168 640 184s420 22 560 6 200-18 240-14V220H0Z" />
       </svg>
     </div>

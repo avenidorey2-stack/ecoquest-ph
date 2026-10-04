@@ -99,6 +99,44 @@
   transform: scale(0.98);
 }
 
+/* Reward actions (claim points) glow amber the same way. */
+:is(a, button)[class~="bg-amber-400"]:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgb(252 211 77 / 0.45),
+    0 10px 28px -10px rgb(251 191 36 / 0.75);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+:is(a, button)[class~="bg-amber-400"]:not(:disabled):hover {
+  box-shadow:
+    0 0 0 1px rgb(253 230 138 / 0.6),
+    0 14px 34px -10px rgb(251 191 36 / 0.95);
+}
+:is(a, button)[class~="bg-amber-400"]:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Invisible touch area: a small control (header icon, card link) keeps its look but takes
+   taps across at least 44×44px. The element must be positioned (add `relative`). */
+.eq-hit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* On touch screens, form fields are at least 44px tall (fingers, outdoors). */
+@media (pointer: coarse) {
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"]), select, textarea) {
+    min-height: 44px;
+  }
+}
+
 html {
   background: var(--background);
   /* Stop iOS from enlarging text after rotating to landscape. */
@@ -413,6 +451,80 @@ body {
   animation: eq-drift-b 30s ease-in-out infinite alternate;
 }
 
+/* ─── Living Bioluminescent Fireflies & Spore Particles ──────────────────── */
+.eq-fireflies {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.eq-firefly {
+  position: absolute;
+  bottom: -24px;
+  left: var(--x);
+  width: var(--s, 6px);
+  height: var(--s, 6px);
+  animation: eq-firefly-rise var(--d, 22s) linear var(--delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+/* The glowing dot. Sway (`translate`) and pulse (`scale`) animate separate properties, so
+   both apply on top of the outer element's rise. */
+.eq-firefly > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--c, #34d399);
+  box-shadow: 0 0 12px 3px var(--c, #34d399);
+  animation:
+    eq-firefly-sway calc(var(--d, 22s) / 4) ease-in-out infinite alternate,
+    eq-firefly-pulse calc(var(--d, 22s) / 6) ease-in-out infinite alternate;
+}
+
+@keyframes eq-firefly-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  8% { opacity: 0.95; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(-115vh); opacity: 0; }
+}
+@keyframes eq-firefly-sway {
+  from { translate: calc(var(--drift, 30px) * -1) 0; }
+  to { translate: var(--drift, 30px) 0; }
+}
+@keyframes eq-firefly-pulse {
+  0%, 100% { scale: 0.6; opacity: 0.35; }
+  50% { scale: 1.4; opacity: 1; }
+}
+
+/* Atmospheric canopy light sweep */
+.eq-eco-sweep {
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 60%;
+  background: radial-gradient(ellipse at 50% 0%, rgb(52 211 153 / 0.12) 0%, rgb(163 230 53 / 0.04) 40%, transparent 70%);
+  filter: blur(48px);
+  animation: eq-sweep-drift 24s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes eq-sweep-drift {
+  0% { transform: translate3d(-6%, -3%, 0) rotate(-1.5deg); }
+  50% { transform: translate3d(6%, 2%, 0) rotate(1.5deg); }
+  100% { transform: translate3d(8%, -2%, 0) rotate(0.8deg); }
+}
+
+/* Breathing contour lines */
+.eq-eco-contours path,
+.eq-eco-contours use {
+  animation: eq-contour-breathe 10s ease-in-out infinite alternate;
+}
+@keyframes eq-contour-breathe {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.85; stroke: rgb(110 231 183 / 0.14); }
+  100% { opacity: 0.45; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .eq-stagger > *,
   .eq-rise,
@@ -425,10 +537,16 @@ body {
   .eq-eco-glow,
   .eq-sidebar-glow::before,
   .eq-eco-leaf > svg,
-  .eq-leaf-flip {
+  .eq-leaf-flip,
+  .eq-firefly,
+  .eq-firefly > span,
+  .eq-eco-sweep,
+  .eq-eco-contours path,
+  .eq-eco-contours use {
     animation: none !important;
   }
-  .eq-eco-leaf {
+  .eq-eco-leaf,
+  .eq-fireflies {
     display: none;
   }
 }
@@ -470,6 +588,13 @@ body {
 }
 .leaflet-container .leaflet-bar a:hover {
   background: var(--color-card-3);
+}
+/* Zoom buttons are 44px on touch screens (Leaflet's own touch size is 30px). */
+.leaflet-touch .leaflet-control-zoom.leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 22px;
 }
 .leaflet-container .leaflet-control-attribution {
   background: rgb(4 16 11 / 0.75);

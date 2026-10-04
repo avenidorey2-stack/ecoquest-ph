@@ -15,14 +15,14 @@ function QuestProgress({ value, pending = 0, max }: { value: number; pending?: n
   const waiting = Math.min(100 - done, pct(pending));
   return (
     <div
-      className="flex h-1.5 w-full overflow-hidden rounded-full bg-card-2"
+      className="flex h-2 w-full overflow-hidden rounded-full bg-card-2"
       role="progressbar"
       aria-valuenow={Math.min(value + pending, max)}
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuetext={pending ? `${value} verified, ${pending} awaiting review, of ${max}` : `${value} of ${max}`}
     >
-      <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-[width] duration-700" style={{ width: `${done}%` }} />
+      <div className="eq-fill h-full bg-gradient-to-r from-emerald-500 to-lime-400 shadow-[0_0_10px_rgba(52,211,153,.5)] transition-[width] duration-700" style={{ width: `${done}%` }} />
       {waiting > 0 && (
         <div
           className="h-full bg-amber-400 bg-[repeating-linear-gradient(135deg,transparent_0_4px,rgba(255,255,255,.35)_4px_8px)] transition-[width] duration-700"
@@ -97,7 +97,7 @@ export default function QuestList({
             onClick={() => setShowCompleted((s) => !s)}
             aria-expanded={showCompleted}
             aria-controls={panelId}
-            className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold text-emerald-300 hover:bg-emerald-400/10"
+            className="flex min-h-11 w-full items-center justify-between rounded-lg px-2 text-left text-xs font-semibold text-emerald-300 hover:bg-emerald-400/10"
           >
             <span>
               ✓ Completed ({completedTotal.toLocaleString("en-PH")})
