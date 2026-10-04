@@ -4,7 +4,7 @@ import { AnimatePresence, LayoutGroup, MotionConfig, motion } from "motion/react
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PhotoCredit } from "@/data/tree-photos";
 import { formatPesos } from "@/lib/format";
-import OrderSeedlingForm from "@/components/shop/OrderSeedlingForm";
+import OrderSeedlingForm, { type DeliveryDefaults } from "@/components/shop/OrderSeedlingForm";
 import { Credit } from "@/components/trees/TreeDirectory";
 import { CloseIcon, CoinIcon } from "@/components/ui/icons";
 
@@ -45,11 +45,13 @@ function OrderSheet({
   product,
   balance,
   maxQuantity,
+  deliveryDefaults,
   onClose,
 }: {
   product: ShopProduct;
   balance: number;
   maxQuantity: number;
+  deliveryDefaults: DeliveryDefaults;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -165,6 +167,7 @@ function OrderSheet({
               }}
               balance={balance}
               maxQuantity={maxQuantity}
+              deliveryDefaults={deliveryDefaults}
             />
           </div>
 
@@ -262,10 +265,13 @@ export default function SeedlingShop({
   products,
   balance,
   maxQuantity,
+  deliveryDefaults,
 }: {
   products: ShopProduct[];
   balance: number;
   maxQuantity: number;
+  /** Pre-fills the cash-on-delivery form (last COD order's details, else the profile). */
+  deliveryDefaults: DeliveryDefaults;
 }) {
   // Kept by id: ordering refreshes the page data, and the sheet should show the new stock.
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -312,7 +318,14 @@ export default function SeedlingShop({
         </ul>
 
         <AnimatePresence>
-          {selected && <OrderSheet key={selected.id} product={selected} balance={balance} maxQuantity={maxQuantity} onClose={close} />}
+          {selected && <OrderSheet
+              key={selected.id}
+              product={selected}
+              balance={balance}
+              maxQuantity={maxQuantity}
+              deliveryDefaults={deliveryDefaults}
+              onClose={close}
+            />}
         </AnimatePresence>
       </LayoutGroup>
     </MotionConfig>

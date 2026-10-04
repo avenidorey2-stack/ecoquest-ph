@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Currency, OrderStatus } from "@/generated/prisma/enums";
 import { formatAmount } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/order-status";
+import { deliveryWindow, formatBarangay, formatPhMobile, type DeliveryDetails } from "@/lib/delivery";
 
 export type AdminOrder = {
   id: string;
@@ -17,7 +18,56 @@ export type AdminOrder = {
   customerName: string;
   customerEmail: string | null;
   customerCity: string | null;
+  packedAt: string | null;
+  /** Cash-on-delivery address and contact (admins only). */
+  delivery: DeliveryDetails | null;
 };
+
+function DeliveryCard({ d, packedAt, status }: { d: DeliveryDetails; packedAt: string | null; status: OrderStatus }) {
+  const row = "grid grid-cols-[6.5rem_1fr] gap-2";
+  return (
+    <div className="mt-3 rounded-xl border border-line bg-card-2 p-3 text-sm">
+      <p className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+        Deliver to
+        {packedAt && (status === "PACKED" || status === "OUT_FOR_DELIVERY") && (
+          <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 normal-case tracking-normal text-emerald-200 ring-1 ring-emerald-400/25">
+            Promised {deliveryWindow(packedAt)}
+          </span>
+        )}
+      </p>
+      <dl className="space-y-1 text-ink-2">
+        <div className={row}>
+          <dt className="text-ink-4">Recipient</dt>
+          <dd className="font-medium text-ink">{d.recipientName}</dd>
+        </div>
+        <div className={row}>
+          <dt className="text-ink-4">Mobile</dt>
+          <dd>
+            <a href={`tel:${d.contactNumber}`} className="font-medium text-emerald-300 underline-offset-2 hover:underline">
+              {formatPhMobile(d.contactNumber)}
+            </a>
+          </dd>
+        </div>
+        <div className={row}>
+          <dt className="text-ink-4">Address</dt>
+          <dd>
+            {d.streetAddress}, {formatBarangay(d.barangay)}, {d.cityProvince}
+          </dd>
+        </div>
+        <div className={row}>
+          <dt className="text-ink-4">Landmark</dt>
+          <dd>{d.landmark}</dd>
+        </div>
+        {d.instructions && (
+          <div className={row}>
+            <dt className="text-ink-4">Instructions</dt>
+            <dd className="whitespace-pre-line">{d.instructions}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
 
 /** Label of the button that moves an order to its next status. */
 const NEXT_ACTION: Partial<Record<OrderStatus, string>> = {
@@ -86,6 +136,8 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
                 <p className="text-xs text-ink-3">{o.currencyUsed === "PESOS" ? "Cash on delivery" : "Paid with points"}</p>
               </div>
             </div>
+
+            {o.delivery && <DeliveryCard d={o.delivery} packedAt={o.packedAt} status={o.status} />}
 
             {(next || cancellable) && (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">

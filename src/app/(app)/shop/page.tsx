@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MAX_ORDER_QUANTITY } from "@/lib/seedlings";
 import { formatAmount } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_STYLES } from "@/lib/order-status";
+import { DELIVERY_DAYS, deliveryWindow } from "@/lib/delivery";
 import { imageSourcesNote, treePhoto } from "@/data/tree-photos";
 import SeedlingShop, { type ShopProduct } from "@/components/shop/SeedlingShop";
 import { CoinIcon, SproutIcon } from "@/components/ui/icons";
@@ -16,8 +17,8 @@ const fmtDate = (d: Date) =>
 export default async function SeedlingShopPage() {
   const userId = await requirePageUserId();
 
-  const [user, products, orders] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } }),
+  const [user, products, orders, lastDelivery] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true, name: true, city: true, province: true } }),
     prisma.seedlingProduct.findMany({
       where: { isActive: true },
       orderBy: { species: { sortOrder: "asc" } },
@@ -29,7 +30,17 @@ export default async function SeedlingShopPage() {
       take: 10,
       include: { product: { select: { species: { select: { name: true } } } } },
     }),
+    // The planter's last cash-on-delivery details, to pre-fill the next order.
+    prisma.orderDelivery.findFirst({
+      where: { order: { userId } },
+      orderBy: { createdAt: "desc" },
+      select: { recipientName: true, contactNumber: true, streetAddress: true, barangay: true, cityProvince: true, landmark: true, instructions: true },
+    }),
   ]);
+  const deliveryDefaults = lastDelivery ?? {
+    recipientName: user.name ?? "",
+    cityProvince: [user.city, user.province].filter(Boolean).join(", "),
+  };
 
   const items: ShopProduct[] = products.map((p) => {
     const photo = treePhoto(p.species.slug);
@@ -74,7 +85,7 @@ export default async function SeedlingShopPage() {
           No seedlings are in stock right now. Check back soon!
         </p>
       ) : (
-        <SeedlingShop products={items} balance={user.points} maxQuantity={MAX_ORDER_QUANTITY} />
+        <SeedlingShop products={items} balance={user.points} maxQuantity={MAX_ORDER_QUANTITY} deliveryDefaults={deliveryDefaults} />
       )}
 
       <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">
@@ -98,6 +109,14 @@ export default async function SeedlingShopPage() {
                     {fmtDate(o.createdAt)} · {formatAmount(o.totalPrice, o.currencyUsed)}
                     {o.currencyUsed === "PESOS" && " · cash on delivery"}
                   </p>
+                  {o.status === "PENDING" && (
+                    <p className="text-xs text-emerald-300/90">
+                      Arrives {DELIVERY_DAYS.min}–{DELIVERY_DAYS.max} days after our team packs it
+                    </p>
+                  )}
+                  {(o.status === "PACKED" || o.status === "OUT_FOR_DELIVERY") && o.packedAt && (
+                    <p className="text-xs text-emerald-300/90">Arriving {deliveryWindow(o.packedAt)}</p>
+                  )}
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${ORDER_STATUS_STYLES[o.status]}`}>
                   {ORDER_STATUS_LABELS[o.status]}

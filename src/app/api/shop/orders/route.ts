@@ -7,9 +7,12 @@ import {
   parseOrderQuantity,
   placeSeedlingOrder,
 } from "@/lib/seedlings";
+import { parseDeliveryDetails } from "@/lib/delivery";
 
-// POST /api/shop/orders — body: { productId: string, quantity: number (1–50), currency?: "POINTS" | "PESOS" }
-// POINTS deducts points now; PESOS is cash on delivery. Both reserve stock and record the order.
+// POST /api/shop/orders — body: { productId: string, quantity: number (1–50), currency?: "POINTS" | "PESOS",
+//   delivery?: { recipientName, contactNumber, streetAddress, barangay, cityProvince, landmark, instructions? } }
+// `delivery` is required for both. POINTS deducts points now; PESOS is cash on delivery. Both
+// reserve stock and record the order.
 export async function POST(req: Request) {
   const { user, response } = await requireVerifiedUser();
   if (response) return response;
@@ -27,8 +30,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'currency must be "POINTS" or "PESOS".' }, { status: 400 });
   }
 
+  const delivery = parseDeliveryDetails(body.delivery);
+  if (!delivery.ok) return NextResponse.json({ error: delivery.error }, { status: 400 });
+
   try {
-    const order = await placeSeedlingOrder(user.id, body.productId, quantity, currency);
+    const order = await placeSeedlingOrder(user.id, body.productId, quantity, currency, delivery.data);
     return NextResponse.json({ order }, { status: 201 });
   } catch (err) {
     if (err instanceof OrderError) {

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { syncTreeSpecies } from "@/lib/species";
 import { DEFAULT_SEEDLING_STOCK, MAX_ORDER_QUANTITY, seedSeedlingProducts } from "@/lib/seedlings";
 import { notify } from "@/lib/notifications";
-import { CODES, createSlot, createUser, ctx, jsonRequest, resetDb, signInAs } from "../helpers";
+import { CODES, DELIVERY, createSlot, createUser, ctx, jsonRequest, resetDb, signInAs } from "../helpers";
 
 beforeEach(resetDb);
 
@@ -18,7 +18,8 @@ async function seedShop() {
   return prisma.seedlingProduct.findFirstOrThrow({ include: { species: true }, orderBy: { species: { sortOrder: "asc" } } });
 }
 
-const order = (body: object) => orderRoute(jsonRequest(body));
+// Every order needs delivery details; tests override `delivery` to check that.
+const order = (body: object) => orderRoute(jsonRequest({ delivery: DELIVERY, ...body }));
 const user = (id: string) => prisma.user.findUniqueOrThrow({ where: { id } });
 const product = (id: string) => prisma.seedlingProduct.findUniqueOrThrow({ where: { id } });
 const notificationsOf = (userId: string) =>

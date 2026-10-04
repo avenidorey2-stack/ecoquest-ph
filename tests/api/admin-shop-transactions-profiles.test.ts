@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 import type { Role } from "@/generated/prisma/client";
 import { syncTreeSpecies } from "@/lib/species";
 import { seedSeedlingProducts } from "@/lib/seedlings";
-import { CODES, createSlot, createUser, ctx, jpeg, jsonRequest, resetDb, signInAs, uploadRequest } from "../helpers";
+import { CODES, DELIVERY, createSlot, createUser, ctx, jpeg, jsonRequest, resetDb, signInAs, uploadRequest } from "../helpers";
 
 beforeEach(resetDb);
 
@@ -26,7 +26,8 @@ async function seedShop() {
   return prisma.seedlingProduct.findFirstOrThrow({ include: { species: true }, orderBy: { species: { sortOrder: "asc" } } });
 }
 
-const order = (body: object) => orderRoute(jsonRequest(body));
+// Every order needs delivery details.
+const order = (body: object) => orderRoute(jsonRequest({ delivery: DELIVERY, ...body }));
 const adminOrder = (id: string, action: string) => orderAdminRoute(jsonRequest({ action }), ctx({ id }));
 const points = async (id: string) => (await prisma.user.findUniqueOrThrow({ where: { id } })).points;
 const stock = async (id: string) => (await prisma.seedlingProduct.findUniqueOrThrow({ where: { id } })).stockQuantity;
@@ -38,7 +39,7 @@ describe("dual-currency seedling orders", () => {
     const buyer = await createUser({ points: 500 });
     signInAs(buyer);
 
-    const res = await order({ productId: p.id, quantity: 4, currency: "pesos" });
+    const res = await order({ productId: p.id, quantity: 4, currency: "pesos", delivery: DELIVERY });
     expect(res.status).toBe(201);
     const { order: created } = await res.json();
     expect(created).toMatchObject({ currencyUsed: "PESOS", totalPrice: Math.round(p.priceInPesos * 4 * 100) / 100, status: "PENDING" });
@@ -55,7 +56,7 @@ describe("dual-currency seedling orders", () => {
     const p = await seedShop();
     await prisma.seedlingProduct.update({ where: { id: p.id }, data: { priceInPesos: 0.1 } });
     signInAs(await createUser());
-    const { order: created } = await (await order({ productId: p.id, quantity: 3, currency: "PESOS" })).json();
+    const { order: created } = await (await order({ productId: p.id, quantity: 3, currency: "PESOS", delivery: DELIVERY })).json();
     expect(created.totalPrice).toBe(0.3);
   });
 
@@ -63,7 +64,7 @@ describe("dual-currency seedling orders", () => {
     const p = await seedShop();
     await prisma.seedlingProduct.update({ where: { id: p.id }, data: { priceInPesos: 0 } });
     signInAs(await createUser({ points: 10_000 }));
-    expect((await order({ productId: p.id, quantity: 1, currency: "PESOS" })).status).toBe(400);
+    expect((await order({ productId: p.id, quantity: 1, currency: "PESOS", delivery: DELIVERY })).status).toBe(400);
     expect((await order({ productId: p.id, quantity: 1, currency: "USD" })).status).toBe(400);
     expect(await stock(p.id)).toBe(p.stockQuantity);
   });
@@ -101,7 +102,7 @@ describe("POST /api/admin/orders/:id", () => {
     const p = await seedShop();
     const buyer = await createUser({ points: 1000 });
     signInAs(buyer);
-    const { order: created } = await (await order({ productId: p.id, quantity: 2, currency })).json();
+    const { order: created } = await (await order({ productId: p.id, quantity: 2, currency, delivery: DELIVERY })).json();
     signInAs(await createUser({ role: "ADMIN" }));
     return { p, buyer, orderId: created.id as string };
   }
