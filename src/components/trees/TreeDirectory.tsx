@@ -71,7 +71,7 @@ function Progress({ tree, onPhoto = false }: { tree: TreeCard; onPhoto?: boolean
   );
 }
 
-function Credit({ credit }: { credit: PhotoCredit }) {
+export function Credit({ credit }: { credit: PhotoCredit }) {
   return (
     <p className="text-[11px] leading-relaxed text-ink-4">
       {credit.shows && <span className="text-ink-3">Photo shows a close relative, {credit.shows}. </span>}

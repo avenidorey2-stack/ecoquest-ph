@@ -16,6 +16,8 @@ const MAX_DELAY = 0.3;
 
 /** Fired by the guided tour: it spotlights sections, so they must already be in place. */
 export const TOUR_OPEN_EVENT = "eq:tour-open";
+/** Fired by the guided tour with `detail: boolean`: open or close the phone menu drawer. */
+export const TOUR_MENU_EVENT = "eq:tour-menu";
 const tourOpen = () => "eqTour" in document.documentElement.dataset;
 
 /**

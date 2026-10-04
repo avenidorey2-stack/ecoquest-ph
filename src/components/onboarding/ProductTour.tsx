@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { TOUR_OPEN_EVENT } from "@/components/layout/ScrollReveal";
+import { TOUR_MENU_EVENT, TOUR_OPEN_EVENT } from "@/components/layout/ScrollReveal";
 import { GAP, MARGIN, placeCard, spotlightBox, type Box, type Side } from "@/lib/tour-placement";
 import {
   BellIcon,
@@ -181,6 +181,15 @@ const SLIDE: Variants = {
 
 const subscribeNoop = () => () => {};
 
+/** Below Tailwind's `lg`, the sidebar is a drawer behind the ☰ menu button. */
+const PHONE_QUERY = "(width < 64rem)";
+const subscribePhone = (onChange: () => void) => {
+  const mq = window.matchMedia(PHONE_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+};
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+
 function isShown(el: HTMLElement) {
   const r = el.getBoundingClientRect();
   return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden";
@@ -191,11 +200,45 @@ function findVisible(key: string) {
   return null;
 }
 
-function resolveTarget(step: Step): { el: HTMLElement | null; fallback: boolean } {
-  if (!step.target) return { el: null, fallback: false };
+type Resolved = {
+  el: HTMLElement | null;
+  /** Pointing at the fallback (the menu button) because the target isn't on screen. */
+  fallback: boolean;
+  /** The target is inside the phone menu drawer, which the tour opens for this step. */
+  drawer: boolean;
+};
+
+/** On phones the sidebar lives in a drawer behind ☰; its copy of a sidebar target, if so. */
+function drawerTarget(step: Step) {
+  if (step.fallback !== "menu" || !step.target || !findVisible("menu")) return null;
+  return document.querySelector<HTMLElement>(`[data-tour-drawer] [data-tour="${step.target}"]`);
+}
+
+function resolveTarget(step: Step): Resolved {
+  if (!step.target) return { el: null, fallback: false, drawer: false };
+  const inDrawer = drawerTarget(step);
+  if (inDrawer) return { el: inDrawer, fallback: false, drawer: true };
   const el = findVisible(step.target);
-  if (el) return { el, fallback: false };
-  return { el: step.fallback ? findVisible(step.fallback) : null, fallback: !!step.fallback };
+  if (el) return { el, fallback: false, drawer: false };
+  return { el: step.fallback ? findVisible(step.fallback) : null, fallback: !!step.fallback, drawer: false };
+}
+
+/**
+ * Where a drawer item will be once the drawer has slid fully open (it may still be closed or
+ * sliding). If the item is cut off in the drawer's scrolling menu list (short phones), the list
+ * scrolls it to the top first, leaving room for the card below it.
+ */
+function openDrawerBox(el: HTMLElement): Box {
+  const list = el.parentElement?.closest("nav");
+  if (list) {
+    const l = list.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    if (r.bottom > l.bottom || r.top < l.top) list.scrollTop += r.top - l.top - 8;
+  }
+  const r = el.getBoundingClientRect();
+  const drawer = el.closest("[data-tour-drawer]")?.getBoundingClientRect();
+  // The drawer slides in from the left to x = 0, top = 0.
+  return { x: r.x - (drawer?.x ?? 0), y: r.y - (drawer?.y ?? 0), width: r.width, height: r.height };
 }
 
 /** Inside the fixed sidebar or the sticky header: scrolling the page won't move it. */
@@ -280,6 +323,8 @@ function TourLayer({
   onClose: (stay?: boolean) => void;
 }) {
   const reduce = !!useReducedMotion();
+  // Known at render time (unlike the resolved target), so a step's hint is in the card when it's measured.
+  const phone = useSyncExternalStore(subscribePhone, isPhone, () => false);
   const titleId = useId();
   const maskId = useId();
   const [[index, dir], setNav] = useState<[number, number]>([0, 1]);
@@ -315,6 +360,21 @@ function TourLayer({
     setView(next);
   };
 
+  // Phones: steps about sidebar items open the menu drawer so the real item is spotlit.
+  const menuOpen = useRef(false);
+  const setMenu = (open: boolean) => {
+    if (menuOpen.current === open) return;
+    menuOpen.current = open;
+    window.dispatchEvent(new CustomEvent(TOUR_MENU_EVENT, { detail: open }));
+  };
+  useEffect(
+    () => () => {
+      if (menuOpen.current) window.dispatchEvent(new CustomEvent(TOUR_MENU_EVENT, { detail: false }));
+      menuOpen.current = false;
+    },
+    [],
+  );
+
   // Step change: measure the new card, work out where the target WILL be once the page has
   // scrolled, then start the spotlight, the card and the page scroll together in this frame.
   // Nothing waits a frame and nothing gets re-aimed mid-flight, so there's no hitch.
@@ -328,8 +388,9 @@ function TourLayer({
     const size = { content: content.offsetHeight, footer: footer.offsetHeight };
     sizeRef.current = size;
 
-    const { el, fallback } = resolveTarget(current);
-    let rect = el ? toBox(el.getBoundingClientRect()) : null;
+    const { el, fallback, drawer } = resolveTarget(current);
+    setMenu(drawer);
+    let rect = el ? (drawer ? openDrawerBox(el) : toBox(el.getBoundingClientRect())) : null;
     const w = Math.min(CARD_MAX_W, window.innerWidth - 2 * MARGIN);
     const delta = el && rect ? scrollNeeded(el, rect, w, size.content + size.footer, current.prefer) : 0;
     if (rect) rect = { ...rect, y: rect.y - delta };
@@ -579,6 +640,12 @@ function TourLayer({
                       </li>
                     ))}
                   </ul>
+                )}
+                {/* Said once, on the first menu step; later cards stay short enough to fit beside their item. */}
+                {phone && step.target === "nav" && !view?.fallback && (
+                  <p className="mt-3 rounded-lg bg-emerald-400/10 px-3 py-2 text-xs text-emerald-200 ring-1 ring-emerald-400/25">
+                    On your phone, open this menu anytime with the ☰ button at the top left.
+                  </p>
                 )}
                 {view?.fallback && (
                   <p className="mt-3 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-amber-400/30">

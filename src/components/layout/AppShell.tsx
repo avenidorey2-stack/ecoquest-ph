@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
 import EcoBackground from "./EcoBackground";
-import ScrollReveal from "./ScrollReveal";
+import ScrollReveal, { TOUR_MENU_EVENT } from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
 
 export type ShellUser = {
@@ -229,6 +229,13 @@ export default function AppShell({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  // The guided tour opens the drawer on phones to point at the menu items inside it.
+  useEffect(() => {
+    const onTourMenu = (e: Event) => setOpen((e as CustomEvent<boolean>).detail);
+    window.addEventListener(TOUR_MENU_EVENT, onTourMenu);
+    return () => window.removeEventListener(TOUR_MENU_EVENT, onTourMenu);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -254,6 +261,7 @@ export default function AppShell({
       {/* Mobile drawer */}
       {open && <div className="eq-fade fixed inset-0 z-[1200] bg-slate-950/50 backdrop-blur-[2px] lg:hidden" onClick={() => setOpen(false)} aria-hidden />}
       <aside
+        data-tour-drawer
         className={`fixed inset-y-0 left-0 z-[1300] w-72 border-r border-line bg-gradient-to-b from-[#071a12] to-[#030b07] shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:hidden ${
           open ? "translate-x-0" : "invisible -translate-x-full"
         }`}
