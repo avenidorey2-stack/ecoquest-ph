@@ -8,6 +8,35 @@ import QuestProofToggle from "./QuestProofToggle";
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric" });
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const fmtDeadline = (iso: string) =>
+  new Date(iso).toLocaleString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+const msUntil = (iso: string) => new Date(iso).getTime() - Date.now();
+
+/** Claim deadline under a slot quest: calm while there's time, amber in the last 2 days, rose once passed. */
+function ClaimDeadline({ claim, inReview }: { claim: NonNullable<DashboardQuest["claim"]>; inReview: boolean }) {
+  const left = msUntil(claim.expiresAt);
+  if (claim.expired || left <= 0) {
+    return (
+      <p className="mt-1.5 rounded-lg bg-rose-500/10 px-2.5 py-1.5 text-xs text-rose-300 ring-1 ring-rose-500/25">
+        {inReview
+          ? "Your claim has expired. The proof you sent will still be reviewed, but no new proof can be added."
+          : "Your claim has expired, so you can't plant here anymore. Ask our team if you need more time."}
+      </p>
+    );
+  }
+  const days = Math.floor(left / DAY_MS);
+  const hours = Math.floor((left % DAY_MS) / (60 * 60 * 1000));
+  const soon = left < 2 * DAY_MS;
+  return (
+    // Time-based text: server and client renders can differ by a minute.
+    <p suppressHydrationWarning className={`mt-1 text-xs ${soon ? "font-semibold text-amber-300" : "text-ink-3"}`}>
+      Plant by {fmtDeadline(claim.expiresAt)} · {days > 0 ? `${days}d ${hours}h left` : hours > 0 ? `${hours}h left` : "less than 1h left"}
+    </p>
+  );
+}
+
 /** Progress bar: verified part (emerald) + submitted-but-unreviewed part (amber). */
 function QuestProgress({ value, pending = 0, max }: { value: number; pending?: number; max: number }) {
   const pct = (n: number) => (max > 0 ? Math.max(0, Math.min(100, (n / max) * 100)) : 0);
@@ -71,6 +100,7 @@ export default function QuestList({
                   <p className="truncate text-xs text-ink-3" title={q.detail}>
                     {q.detail}
                   </p>
+                  {q.claim && <ClaimDeadline claim={q.claim} inReview={q.status === "review"} />}
                 </div>
                 {/* Planting quest cards have no progress bar; milestones show a bar with "X of Y" text. */}
                 {q.kind === "milestone" && (

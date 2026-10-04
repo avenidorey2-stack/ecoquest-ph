@@ -8,6 +8,8 @@ import { ecoTipsFor } from "@/data/eco-tips";
 import { evaluateAchievementsSafely } from "@/lib/achievements";
 import { getPendingCelebrations } from "@/lib/celebrations";
 import { getUserMissions } from "@/lib/missions";
+import { isClaimExpired } from "@/lib/quests";
+import { slotOnMapPath } from "@/lib/notifications";
 
 const DAY_MS = 86_400_000;
 const PLANT_TIERS = [10, 25, 50, 100, 250, 500, 1000];
@@ -33,6 +35,8 @@ export type DashboardQuest = {
   proof?: { plantType: string; remaining: number; pointsPerPlant: number };
   status: "todo" | "review" | "done";
   href?: string;
+  /** Slot quests: the claim's deadline (ISO) and whether it has passed. */
+  claim?: { expiresAt: string; expired: boolean };
 };
 
 /** A finished task for the "Completed" list under Active quests. */
@@ -223,6 +227,8 @@ export async function getDashboardData(userId: string, now = new Date()) {
     const submitted = q.status === "PENDING_VERIFICATION";
     const inReview = submitted && latest?.status === "PENDING" ? latest.plantCount : 0;
     const remaining = Math.max(q.targetPlants - q.plantCount, 1);
+    // Past the deadline: proof already under review still counts, but no new proof.
+    const expired = isClaimExpired(q, now);
     // Points per plant are the admin-assigned slot reward (Slot.pointsPerPlant), read live.
     const pts = `${q.slot.pointsPerPlant} pts per plant`;
     return {
@@ -230,13 +236,14 @@ export async function getDashboardData(userId: string, now = new Date()) {
       kind: "planting" as const,
       title: `Plant ${q.targetPlants} ${q.slot.requiredPlantType} in ${q.slot.city}`,
       // Fixed format. While proof is under review there's nothing to upload, so it says so.
-      detail: submitted ? `${pts} — awaiting review` : `${pts} — upload your proof`,
+      detail: submitted ? `${pts} — awaiting review` : expired ? `${pts} — claim expired` : `${pts} — upload your proof`,
       current: q.plantCount,
       pending: inReview,
       target: q.targetPlants,
       status: submitted ? "review" : "todo",
-      uploadQuestId: q.status === "ACTIVE" ? q.id : undefined,
+      uploadQuestId: q.status === "ACTIVE" && !expired ? q.id : undefined,
       proof: { plantType: q.slot.requiredPlantType, remaining, pointsPerPlant: q.slot.pointsPerPlant },
+      claim: q.expiresAt ? { expiresAt: q.expiresAt.toISOString(), expired } : undefined,
     };
   });
   if (!place) {
@@ -334,6 +341,7 @@ export async function getDashboardData(userId: string, now = new Date()) {
       kind: "slot" as const,
       text: `New planting slot: ${s.requiredPlantType} in ${s.city} · ${s.pointsPerPlant} pts/plant`,
       at: s.createdAt,
+      href: slotOnMapPath(s.id),
     })),
     ...newRewards.map((r) => ({
       id: `reward-${r.id}`,

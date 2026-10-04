@@ -2,6 +2,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { listRegions, resolveCity } from "@/lib/psgc";
 import { deleteMedia } from "@/lib/storage";
+import { holdsSpot, isClaimExpired } from "@/lib/quests";
+import { notify } from "@/lib/notifications";
 
 /** Planter notice when a slot closes (or is removed) while their quest there is active. */
 export function slotClosedNotice(slot: { requiredPlantType: string; city: string }) {
@@ -94,11 +96,8 @@ export async function loadAdminSlotData() {
       include: { _count: { select: { quests: true } } },
     }),
   ]);
-  const active = await prisma.quest.groupBy({
-    by: ["slotId"],
-    where: { status: { in: ["ACTIVE", "PENDING_VERIFICATION"] } },
-    _count: true,
-  });
+  // Planters holding a spot (expired claims don't).
+  const active = await prisma.quest.groupBy({ by: ["slotId"], where: holdsSpot(), _count: true });
   const activeBySlot = new Map(active.map((a) => [a.slotId, a._count]));
 
   return {
@@ -173,4 +172,66 @@ export async function deleteSlotPermanently(slotId: string) {
     deletedMedia: result.mediaKeys.length,
     notified: result.notified,
   };
+}
+
+const MAX_CLAIM_DAYS_AHEAD = 365;
+const fmtDay = (d: Date) => d.toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric" });
+
+/** In-progress claims on a slot (active or awaiting review), soonest deadline first. */
+export async function listSlotClaims(slotId: string, now = new Date()) {
+  const quests = await prisma.quest.findMany({
+    where: { slotId, status: { in: ["ACTIVE", "PENDING_VERIFICATION"] } },
+    orderBy: [{ expiresAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      status: true,
+      plantCount: true,
+      targetPlants: true,
+      createdAt: true,
+      expiresAt: true,
+      user: { select: { id: true, name: true, email: true } },
+    },
+  });
+  return quests.map((q) => ({ ...q, expired: isClaimExpired(q, now) }));
+}
+
+/**
+ * Admin sets a claim's deadline to the end of `day` ("YYYY-MM-DD", Philippine time). Extending an
+ * expired claim lets the planter submit proof there again. The planter is notified.
+ */
+export async function setClaimExpiry(questId: string, day: unknown, now = new Date()) {
+  if (typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    return { error: "Choose a valid date.", status: 400 } as const;
+  }
+  const expiresAt = new Date(`${day}T23:59:59.999+08:00`);
+  // 23:59 PHT is 15:59 UTC the same day, so a rolled-over date (e.g. Feb 31) won't match.
+  if (Number.isNaN(expiresAt.getTime()) || expiresAt.toISOString().slice(0, 10) !== day) {
+    return { error: "Choose a valid date.", status: 400 } as const;
+  }
+  if (expiresAt.getTime() - now.getTime() > MAX_CLAIM_DAYS_AHEAD * 24 * 60 * 60 * 1000) {
+    return { error: "Choose a date within a year.", status: 400 } as const;
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const quest = await tx.quest.findUnique({
+      where: { id: questId },
+      select: { userId: true, status: true, expiresAt: true, slot: { select: { requiredPlantType: true, city: true } } },
+    });
+    if (!quest) return { error: "Claim not found.", status: 404 } as const;
+    if (quest.status !== "ACTIVE" && quest.status !== "PENDING_VERIFICATION") {
+      return { error: "This quest has already ended.", status: 409 } as const;
+    }
+    const updated = await tx.quest.update({ where: { id: questId }, data: { expiresAt, expiryRemindedAt: null }, select: { id: true, expiresAt: true } });
+
+    const where = `${quest.slot.requiredPlantType} slot in ${quest.slot.city}`;
+    const wasExpired = isClaimExpired(quest, now);
+    const message =
+      expiresAt <= now
+        ? `Your claim on the ${where} has ended. Plants and points already approved are yours to keep.`
+        : wasExpired
+          ? `Good news! Your claim on the ${where} is active again until ${fmtDay(expiresAt)}. You can plant and send proof there.`
+          : `Your claim on the ${where} now lasts until ${fmtDay(expiresAt)}.`;
+    await notify(tx, quest.userId, message, "/dashboard");
+    return { claim: { ...updated, expired: expiresAt <= now } };
+  });
 }

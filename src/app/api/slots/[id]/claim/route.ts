@@ -3,6 +3,7 @@ import { requireVerifiedUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { isWithinUserCity } from "@/lib/geo";
+import { claimExpiry, holdsSpot, isClaimExpired } from "@/lib/quests";
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -10,12 +11,14 @@ class ClaimError extends Error {
   }
 }
 
-// POST /api/slots/:id/claim — start a quest on a slot inside the user's city.
+// POST /api/slots/:id/claim — start a quest on a slot inside the user's city. The claim lasts
+// CLAIM_DAYS; once it expires the planter can't claim this slot again unless an admin extends it.
 export async function POST(_req: Request, { params }: RouteContext<"/api/slots/[id]/claim">) {
   const { user: me, response } = await requireVerifiedUser();
   if (response) return response;
   const userId = me.id;
   const { id: slotId } = await params;
+  const now = new Date();
 
   try {
     const quest = await prisma.$transaction(
@@ -36,19 +39,22 @@ export async function POST(_req: Request, { params }: RouteContext<"/api/slots/[
 
         const existing = await tx.quest.findFirst({
           where: { userId, slotId, status: { in: ["ACTIVE", "PENDING_VERIFICATION"] } },
-          select: { id: true },
+          select: { id: true, expiresAt: true },
         });
+        if (existing && isClaimExpired(existing, now)) {
+          throw new ClaimError("Your claim on this slot has expired. Ask our team if you need more time.", 409);
+        }
         if (existing) throw new ClaimError("You already have an active quest on this slot.", 409);
 
-        // Shared slots hold up to maxParticipants planters at once (active or awaiting review).
-        const participants = await tx.quest.count({
-          where: { slotId, status: { in: ["ACTIVE", "PENDING_VERIFICATION"] } },
-        });
+        // Shared slots hold up to maxParticipants planters at once (expired claims don't count).
+        const participants = await tx.quest.count({ where: { slotId, ...holdsSpot(now) } });
         if (participants >= slot.maxParticipants) {
           throw new ClaimError(`This slot is full (${slot.maxParticipants} planters). Try another slot.`, 409);
         }
 
-        return tx.quest.create({ data: { userId, slotId, status: "ACTIVE", targetPlants: slot.questGoal } });
+        return tx.quest.create({
+          data: { userId, slotId, status: "ACTIVE", targetPlants: slot.questGoal, expiresAt: claimExpiry(now) },
+        });
       },
       { isolationLevel: "Serializable" },
     );

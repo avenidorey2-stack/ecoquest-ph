@@ -137,6 +137,14 @@
   }
 }
 
+/* Dropdown lists: options inherit the field's light text, but some browsers (Chrome on Windows)
+   draw the open list on a light background, leaving only the highlighted row readable. */
+select option,
+select optgroup {
+  background-color: var(--color-card-2);
+  color: var(--color-ink);
+}
+
 html {
   background: var(--background);
   /* Stop iOS from enlarging text after rotating to landscape. */

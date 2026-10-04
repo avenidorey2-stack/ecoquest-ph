@@ -33,6 +33,11 @@ export async function notifyAdmins(db: Db, message: string, link?: string, excep
   return count;
 }
 
+/** Dashboard link that scrolls to the map, zooms to the slot and opens its popup. */
+export function slotOnMapPath(slotId: string) {
+  return `/dashboard?slot=${encodeURIComponent(slotId)}`;
+}
+
 /** Only same-site paths are stored, so a notification can never link off-site. */
 function safeLink(link: string | undefined) {
   return link && link.startsWith("/") && !link.startsWith("//") ? link : null;
