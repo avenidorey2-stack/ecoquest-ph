@@ -4,6 +4,7 @@ import { notify } from "@/lib/notifications";
 import { recordTransaction } from "@/lib/transactions";
 import { formatPesos, formatPoints } from "@/lib/format";
 import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
+import { DELIVERY_DAYS, deliveryWindow, type DeliveryDetails } from "@/lib/delivery";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -79,10 +80,17 @@ export function parseCurrency(value: unknown): Currency | null {
 }
 
 /**
- * Buys `quantity` seedlings. Stock is reserved for both currencies; POINTS orders are paid now
- * (guarded decrement), PESOS orders are cash on delivery. All-or-nothing: any failure rolls back.
+ * Buys `quantity` seedlings, delivered to `delivery`. Stock is reserved for both currencies;
+ * POINTS orders are paid now (guarded decrement), PESOS orders are cash on delivery.
+ * All-or-nothing: any failure rolls back.
  */
-export async function placeSeedlingOrder(userId: string, productId: string, quantity: number, currency: Currency = "POINTS") {
+export async function placeSeedlingOrder(
+  userId: string,
+  productId: string,
+  quantity: number,
+  currency: Currency = "POINTS",
+  delivery: DeliveryDetails,
+) {
   return prisma.$transaction(async (tx) => {
     const product = await tx.seedlingProduct.findUnique({
       where: { id: productId },
@@ -110,7 +118,16 @@ export async function placeSeedlingOrder(userId: string, productId: string, quan
       if (!paid.count) throw new OrderError(`You need ${formatPoints(totalPrice)} for this order.`, 402);
     }
 
-    const order = await tx.order.create({ data: { userId, productId, quantity, totalPrice, currencyUsed: currency } });
+    const order = await tx.order.create({
+      data: {
+        userId,
+        productId,
+        quantity,
+        totalPrice,
+        currencyUsed: currency,
+        delivery: { create: delivery },
+      },
+    });
     const what = plural(quantity, product.species.name);
     await recordTransaction(tx, {
       userId,
@@ -120,12 +137,13 @@ export async function placeSeedlingOrder(userId: string, productId: string, quan
       description: what,
       orderId: order.id,
     });
+    const arrives = `It arrives ${DELIVERY_DAYS.min}–${DELIVERY_DAYS.max} days after our team packs it.`;
     await notify(
       tx,
       userId,
       currency === "PESOS"
-        ? `Order placed: ${what} — pay ${formatPesos(totalPrice)} cash on delivery.`
-        : `Order placed: ${what} for ${formatPoints(totalPrice)}.`,
+        ? `Order placed: ${what} — pay ${formatPesos(totalPrice)} cash on delivery. ${arrives}`
+        : `Order placed: ${what} for ${formatPoints(totalPrice)}. ${arrives}`,
       "/transactions",
     );
     return order;
@@ -176,7 +194,6 @@ export const NEXT_ORDER_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
 export const CANCELLABLE: OrderStatus[] = ["PENDING", "PACKED"];
 
 const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
-  PACKED: "is packed and getting ready to ship",
   OUT_FOR_DELIVERY: "is out for delivery",
   DELIVERED: "was delivered — happy planting! 🌱",
 };
@@ -202,7 +219,11 @@ export async function updateOrderStatus(orderId: string, action: "advance" | "ca
       );
     }
 
-    const { count } = await tx.order.updateMany({ where: { id: orderId, status: order.status }, data: { status: next } });
+    const now = new Date();
+    const { count } = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
+      data: { status: next, ...(next === "PACKED" ? { packedAt: now } : {}) },
+    });
     if (!count) throw new OrderError("This order was just updated by someone else. Refresh and try again.", 409);
 
     const what = plural(order.quantity, order.product.species.name);
@@ -225,6 +246,8 @@ export async function updateOrderStatus(orderId: string, action: "advance" | "ca
         `Your order for ${what} was cancelled${order.currencyUsed === "POINTS" ? ` — ${formatPoints(order.totalPrice)} refunded` : ""}.`,
         "/transactions",
       );
+    } else if (next === "PACKED") {
+      await notify(tx, order.userId, `Your order for ${what} is packed — expect it ${deliveryWindow(now)}.`, "/shop");
     } else {
       await notify(tx, order.userId, `Your order for ${what} ${STATUS_MESSAGES[next]}.`, "/transactions");
     }

@@ -475,15 +475,37 @@ model Order {
   // quantity × unit price at order time, in `currencyUsed` (points, or pesos to 2 decimals).
   totalPrice   Float
   status       OrderStatus @default(PENDING)
+  // When our team packed it; the planter is promised delivery 5–7 days after this.
+  packedAt     DateTime?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   product      SeedlingProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
   transactions Transaction[]
+  // Where to deliver the order (required at checkout; older orders have none). Shown only to
+  // admins and the buyer.
+  delivery     OrderDelivery?
 
   @@index([userId, createdAt])
   @@index([status])
+}
+
+// Delivery details for a seedling order (points or cash on delivery), entered by the buyer at checkout.
+model OrderDelivery {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  recipientName String
+  // Philippine mobile number, stored as 09XXXXXXXXX.
+  contactNumber String
+  streetAddress String
+  barangay      String
+  cityProvince  String
+  landmark      String
+  instructions  String?
+  createdAt     DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 // Unified money/points history: one row per seedling order, reward redemption or refund.

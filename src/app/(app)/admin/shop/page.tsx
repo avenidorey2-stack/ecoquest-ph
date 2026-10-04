@@ -36,6 +36,7 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
           include: {
             user: { select: { name: true, email: true, city: true } },
             product: { select: { species: { select: { name: true } } } },
+            delivery: true,
           },
         })
       : [],
@@ -119,6 +120,16 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
               customerName: o.user.name ?? "Unnamed planter",
               customerEmail: o.user.email,
               customerCity: o.user.city,
+              packedAt: o.packedAt?.toISOString() ?? null,
+              delivery: o.delivery && {
+                recipientName: o.delivery.recipientName,
+                contactNumber: o.delivery.contactNumber,
+                streetAddress: o.delivery.streetAddress,
+                barangay: o.delivery.barangay,
+                cityProvince: o.delivery.cityProvince,
+                landmark: o.delivery.landmark,
+                instructions: o.delivery.instructions,
+              },
             }))}
           />
           {orders.length === ORDER_LIMIT && (

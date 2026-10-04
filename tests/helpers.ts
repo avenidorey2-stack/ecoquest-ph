@@ -48,6 +48,17 @@ export function createSlot(overrides: Partial<Prisma.SlotUncheckedCreateInput> =
 }
 
 /** Sets the mocked Auth.js session. Pass null to sign out. */
+/** Valid cash-on-delivery details for PESOS seedling orders. */
+export const DELIVERY = {
+  recipientName: "Juan Dela Cruz",
+  contactNumber: "0917 123 4567",
+  streetAddress: "12 Mabini St.",
+  barangay: "San Roque",
+  cityProvince: "Quezon City, Metro Manila",
+  landmark: "Beside the barangay hall",
+  instructions: "Call when you arrive",
+};
+
 export function signInAs(user: { id: string; role?: Role } | null) {
   vi.mocked(auth as unknown as () => Promise<unknown>).mockResolvedValue(
     user ? { user: { id: user.id, role: user.role ?? "USER" }, expires: "2099-01-01" } : null,
