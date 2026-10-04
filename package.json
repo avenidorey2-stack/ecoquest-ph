@@ -19,6 +19,7 @@
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@supabase/realtime-js": "2.117.2",
     "bcryptjs": "^3.0.3",
     "leaflet": "^1.9.4",
     "motion": "^14.0.0",

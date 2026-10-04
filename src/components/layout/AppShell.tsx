@@ -218,12 +218,15 @@ export default function AppShell({
   status,
   serverNowIso,
   unreadNotifications,
+  notifyChannel,
   children,
 }: {
   user: ShellUser;
   status: ShellStatus;
   serverNowIso: string;
   unreadNotifications: number;
+  /** The user's secret live-notification channel ("notify:<token>"). */
+  notifyChannel: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -319,7 +322,7 @@ export default function AppShell({
               {user.points.toLocaleString("en-PH")}
               <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
-            <NotificationBell initialUnread={unreadNotifications} />
+            <NotificationBell initialUnread={unreadNotifications} channel={notifyChannel} since={serverNowIso} />
             <Link href="/profile" title="Profile" className="eq-hit relative shrink-0 rounded-full">
               <Avatar user={user} />
             </Link>

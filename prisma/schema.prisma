@@ -82,6 +82,9 @@ model User {
   // ProfilePictureURL — named `image` because Auth.js adapters write to this field.
   image                  String?   @map("profile_picture_url")
   passwordHash           String?
+  // Secret name of this user's live notification channel (Supabase Realtime topic "notify:<token>").
+  // Only "something new" pings travel on it; the notifications themselves are fetched signed in.
+  notifyToken            String    @unique @default(dbgenerated("(gen_random_uuid())::text"))
   // Location: names are display copies resolved from the PSGC city code (the geofence key).
   region                 String?
   province               String?

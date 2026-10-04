@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const [user, unreadNotifications] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true },
+      select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true, notifyToken: true },
     }),
     prisma.notification.count({ where: { userId: session.user.id, isRead: false } }),
   ]);
@@ -41,6 +41,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       }}
       serverNowIso={serverNowIso()}
       unreadNotifications={unreadNotifications}
+      notifyChannel={`notify:${user.notifyToken}`}
     >
       {user.emailVerified ? (
         children

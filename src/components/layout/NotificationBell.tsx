@@ -7,7 +7,51 @@ import { BellIcon } from "@/components/ui/icons";
 
 type Item = { id: string; message: string; link: string | null; isRead: boolean; createdAt: string };
 
-const POLL_MS = 60_000;
+// Live pings (Supabase Realtime) bring notifications in at once; this poll is the fallback for
+// when the live connection is unavailable (and in local development, which has no Supabase).
+const POLL_MS = 30_000;
+const TOAST_MS = 7_000;
+const REALTIME_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const REALTIME_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+/**
+ * Listens on the user's secret Realtime channel and calls `onPing` whenever a notification is
+ * saved for them (the database sends the ping after commit; it carries no data).
+ */
+function useLivePings(channel: string | undefined, onPing: () => void) {
+  const ping = useRef(onPing);
+  useEffect(() => {
+    ping.current = onPing;
+  }, [onPing]);
+
+  useEffect(() => {
+    if (!channel || !REALTIME_URL || !REALTIME_KEY) return;
+    let stopped = false;
+    let cleanup = () => {};
+    // Loaded on demand so pages don't pay for the client until it's needed.
+    import("@supabase/realtime-js")
+      .then(({ RealtimeClient }) => {
+        if (stopped) return;
+        const client = new RealtimeClient(`${REALTIME_URL.replace(/^http/i, "ws")}/realtime/v1`, {
+          params: { apikey: REALTIME_KEY },
+        });
+        const sub = client
+          .channel(channel)
+          .on("broadcast", { event: "notify" }, () => ping.current())
+          // (Re)connected: catch up on anything sent while the connection was down.
+          .subscribe((status) => status === "SUBSCRIBED" && ping.current());
+        cleanup = () => {
+          client.removeChannel(sub).catch(() => {});
+          client.disconnect().catch(() => {});
+        };
+      })
+      .catch(() => {}); // no live updates; the poll still runs
+    return () => {
+      stopped = true;
+      cleanup();
+    };
+  }, [channel]);
+}
 
 function timeAgo(iso: string) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
@@ -18,15 +62,33 @@ function timeAgo(iso: string) {
   return new Date(iso).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric" });
 }
 
-/** Header bell: red badge for unread notifications, dropdown with the recent ones. */
-export default function NotificationBell({ initialUnread }: { initialUnread: number }) {
+/** Header bell: red badge for unread notifications, dropdown with the recent ones, and a pop-up
+ *  the moment a new one arrives. */
+export default function NotificationBell({
+  initialUnread,
+  channel,
+  since,
+}: {
+  initialUnread: number;
+  channel?: string;
+  /** Server time the page loaded (ISO); only notifications newer than this pop up. */
+  since?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<Item[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [toast, setToast] = useState<{ item: Item; more: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const lastUnread = useRef(initialUnread);
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  // Ids already popped up, so each notification pops up once.
+  const shown = useRef(new Set<string>());
+  const sinceMs = since ? new Date(since).getTime() : Infinity;
 
   const load = useCallback(async () => {
     const res = await fetch("/api/notifications", { cache: "no-store" }).catch(() => null);
@@ -38,11 +100,26 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
     setFailed(false);
     setItems(data.notifications);
     setUnread(data.unreadCount);
+    // Pop up unread ones that arrived after the page loaded (each once; not with the list open).
+    const fresh = data.notifications.filter(
+      (n) => !n.isRead && !shown.current.has(n.id) && new Date(n.createdAt).getTime() >= sinceMs,
+    );
+    fresh.forEach((n) => shown.current.add(n.id));
+    if (fresh.length && !openRef.current) setToast({ item: fresh[0], more: fresh.length - 1 });
     // Something new arrived (e.g. a tree was approved): refresh server data such as points.
     if (data.unreadCount > lastUnread.current) router.refresh();
     lastUnread.current = data.unreadCount;
     return data;
-  }, [router]);
+  }, [router, sinceMs]);
+
+  useLivePings(channel, load);
+
+  // Hide the pop-up after a while.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), TOAST_MS);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Poll while the tab is visible.
   useEffect(() => {
@@ -71,6 +148,7 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
   async function toggle() {
     if (open) return setOpen(false);
     setOpen(true);
+    setToast(null);
     const data = await load();
     if (data && data.unreadCount > 0) {
       // Opening the list marks everything read; unread rows stay highlighted until next open.
@@ -99,6 +177,40 @@ export default function NotificationBell({ initialUnread }: { initialUnread: num
           </span>
         )}
       </button>
+
+      {toast && (
+        <div
+          role="status"
+          className="eq-rise fixed inset-x-3 top-16 z-[1450] flex items-start gap-3 rounded-2xl border border-emerald-400/30 bg-card p-3 shadow-[0_16px_40px_-12px_rgba(0,0,0,.6)] sm:inset-x-auto sm:right-4 sm:top-16 sm:w-96"
+        >
+          <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-emerald-300" aria-hidden>
+            <BellIcon className="h-4 w-4" />
+          </span>
+          {toast.item.link ? (
+            <Link
+              href={toast.item.link}
+              onClick={() => setToast(null)}
+              className="min-w-0 flex-1 text-sm text-ink hover:text-emerald-200"
+            >
+              {toast.item.message}
+              {toast.more > 0 && <span className="mt-0.5 block text-xs text-ink-3">+{toast.more} more in your notifications</span>}
+            </Link>
+          ) : (
+            <p className="min-w-0 flex-1 text-sm text-ink">
+              {toast.item.message}
+              {toast.more > 0 && <span className="mt-0.5 block text-xs text-ink-3">+{toast.more} more in your notifications</span>}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            aria-label="Dismiss"
+            className="-m-1 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-ink-3 hover:bg-card-2 hover:text-ink"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {open && (
         <div

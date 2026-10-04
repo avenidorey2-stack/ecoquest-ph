@@ -1,6 +1,7 @@
 import type { RewardType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordTransaction } from "@/lib/transactions";
+import { notifyAdmins } from "@/lib/notifications";
 import { MAX_COST_POINTS, MAX_VALUE_PESOS } from "@/lib/voucher";
 
 export const BRANDS: Record<RewardType, readonly string[]> = {
@@ -128,6 +129,16 @@ export async function redeemReward(userId: string, rewardId: string, rawEWalletN
       description: `₱${reward.valuePesos.toLocaleString("en-PH")} ${reward.brand} ${reward.rewardType === "VOUCHER" ? "voucher" : "cashout"}`,
       redemptionId: redemption.id,
     });
+    // Tell the team there's a request to fulfil (same transaction: no notice without the request).
+    const { name } = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+    await notifyAdmins(
+      tx,
+      `New redemption request: ${name?.trim() || "A planter"} redeemed a ₱${reward.valuePesos.toLocaleString("en-PH")} ${reward.brand} ${
+        reward.rewardType === "VOUCHER" ? "voucher" : "cashout"
+      } (${reward.costPoints.toLocaleString("en-PH")} pts).`,
+      "/admin/redemptions",
+      userId,
+    );
     return redemption;
   });
 }
