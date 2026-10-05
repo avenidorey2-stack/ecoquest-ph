@@ -50,8 +50,8 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
         <li>Edit your name, picture and home city on your Profile.</li>
         <li>Choose who sees your planting photos, and which social notifications you get, in Settings.</li>
         <li>
-          Delete your account any time in Settings. This permanently removes your account, photos, points, orders, friends, comments and
-          reports.
+          Delete your account in Settings once no seedling order or cash-out is still in progress. This permanently removes your account,
+          photos, points, orders, friends, comments and reports.
         </li>
       </ul>
     ),
