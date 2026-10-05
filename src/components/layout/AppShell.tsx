@@ -281,7 +281,7 @@ export default function AppShell({
       </aside>
 
       <div className="flex min-h-dvh flex-col lg:pl-64">
-        <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas/75 backdrop-blur-md">
+        <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas lg:bg-canvas/75 lg:backdrop-blur-md">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setOpen(true)}
