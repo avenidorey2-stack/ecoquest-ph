@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 
 const RESEND_SECONDS = 60;
 
-/** `devMailbox`: emails go to the local /dev/mailbox page instead of a real inbox (development only). */
-export default function SignupForm({ devMailbox = false }: { devMailbox?: boolean }) {
+/**
+ * `devMailbox`: emails go to the local /dev/mailbox page instead of a real inbox (development only).
+ * `initialEmail`: prefilled from the login page's "Create an Account" offer.
+ */
+export default function SignupForm({ devMailbox = false, initialEmail = "" }: { devMailbox?: boolean; initialEmail?: string }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [website, setWebsite] = useState(""); // honeypot
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

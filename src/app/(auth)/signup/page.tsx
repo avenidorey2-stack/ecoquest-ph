@@ -9,7 +9,9 @@ import SignupForm from "@/components/auth/SignupForm";
 import GoogleButton from "@/components/auth/GoogleButton";
 
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
-  const callbackUrl = safeCallbackUrl((await searchParams).callbackUrl);
+  const params = await searchParams;
+  const callbackUrl = safeCallbackUrl(params.callbackUrl);
+  const email = typeof params.email === "string" ? params.email.slice(0, 254) : "";
   if (await getCurrentUser()) redirect(callbackUrl);
 
   return (
@@ -31,12 +33,12 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
         </>
       )}
 
-      <SignupForm devMailbox={isDevMailboxEnabled()} />
+      <SignupForm devMailbox={isDevMailboxEnabled()} initialEmail={email} />
 
       <p className="text-center text-sm text-ink-2">
         Already have an account?{" "}
         <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-emerald-400">
-          Sign in
+          Sign In
         </Link>
       </p>
     </div>

@@ -16,6 +16,7 @@ import {
   SIGNUP_IP_LIMIT,
   startRegistration,
   TOKEN_TTL_MS,
+  UNKNOWN_EMAIL_LIMIT,
   verifyCredentials,
 } from "@/lib/registration";
 import { createUser, resetDb } from "../helpers";
@@ -286,11 +287,19 @@ describe("verifyCredentials (email/password login)", () => {
     });
   });
 
-  it("rejects wrong passwords and unknown emails identically", async () => {
+  it("rejects wrong passwords and badly formatted emails", async () => {
     await account();
     expect(await verifyCredentials("login@example.ph", "wrong")).toEqual({ ok: false, code: "invalid" });
-    expect(await verifyCredentials("nobody@example.ph", "wrong")).toEqual({ ok: false, code: "invalid" });
     expect(await verifyCredentials("not-an-email", "x")).toEqual({ ok: false, code: "invalid" });
+  });
+
+  it("tells a well-formed unknown email apart, until the per-IP cap", async () => {
+    const now = new Date();
+    expect(await verifyCredentials("nobody@example.ph", "x", now, "1.2.3.4")).toEqual({ ok: false, code: "not_found" });
+    for (let i = 1; i < UNKNOWN_EMAIL_LIMIT.limit; i++) await verifyCredentials(`n${i}@example.ph`, "x", now, "1.2.3.4");
+    expect(await verifyCredentials("other@example.ph", "x", now, "1.2.3.4")).toEqual({ ok: false, code: "invalid" });
+    // Another IP isn't affected.
+    expect(await verifyCredentials("other@example.ph", "x", now, "5.6.7.8")).toEqual({ ok: false, code: "not_found" });
   });
 
   it("rejects Google-only accounts (no password)", async () => {
