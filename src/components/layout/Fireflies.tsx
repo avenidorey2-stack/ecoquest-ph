@@ -10,6 +10,7 @@ export type Firefly = {
   s: number;
   d: number;
   delay: number;
+  /** Sway width in px; 45+ uses the wide sway. */
   drift: number;
   c: string;
 };
@@ -54,14 +55,13 @@ export default function Fireflies({ fireflies = DEFAULT_FIREFLIES }: { fireflies
       {fireflies.map((f, i) => (
         <span
           key={i}
-          className="eq-firefly"
+          className={f.drift >= 45 ? "eq-firefly eq-firefly--wide" : "eq-firefly"}
           style={
             {
               "--x": f.x,
               "--s": `${f.s}px`,
               "--d": `${f.d}s`,
               "--delay": `${f.delay}s`,
-              "--drift": `${f.drift}px`,
               "--c": f.c,
             } as CSSProperties
           }

@@ -1,11 +1,12 @@
 import FallingLeaves, { makeLeaves, type Leaf } from "./FallingLeaves";
 import Fireflies, { makeFireflies } from "./Fireflies";
+import PauseWhileScrolling from "./PauseWhileScrolling";
 import { TREELINE } from "@/lib/palette";
 
 // Decorative, fixed backdrop behind every portal and sign-in page: a dim AI-generated forest
 // photo, a soft sky, drifting sunlight, faint terrain contours, rolling hills with a tree line,
 // falling leaves, and living bioluminescent fireflies and canopy light sweeps — SVG + CSS.
-// Motion stops under prefers-reduced-motion.
+// Motion stops under prefers-reduced-motion, and pauses while the page is touched or scrolled.
 
 const BLOB = "M0-60C34-62 66-38 64-4 62 30 38 58 2 60-34 62-64 36-62 0-60-34-34-58 0-60Z";
 const RINGS = [1, 1.6, 2.25, 2.95, 3.7, 4.5];
@@ -64,6 +65,7 @@ export default function EcoBackground({ lush = false }: { lush?: boolean }) {
       <div className="eq-eco-glow eq-eco-glow--leaf" />
       <div className="eq-eco-glow eq-eco-glow--moss" />
       <Fireflies fireflies={lush ? LUSH_FIREFLIES : undefined} />
+      <PauseWhileScrolling />
 
       <svg className="eq-eco-contours" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
         <defs>

@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 
 // Falling leaves for the decorative backdrops (see globals.css "Eco background"). Each leaf
-// falls with drift + spin on its wrapper and sways on the svg; `flip` adds a slow turn-over.
+// falls and drifts (left or right) on its wrapper; the inner span sways, spins and, with `flip`,
+// slowly turns over.
 // Motion stops under prefers-reduced-motion.
 
 export type Leaf = {
@@ -11,7 +12,9 @@ export type Leaf = {
   /** Fall duration and (negative) start offset, in seconds. */
   d: number;
   delay: number;
+  /** Drift direction while falling: negative = left. */
   drift: number;
+  /** Spin direction: negative = counter-clockwise. */
   spin: number;
   c: string;
   shape?: 0 | 1 | 2;
@@ -78,26 +81,25 @@ export default function FallingLeaves({ leaves, className = "" }: { leaves: Leaf
         return (
           <span
             key={i}
-            className="eq-eco-leaf"
+            className={`eq-eco-leaf${l.drift < 0 ? " eq-eco-leaf--left" : ""}${l.flip ? " eq-eco-leaf--flip" : ""}`}
             style={
               {
                 "--x": l.x,
                 "--s": `${l.s}px`,
                 "--d": `${l.d}s`,
                 "--delay": `${l.delay}s`,
-                "--drift": `${l.drift}px`,
-                "--spin": `${l.spin}deg`,
                 "--c": l.c,
+                ...(l.spin < 0 ? { "--spin-dir": "reverse" } : null),
                 ...(l.flip ? { "--flip": `${l.flip}s` } : null),
               } as CSSProperties
             }
           >
-            <svg viewBox="0 0 24 24">
-              <g className={l.flip ? "eq-leaf-flip" : undefined}>
+            <span>
+              <svg viewBox="0 0 24 24">
                 <path fill="currentColor" d={shape.body} />
                 <path d={shape.vein} stroke="white" strokeOpacity=".55" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-              </g>
-            </svg>
+              </svg>
+            </span>
           </span>
         );
       })}
