@@ -5,11 +5,12 @@ import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { isGoogleEnabled } from "@/lib/auth-providers";
 import { prisma } from "@/lib/prisma";
+import { clientIp } from "@/lib/rate-limit";
 import { attachReferral, REFERRAL_COOKIE } from "@/lib/referrals";
 import { verifyCredentials } from "@/lib/registration";
 import type { Role } from "@/generated/prisma/client";
 
-/** Login failure surfaced to the login page as ?code=… (invalid | unverified | rate_limited). */
+/** Login failure surfaced to the login page as ?code=… (invalid | not_found | unverified | rate_limited). */
 class LoginError extends CredentialsSignin {
   constructor(code: string) {
     super();
@@ -45,8 +46,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        const result = await verifyCredentials(credentials?.email, credentials?.password);
+      async authorize(credentials, request) {
+        const result = await verifyCredentials(credentials?.email, credentials?.password, new Date(), clientIp(request));
         if (!result.ok) throw new LoginError(result.code);
         return result.user;
       },

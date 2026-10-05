@@ -18,6 +18,8 @@ export const MAX_EXISTING_NOTICES_PER_DAY = 3;
 export const SIGNUP_IP_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
 export const COMPLETE_IP_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 export const LOGIN_LIMIT = { limit: 10, windowMs: 15 * 60 * 1000 };
+/** Per-IP cap on "no account with that email" answers, so the login form can't be used to scan for members. */
+export const UNKNOWN_EMAIL_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 
 export const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_BYTES = 72; // bcrypt ignores anything longer
@@ -225,10 +227,19 @@ export async function completeRegistration(input: {
 
 export type CredentialsCheck =
   | { ok: true; user: { id: string; name: string | null; email: string | null; role: string } }
-  | { ok: false; code: "invalid" | "unverified" | "rate_limited" };
+  | { ok: false; code: "invalid" | "not_found" | "unverified" | "rate_limited" };
 
 /** Checks an email/password login. Rate-limited per email to stop password guessing. */
-export async function verifyCredentials(emailInput: unknown, password: unknown, now = new Date()): Promise<CredentialsCheck> {
+/**
+ * `not_found` means no account uses that email, so the login page can offer to create one.
+ * Past UNKNOWN_EMAIL_LIMIT per IP it falls back to the generic `invalid`.
+ */
+export async function verifyCredentials(
+  emailInput: unknown,
+  password: unknown,
+  now = new Date(),
+  ip = "unknown",
+): Promise<CredentialsCheck> {
   const email = normalizeEmail(emailInput);
   if (!email || typeof password !== "string" || !password) return { ok: false, code: "invalid" };
 
@@ -238,6 +249,10 @@ export async function verifyCredentials(emailInput: unknown, password: unknown, 
 
   const user = await findUserByEmail(email);
   const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user) {
+    const allowed = await hitRateLimit(`login:unknown:ip:${ip}`, UNKNOWN_EMAIL_LIMIT.limit, UNKNOWN_EMAIL_LIMIT.windowMs, now);
+    return { ok: false, code: allowed ? "not_found" : "invalid" };
+  }
   if (!user?.passwordHash || !valid) return { ok: false, code: "invalid" };
   if (!user.emailVerified) return { ok: false, code: "unverified" };
 

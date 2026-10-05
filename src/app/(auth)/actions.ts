@@ -12,7 +12,8 @@ const LOGIN_MESSAGES: Record<string, string> = {
   rate_limited: "Too many sign-in attempts. Please wait 15 minutes and try again.",
 };
 
-export type LoginState = { error?: string } | undefined;
+/** `notFound`: the (normalized) email has no account — the form offers to create one. */
+export type LoginState = { error?: string; notFound?: string } | undefined;
 
 export async function loginWithPassword(_prev: LoginState, formData: FormData): Promise<LoginState> {
   try {
@@ -22,7 +23,10 @@ export async function loginWithPassword(_prev: LoginState, formData: FormData): 
       redirectTo: safeCallbackUrl(formData.get("callbackUrl")),
     });
   } catch (err) {
-    if (err instanceof CredentialsSignin) return { error: LOGIN_MESSAGES[err.code] ?? LOGIN_MESSAGES.invalid };
+    if (err instanceof CredentialsSignin) {
+      if (err.code === "not_found") return { notFound: String(formData.get("email")).trim().toLowerCase() };
+      return { error: LOGIN_MESSAGES[err.code] ?? LOGIN_MESSAGES.invalid };
+    }
     if (err instanceof AuthError) return { error: "Sign-in failed. Please try again." };
     throw err; // includes Next's redirect on success
   }
