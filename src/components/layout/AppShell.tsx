@@ -23,12 +23,14 @@ import {
   MedalIcon,
   SproutIcon,
   TreeIcon,
+  UserCheckIcon,
   WalletIcon,
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
 import EcoBackground from "./EcoBackground";
 import ScrollReveal, { TOUR_MENU_EVENT } from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
+import UserSearch from "@/components/social/UserSearch";
 
 export type ShellUser = {
   name: string | null;
@@ -48,6 +50,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", hint: null, Icon: DashboardIcon },
   { href: "/profile", label: "Profile", hint: "Location Settings", Icon: PinIcon },
   { href: "/leaderboard", label: "Leaderboard", hint: "Local / National", Icon: TrophyIcon },
+  { href: "/friends", label: "Friends", hint: "Requests & Friends", Icon: UserCheckIcon },
   { href: "/shop", label: "Shop", hint: "Order Seedlings", Icon: SproutIcon },
   { href: "/rewards", label: "Rewards", hint: "GCash, Maya & Vouchers", Icon: GiftIcon },
   { href: "/transactions", label: "Transactions", hint: "Orders & Redemptions", Icon: WalletIcon },
@@ -60,6 +63,7 @@ const ADMIN = { href: "/admin", label: "Admin Portal", hint: null, Icon: ShieldI
 const PAGE_TITLES: [prefix: string, title: string, subtitle: string][] = [
   ["/profile", "Profile & Location", "Your account details and verified home city."],
   ["/leaderboard", "Leaderboard", "This week's top planters, locally and nationally."],
+  ["/friends", "Friends", "Friend requests and your planting friends."],
   ["/shop", "Seedling Shop", "Order native tree seedlings with your planting points."],
   ["/rewards", "Rewards", "Turn your planting points into GCash, Maya and vouchers."],
   ["/transactions", "Transactions", "Your seedling orders and reward redemptions, with live status."],
@@ -328,6 +332,7 @@ export default function AppShell({
             </Link>
           </div>
         </header>
+        <UserSearch />
 
         <main className="flex flex-1 flex-col">{children}</main>
       </div>

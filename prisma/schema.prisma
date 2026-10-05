@@ -18,6 +18,18 @@ enum Role {
   PATRON
 }
 
+// Who can see a planter's planting photos (and so like or comment on them).
+enum PhotoVisibility {
+  EVERYONE
+  FRIENDS
+  ONLY_ME
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
 enum SlotStatus {
   OPEN
   FULL
@@ -74,31 +86,31 @@ enum TransactionKind {
 // ─── Core models ────────────────────────────────────────────────────────────
 
 model User {
-  id                     String    @id @default(cuid())
-  role                   Role      @default(USER)
+  id                     String          @id @default(cuid())
+  role                   Role            @default(USER)
   name                   String?
-  email                  String?   @unique
+  email                  String?         @unique
   emailVerified          DateTime?
   // ProfilePictureURL — named `image` because Auth.js adapters write to this field.
-  image                  String?   @map("profile_picture_url")
+  image                  String?         @map("profile_picture_url")
   passwordHash           String?
   // Secret name of this user's live notification channel (Supabase Realtime topic "notify:<token>").
   // Only "something new" pings travel on it; the notifications themselves are fetched signed in.
-  notifyToken            String    @unique @default(dbgenerated("(gen_random_uuid())::text"))
+  notifyToken            String          @unique @default(dbgenerated("(gen_random_uuid())::text"))
   // Location: names are display copies resolved from the PSGC city code (the geofence key).
   region                 String?
   province               String?
   city                   String?
   cityCode               String?
   locationUpdatedAt      DateTime?
-  points                 Int       @default(0)
+  points                 Int             @default(0)
   // Points earned in the week starting weeklyPointsWeekStart (Monday 00:00 Asia/Manila).
   // A stale week start means 0 this week — the weekly reset is lazy, no cron job needed.
-  weeklyPoints           Int       @default(0)
+  weeklyPoints           Int             @default(0)
   weeklyPointsWeekStart  DateTime?
-  totalPlants            Int       @default(0)
+  totalPlants            Int             @default(0)
   // Short, URL-safe invite code (/r/<code>). Older accounts may have longer cuid codes.
-  referralCode           String    @unique @default(nanoid(10))
+  referralCode           String          @unique @default(nanoid(10))
   referredByUserId       String?
   // Set when the referrer was paid for this user's first verified planting (pays once).
   referralBonusAwardedAt DateTime?
@@ -107,29 +119,35 @@ model User {
   // Uploaded profile picture (served from /api/avatars/…); shown instead of the OAuth `image`.
   avatarUrl              String?
   // Gamification: XP fills the level bar and is never spent (unlike shop `points`).
-  xp                     Int       @default(0)
-  level                  Int       @default(1)
+  xp                     Int             @default(0)
+  level                  Int             @default(1)
   // Celebration bookkeeping — what the user has already been shown, so popups fire once.
-  lastLevelSeen          Int       @default(1)
+  lastLevelSeen          Int             @default(1)
   lastRankSeen           Int?
   lastRankWeekStart      DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  // Privacy: who sees this planter's planting photos on their profile.
+  photoVisibility        PhotoVisibility @default(EVERYONE)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
-  referredBy     User?                @relation("Referrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
-  referrals      User[]               @relation("Referrals")
-  quests         Quest[]
-  reviews        Verification[]       @relation("VerificationReviews")
-  redemptions    RedemptionHistory[]
-  accounts       Account[]
-  sessions       Session[]
-  passwordResets PasswordResetToken[]
-  achievements   UserAchievement[]
-  plantedTrees   PlantedTree[]
-  notifications  Notification[]
-  orders         Order[]
-  transactions   Transaction[]
-  missionClaims  MissionClaim[]
+  referredBy             User?                @relation("Referrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals              User[]               @relation("Referrals")
+  quests                 Quest[]
+  reviews                Verification[]       @relation("VerificationReviews")
+  redemptions            RedemptionHistory[]
+  accounts               Account[]
+  sessions               Session[]
+  passwordResets         PasswordResetToken[]
+  achievements           UserAchievement[]
+  plantedTrees           PlantedTree[]
+  notifications          Notification[]
+  orders                 Order[]
+  transactions           Transaction[]
+  missionClaims          MissionClaim[]
+  friendRequestsSent     Friendship[]         @relation("FriendRequester")
+  friendRequestsReceived Friendship[]         @relation("FriendAddressee")
+  photoLikes             PhotoLike[]
+  photoComments          PhotoComment[]
 
   // Leaderboards: national, and local (per city).
   @@index([weeklyPointsWeekStart, weeklyPoints])
@@ -213,9 +231,11 @@ model Verification {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  quest      Quest        @relation(fields: [questId], references: [id], onDelete: Cascade)
-  reviewedBy User?        @relation("VerificationReviews", fields: [reviewedById], references: [id], onDelete: SetNull)
+  quest      Quest          @relation(fields: [questId], references: [id], onDelete: Cascade)
+  reviewedBy User?          @relation("VerificationReviews", fields: [reviewedById], references: [id], onDelete: SetNull)
   planted    PlantedTree?
+  likes      PhotoLike[]
+  comments   PhotoComment[]
 
   @@index([questId])
   @@index([status])
@@ -592,4 +612,55 @@ model MissionClaim {
 
   @@unique([missionId, userId, periodKey])
   @@index([userId, claimedAt])
+}
+
+// ─── Friends & photo reactions ──────────────────────────────────────────────
+
+// One row per pair of users. `pairKey` (the two ids sorted, joined by ":") keeps a pair unique
+// whichever side asked first. PENDING = requested by `requester`, waiting on `addressee`.
+model Friendship {
+  id          String           @id @default(cuid())
+  pairKey     String           @unique
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId, status])
+  @@index([addresseeId, status])
+}
+
+// A like on an approved planting photo/video (Verification).
+model PhotoLike {
+  verificationId String
+  userId         String
+  createdAt      DateTime @default(now())
+
+  verification Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([verificationId, userId])
+  @@index([userId])
+}
+
+// A comment on a planting photo; `parentId` makes it a reply (one level deep).
+model PhotoComment {
+  id             String   @id @default(cuid())
+  verificationId String
+  authorId       String
+  parentId       String?
+  body           String
+  createdAt      DateTime @default(now())
+
+  verification Verification   @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent       PhotoComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      PhotoComment[] @relation("CommentReplies")
+
+  @@index([verificationId, createdAt])
+  @@index([parentId])
 }

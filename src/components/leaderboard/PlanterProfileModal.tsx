@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { PublicProfile } from "@/lib/public-profile";
 import { CloseIcon, CoinIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
 import ProofLightbox from "@/components/profile/ProofLightbox";
+import FriendButton from "@/components/social/FriendButton";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric" });
@@ -91,6 +92,9 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                     {profile.city}, {profile.province}
                   </p>
                 )}
+                <div className="mt-2 flex">
+                  <FriendButton userId={profile.id} initial={profile.friendState} />
+                </div>
               </div>
             </div>
           ) : (
@@ -146,7 +150,13 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                 <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
                   Proof Gallery {profile.totalProofs > 0 && `· ${profile.totalProofs}`}
                 </h3>
-                {profile.proofs.length === 0 ? (
+                {profile.photosHiddenBy ? (
+                  <p className="rounded-xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">
+                    {profile.photosHiddenBy === "FRIENDS"
+                      ? `${profile.name} shares planting photos with friends only.`
+                      : `${profile.name} keeps their planting photos private.`}
+                  </p>
+                ) : profile.proofs.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">
                     No approved plantings yet.
                   </p>

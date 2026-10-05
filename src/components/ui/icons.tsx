@@ -190,3 +190,53 @@ export const TreeIcon = (p: IconProps) => (
     <path d="M9 21h6" />
   </Svg>
 );
+
+export const SearchIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m20 20-4.2-4.2" />
+  </Svg>
+);
+/** Outline heart; `filled` paints it (a liked photo). */
+export const HeartIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+  <Svg {...p}>
+    <path
+      fill={filled ? "currentColor" : "none"}
+      d="M12 20s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10Z"
+    />
+  </Svg>
+);
+export const ChatIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 18.5 3.5 21l.6-4.2A8 8 0 1 1 7.8 19.3 8 8 0 0 1 5 18.5Z" />
+  </Svg>
+);
+export const UserPlusIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="9.5" cy="8" r="3.5" />
+    <path d="M3 20c.6-3.4 3.2-5.5 6.5-5.5 1.6 0 3 .5 4.1 1.3M18.5 13v6M15.5 16h6" />
+  </Svg>
+);
+export const UserCheckIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="9.5" cy="8" r="3.5" />
+    <path d="M3 20c.6-3.4 3.2-5.5 6.5-5.5 1.6 0 3 .5 4.1 1.3M15.5 17l2 2 4-4.5" />
+  </Svg>
+);
+export const SendIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 12 20 4l-4.5 16-3.5-6.5L4 12Z" />
+    <path d="m12 13.5 3.5-3.5" />
+  </Svg>
+);
+export const TrashIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.9 12.5h9.2L17.5 7M10.5 11v5M13.5 11v5" />
+  </Svg>
+);
+export const LockIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2" />
+    <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3M12 14.5v2" />
+  </Svg>
+);
