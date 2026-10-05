@@ -3,6 +3,7 @@ import { displayAvatar } from "@/lib/avatar-url";
 import { levelForXp, levelTitle } from "@/lib/levels";
 import { achievementName } from "@/lib/achievements";
 import { canSeePhotos, friendState, type FriendState } from "@/lib/friends";
+import { isBlockedEitherWay } from "@/lib/blocks";
 import type { PhotoVisibility } from "@/generated/prisma/client";
 
 /** Proofs shown in the leaderboard modal; the full profile page shows up to PROOF_PAGE_SIZE. */
@@ -83,6 +84,8 @@ export async function getPublicProfile(
   if (!user || (user.role !== "USER" && user.id !== viewerId)) return null;
 
   const viewer = await prisma.user.findUnique({ where: { id: viewerId }, select: { id: true, role: true } });
+  // Blocked either way: the profile doesn't exist for them (admins can still look).
+  if (viewer?.role !== "ADMIN" && (await isBlockedEitherWay(userId, viewerId))) return null;
   const showPhotos = !!viewer && (await canSeePhotos(user, viewer));
   const approved = { status: "APPROVED" as const, quest: { userId } };
   const [proofs, totalProofs, unlocks, friendship] = await Promise.all([

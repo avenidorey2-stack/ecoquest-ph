@@ -119,7 +119,11 @@ export default function UserSearch() {
               setQuery(e.target.value);
               setOpen(true);
             }}
-            onFocus={() => setOpen(true)}
+            onFocus={() => {
+              // Search again on reopening: friend states or blocks may have changed since.
+              if (!open) setAttempt((n) => n + 1);
+              setOpen(true);
+            }}
             placeholder="Search planters by name"
             autoComplete="off"
             enterKeyHint="search"
@@ -174,7 +178,13 @@ export default function UserSearch() {
               <ul className={`divide-y divide-line ${loading ? "opacity-60" : ""}`}>
                 {results?.map((p) => (
                   <li key={p.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <Link href={`/planters/${p.id}`} onClick={() => setOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 hover:text-emerald-200">
+                    <Link
+                      href={`/planters/${p.id}`}
+                      onClick={() => {
+                        setOpen(false);
+                        setQuery("");
+                      }}
+                      className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 hover:text-emerald-200">
                       <Avatar card={p} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>

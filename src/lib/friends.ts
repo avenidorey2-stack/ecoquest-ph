@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { displayAvatar } from "@/lib/avatar-url";
 import { levelForXp } from "@/lib/levels";
+import { blockedIds, isBlockedEitherWay } from "@/lib/blocks";
 
 /** The friendship row's key for a pair of users, whichever of them asked first. */
 export const pairKey = (a: string, b: string) => (a < b ? `${a}:${b}` : `${b}:${a}`);
@@ -30,7 +31,7 @@ export async function areFriends(a: string, b: string) {
 
 /** Planters who can be found and befriended: regular users only (admins and patrons aren't listed). */
 async function findPlanter(id: string) {
-  return prisma.user.findFirst({ where: { id, role: "USER" }, select: { id: true, name: true } });
+  return prisma.user.findFirst({ where: { id, role: "USER" }, select: { id: true, name: true, notifyFriendRequests: true } });
 }
 
 type Result = { ok: true; state: FriendState } | { ok: false; status: number; error: string };
@@ -42,7 +43,7 @@ type Result = { ok: true; state: FriendState } | { ok: false; status: number; er
 export async function requestFriend(userId: string, otherId: string): Promise<Result> {
   if (userId === otherId) return { ok: false, status: 400, error: "You can't add yourself." };
   const other = await findPlanter(otherId);
-  if (!other) return { ok: false, status: 404, error: "Planter not found." };
+  if (!other || (await isBlockedEitherWay(userId, otherId))) return { ok: false, status: 404, error: "Planter not found." };
 
   const key = pairKey(userId, otherId);
   const existing = await prisma.friendship.findUnique({ where: { pairKey: key } });
@@ -55,7 +56,7 @@ export async function requestFriend(userId: string, otherId: string): Promise<Re
   try {
     await prisma.$transaction(async (tx) => {
       await tx.friendship.create({ data: { pairKey: key, requesterId: userId, addresseeId: otherId } });
-      await notify(tx, otherId, `${me?.name ?? "A planter"} sent you a friend request.`, "/friends");
+      if (other.notifyFriendRequests) await notify(tx, otherId, `${me?.name ?? "A planter"} sent you a friend request.`, "/friends");
     });
   } catch (e) {
     // Both asked at the same moment: the other request won the unique pair key — accept it.
@@ -68,13 +69,18 @@ export async function requestFriend(userId: string, otherId: string): Promise<Re
 /** Accepts `otherId`'s pending request to `userId`. */
 export async function acceptFriend(userId: string, otherId: string): Promise<Result> {
   const key = pairKey(userId, otherId);
-  const me = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  const [me, other] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+    prisma.user.findUnique({ where: { id: otherId }, select: { notifyFriendRequests: true } }),
+  ]);
   const accepted = await prisma.$transaction(async (tx) => {
     const { count } = await tx.friendship.updateMany({
       where: { pairKey: key, status: "PENDING", addresseeId: userId },
       data: { status: "ACCEPTED", acceptedAt: new Date() },
     });
-    if (count) await notify(tx, otherId, `${me?.name ?? "A planter"} accepted your friend request.`, `/planters/${userId}`);
+    if (count && other?.notifyFriendRequests) {
+      await notify(tx, otherId, `${me?.name ?? "A planter"} accepted your friend request.`, `/planters/${userId}`);
+    }
     return count > 0;
   });
   if (!accepted) return { ok: false, status: 404, error: "No friend request to accept." };
@@ -144,8 +150,9 @@ const SEARCH_LIMIT = 20;
 export async function searchPlanters(viewerId: string, query: string): Promise<PlanterCard[]> {
   const q = query.trim().slice(0, 60);
   if (q.length < SEARCH_MIN) return [];
+  const hidden = await blockedIds(viewerId);
   const users = await prisma.user.findMany({
-    where: { role: "USER", id: { not: viewerId }, name: { contains: q, mode: "insensitive" } },
+    where: { role: "USER", id: { notIn: [viewerId, ...hidden] }, name: { contains: q, mode: "insensitive" } },
     orderBy: [{ totalPlants: "desc" }, { name: "asc" }],
     take: SEARCH_LIMIT,
     select: cardSelect,
@@ -163,10 +170,11 @@ export async function searchPlanters(viewerId: string, query: string): Promise<P
 
 /**
  * Whether `viewerId` may see `owner`'s planting photos — and so like or comment on them. The owner
- * and admins always can; otherwise the owner's photo privacy setting decides.
+ * and admins always can; a block either way never can; otherwise the owner's photo privacy decides.
  */
 export async function canSeePhotos(owner: { id: string; photoVisibility: PhotoVisibility }, viewer: { id: string; role: string }) {
   if (owner.id === viewer.id || viewer.role === "ADMIN") return true;
+  if (await isBlockedEitherWay(owner.id, viewer.id)) return false;
   if (owner.photoVisibility === "EVERYONE") return true;
   if (owner.photoVisibility === "FRIENDS") return areFriends(owner.id, viewer.id);
   return false;

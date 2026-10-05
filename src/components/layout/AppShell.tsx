@@ -17,6 +17,7 @@ import {
   LogoutIcon,
   MenuIcon,
   PinIcon,
+  SettingsIcon,
   ShieldIcon,
   TrophyIcon,
   UsersIcon,
@@ -57,6 +58,7 @@ const NAV = [
   { href: "/referrals", label: "Referral Hub", hint: null, Icon: UsersIcon },
   { href: "/achievements", label: "Achievements", hint: "Badges & Levels", Icon: MedalIcon },
   { href: "/trees", label: "Tree Directory", hint: "Native PH Trees", Icon: TreeIcon },
+  { href: "/settings", label: "Settings", hint: "Privacy, Password & Help", Icon: SettingsIcon },
 ];
 const ADMIN = { href: "/admin", label: "Admin Portal", hint: null, Icon: ShieldIcon };
 
@@ -72,6 +74,7 @@ const PAGE_TITLES: [prefix: string, title: string, subtitle: string][] = [
   ["/admin", "Admin Portal", "Slots, verifications, rewards and patrons."],
   ["/achievements", "Achievements", "Badges you've earned and the ones still ahead."],
   ["/trees", "Tree Directory", "Native Philippine trees worth planting."],
+  ["/settings", "Settings", "Privacy, notifications, password and help."],
 ];
 
 function Avatar({ user, size = "h-10 w-10" }: { user: ShellUser; size?: string }) {

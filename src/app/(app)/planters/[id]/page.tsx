@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import AchievementShowcase from "@/components/profile/AchievementShowcase";
 import ProofGallery from "@/components/profile/ProofGallery";
 import FriendButton from "@/components/social/FriendButton";
+import BlockButton from "@/components/social/BlockButton";
 import { CoinIcon, LockIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Planter profile · EcoQuest PH" };
@@ -57,7 +58,8 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
               Edit Profile
             </Link>
           ) : (
-            <div className="basis-full sm:basis-auto">
+            <div className="flex basis-full items-start justify-end gap-1 sm:basis-auto">
+              <BlockButton userId={profile.id} name={profile.name} />
               <FriendButton userId={profile.id} initial={profile.friendState} />
             </div>
           )}

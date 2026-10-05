@@ -20,7 +20,10 @@ export const photoPath = (ownerId: string, verificationId: string) => `/planters
 async function visiblePhoto(verificationId: string, viewer: Viewer) {
   const v = await prisma.verification.findFirst({
     where: { id: verificationId, status: "APPROVED" },
-    select: { id: true, quest: { select: { user: { select: { id: true, name: true, photoVisibility: true } } } } },
+    select: {
+      id: true,
+      quest: { select: { user: { select: { id: true, name: true, photoVisibility: true, notifyLikes: true, notifyComments: true } } } },
+    },
   });
   if (!v || !(await canSeePhotos(v.quest.user, viewer))) return null;
   return { id: v.id, owner: v.quest.user };
@@ -91,7 +94,7 @@ export async function setLike(verificationId: string, viewer: Viewer, like: bool
       const me = await prisma.user.findUnique({ where: { id: viewer.id }, select: { name: true } });
       await prisma.$transaction(async (tx) => {
         await tx.photoLike.create({ data: { verificationId, userId: viewer.id } });
-        if (photo.owner.id !== viewer.id) {
+        if (photo.owner.id !== viewer.id && photo.owner.notifyLikes) {
           await notify(tx, photo.owner.id, `${me?.name ?? "A planter"} liked your planting photo.`, photoPath(photo.owner.id, verificationId));
         }
       }).catch((e) => {
@@ -116,12 +119,15 @@ export async function addComment(verificationId: string, viewer: Viewer, rawBody
   const photo = await visiblePhoto(verificationId, viewer);
   if (!photo) return notFound;
 
-  let parent: { id: string; authorId: string } | null = null;
+  let parent: { id: string; authorId: string; notify: boolean } | null = null;
   if (rawParentId != null) {
     if (typeof rawParentId !== "string") return { ok: false, status: 400, error: "Invalid reply." } satisfies Fail;
-    const p = await prisma.photoComment.findFirst({ where: { id: rawParentId, verificationId }, select: { id: true, authorId: true, parentId: true } });
+    const p = await prisma.photoComment.findFirst({
+      where: { id: rawParentId, verificationId },
+      select: { id: true, authorId: true, parentId: true, author: { select: { notifyComments: true } } },
+    });
     if (!p) return { ok: false, status: 404, error: "That comment was deleted." } satisfies Fail;
-    parent = { id: p.parentId ?? p.id, authorId: p.authorId };
+    parent = { id: p.parentId ?? p.id, authorId: p.authorId, notify: p.author.notifyComments };
   }
 
   const me = await prisma.user.findUnique({ where: { id: viewer.id }, select: { name: true } });
@@ -130,10 +136,10 @@ export async function addComment(verificationId: string, viewer: Viewer, rawBody
   const comment = await prisma.$transaction(async (tx) => {
     const c = await tx.photoComment.create({ data: { verificationId, authorId: viewer.id, parentId: parent?.id ?? null, body } });
     const preview = body.length > 60 ? `${body.slice(0, 57)}…` : body;
-    if (photo.owner.id !== viewer.id) {
+    if (photo.owner.id !== viewer.id && photo.owner.notifyComments) {
       await notify(tx, photo.owner.id, `${who} commented on your planting photo: “${preview}”`, link);
     }
-    if (parent && parent.authorId !== viewer.id && parent.authorId !== photo.owner.id) {
+    if (parent?.notify && parent.authorId !== viewer.id && parent.authorId !== photo.owner.id) {
       await notify(tx, parent.authorId, `${who} replied to your comment: “${preview}”`, link);
     }
     return c;

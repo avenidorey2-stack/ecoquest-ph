@@ -14,6 +14,7 @@ const TABS = [
   { href: "/admin/redemptions", label: "Redemptions" },
   { href: "/admin/rewards", label: "Rewards" },
   { href: "/admin/patrons", label: "Patrons" },
+  { href: "/admin/support", label: "Support" },
 ];
 
 export default function AdminNav() {
