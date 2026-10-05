@@ -485,15 +485,15 @@ body {
   100% { transform: translate3d(8%, -2%, 0) rotate(0.8deg); }
 }
 
-/* Breathing contour lines */
-.eq-eco-contours path,
-.eq-eco-contours use {
+/* Breathing contour lines: the whole layer fades, so it runs on the compositor (animating each
+   ring was main-thread work). */
+.eq-eco-contours {
   animation: eq-contour-breathe 10s ease-in-out infinite alternate;
 }
 @keyframes eq-contour-breathe {
-  0% { opacity: 0.4; }
-  50% { opacity: 0.85; stroke: rgb(110 231 183 / 0.14); }
-  100% { opacity: 0.45; }
+  0% { opacity: 0.55; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -513,13 +513,43 @@ body {
   .eq-firefly,
   .eq-firefly > span,
   .eq-eco-sweep,
-  .eq-eco-contours path,
-  .eq-eco-contours use {
+  .eq-eco-contours {
     animation: none !important;
   }
   .eq-eco-leaf,
   .eq-fireflies {
     display: none;
+  }
+}
+
+/* ─── Phones & touch screens: a still scene ────────────────────────────────
+   On a budget phone the moving backdrop kept the main thread busy nearly all the time (leaves
+   and fireflies animate custom properties, which can't leave the main thread), so taps and
+   scrolling stuttered on every page. Phones keep the same scene, held still, without the
+   falling leaves, fireflies and blurred light sweep. Frosted-glass blur is dropped too: it
+   re-blurs everything behind it on each scroll frame; the panels' tinted fill stays. */
+@media (max-width: 1023px), (pointer: coarse) {
+  .eq-fireflies,
+  .eq-leaves,
+  .eq-eco-sweep {
+    display: none;
+  }
+  .eq-eco-bg,
+  .eq-eco-bg *,
+  .eq-sidebar-glow::before,
+  .eq-kenburns,
+  .eq-gradient-text {
+    animation: none !important;
+  }
+  .eq-eco-glow {
+    will-change: auto;
+  }
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 }
 
