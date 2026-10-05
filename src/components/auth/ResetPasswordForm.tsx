@@ -48,7 +48,7 @@ export default function ResetPasswordForm({
       {/* Lets password managers save the right username. */}
       <input type="email" value={email} autoComplete="username" readOnly hidden />
       <label className="block text-sm font-medium text-ink-2">
-        New password
+        New Password
         <input
           type="password"
           value={password}
@@ -61,7 +61,7 @@ export default function ResetPasswordForm({
         <span className="text-xs text-ink-3">At least {minPasswordLength} characters.</span>
       </label>
       <label className="block text-sm font-medium text-ink-2">
-        Confirm new password
+        Confirm New Password
         <input
           type="password"
           value={confirm}
@@ -80,7 +80,7 @@ export default function ResetPasswordForm({
         disabled={busy}
         className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {busy ? "Saving…" : "Set new password"}
+        {busy ? "Saving…" : "Set New Password"}
       </button>
     </form>
   );

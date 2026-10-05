@@ -106,7 +106,7 @@ export default function WebcamCapture({ onCapture, onCancel }: { onCapture: (fil
           disabled={!ready || !!error}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-400 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <CameraIcon className="h-4 w-4" /> Take photo
+          <CameraIcon className="h-4 w-4" /> Take Photo
         </button>
       </div>
     </div>

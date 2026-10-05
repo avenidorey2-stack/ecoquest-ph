@@ -37,7 +37,7 @@ export default async function AchievementsPage() {
             </div>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Badges unlocked</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Badges Unlocked</p>
             <p className="text-lg font-bold text-ink">
               {unlocked === badges.length ? "All badges collected! 🎉" : `${badges.length - unlocked} still to earn`}
             </p>
@@ -47,7 +47,7 @@ export default async function AchievementsPage() {
           <LevelBar xp={user.xp} />
         </div>
         <div className="rounded-xl border border-dashed border-emerald-400/20 p-4 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Closest next badge</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Closest Next Badge</p>
           {nextUp ? (
             <p className="mt-1 text-ink">
               <span className="mr-1 text-lg" aria-hidden>

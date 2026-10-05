@@ -34,7 +34,7 @@ const fmt = (n: number) => n.toLocaleString("en-PH");
 
 function StockBadge({ stock }: { stock: number }) {
   if (stock < 1) {
-    return <span className="rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-semibold text-white ring-1 ring-red-300/30 backdrop-blur">Sold out</span>;
+    return <span className="rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-semibold text-white ring-1 ring-red-300/30 backdrop-blur">Sold Out</span>;
   }
   if (stock <= LOW_STOCK) {
     return <span className="rounded-full bg-amber-400/90 px-2 py-0.5 text-[10px] font-semibold text-amber-950 backdrop-blur">Only {fmt(stock)} left</span>;
@@ -156,7 +156,7 @@ function OrderSheet({
                 soldOut ? "text-red-400" : product.stockQuantity <= LOW_STOCK ? "text-amber-300" : "text-ink-3"
               }`}
             >
-              {soldOut ? "Out of stock" : `${fmt(product.stockQuantity)} available`}
+              {soldOut ? "Out of Stock" : `${fmt(product.stockQuantity)} available`}
               <span className="block font-normal text-ink-4">You have {fmt(balance)} pts</span>
             </p>
           </div>
@@ -237,7 +237,7 @@ function SeedlingTile({
           <p className="mt-0.5 truncate text-[11px] italic text-ink/90 drop-shadow sm:text-xs">{product.scientificName}</p>
           {product.credit?.shows && (
             <span className="mt-1.5 inline-block rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur">
-              Related species
+              Related Species
             </span>
           )}
         </div>

@@ -114,7 +114,7 @@ describe("getDashboardData", () => {
 
     expect(d.place).toBeNull();
     expect(d.quests[0]).toMatchObject({ id: "m-city", href: "/profile" });
-    expect(d.health.find((h) => h.label.startsWith("Home city"))?.ok).toBe(false);
+    expect(d.health.find((h) => h.label.startsWith("Home City"))?.ok).toBe(false);
     expect(d.localLeaders).toEqual([]);
     expect(d.latestApproved).toBeNull();
     expect(d.ranks).toMatchObject({ national: null, local: null });
@@ -177,7 +177,7 @@ describe("getDashboardData", () => {
     const d = await getDashboardData(user.id);
     // The subtitle keeps its fixed format; the reason reaches the planter as a notification.
     expect(d.quests[0].detail).toBe("10 pts per plant — upload your proof");
-    expect(d.health.find((h) => h.label === "No rejected submissions")?.ok).toBe(false);
+    expect(d.health.find((h) => h.label === "No Rejected Submissions")?.ok).toBe(false);
     expect(d.notices[0]).toMatchObject({ kind: "rejected" });
   });
 });

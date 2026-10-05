@@ -20,7 +20,7 @@ export default async function CompleteSignupPage({ searchParams }: PageProps<"/s
         </p>
         <div className="flex gap-2">
           <Link href="/signup" className="flex-1 rounded-lg bg-emerald-400 py-2 text-sm font-semibold text-emerald-950">
-            Sign up again
+            Sign Up Again
           </Link>
           <Link href="/login" className="flex-1 rounded-lg border py-2 text-sm font-medium">
             Sign in
@@ -32,7 +32,7 @@ export default async function CompleteSignupPage({ searchParams }: PageProps<"/s
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Finish creating your account</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Finish Creating Your Account</h1>
       <CompleteSignupForm
         token={token}
         email={pending.email}

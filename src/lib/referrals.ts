@@ -80,7 +80,7 @@ export async function getReferralSummary(userId: string) {
   return {
     referrals: referrals.map((r) => ({
       id: r.id,
-      name: r.name ?? "New planter",
+      name: r.name ?? "New Planter",
       joinedAt: r.createdAt,
       bonusAwarded: !!r.referralBonusAwardedAt,
     })),

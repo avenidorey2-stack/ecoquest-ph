@@ -18,8 +18,8 @@ export default async function PlanterProfilePage({ params }: PageProps<"/planter
   const isMe = profile.id === viewerId;
 
   const stats = [
-    { label: "Trees planted", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
-    { label: "Current points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
+    { label: "Trees Planted", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
+    { label: "Current Points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
     { label: "Achievements", value: profile.achievements.length.toLocaleString("en-PH"), Icon: MedalIcon },
   ];
 
@@ -52,7 +52,7 @@ export default async function PlanterProfilePage({ params }: PageProps<"/planter
           </div>
           {isMe && (
             <Link href="/profile" className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-white/20 hover:bg-white/20">
-              Edit profile
+              Edit Profile
             </Link>
           )}
         </div>

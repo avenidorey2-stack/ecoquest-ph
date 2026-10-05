@@ -21,7 +21,7 @@ export default function ProofGallery({
     <section aria-labelledby="proofs-heading" className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card shadow-sm">
       <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <h2 id="proofs-heading" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
-          <CameraIcon className="h-4 w-4 text-emerald-400" /> Proof gallery
+          <CameraIcon className="h-4 w-4 text-emerald-400" /> Proof Gallery
         </h2>
         <span className="text-xs text-ink-3">
           {total > proofs.length ? `Latest ${proofs.length} of ${total}` : `${total} approved`}

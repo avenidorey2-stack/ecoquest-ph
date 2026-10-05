@@ -9,9 +9,9 @@ import { getCommunityStats, type CommunityStats } from "@/lib/impact";
 import { HERO_PHOTO } from "@/data/tree-photos";
 
 const STEPS = [
-  { Icon: PinIcon, title: "Claim a slot", text: "Pick an open spot in your city on the live map." },
-  { Icon: CameraIcon, title: "Plant & prove it", text: "Upload a photo. Our team verifies every tree." },
-  { Icon: GiftIcon, title: "Earn rewards", text: "Trade points for GCash, Maya or vouchers." },
+  { Icon: PinIcon, title: "Claim a Slot", text: "Pick an open spot in your city on the live map." },
+  { Icon: CameraIcon, title: "Plant & Prove It", text: "Upload a photo. Our team verifies every tree." },
+  { Icon: GiftIcon, title: "Earn Rewards", text: "Trade points for GCash, Maya or vouchers." },
 ];
 
 const REWARDS = ["rewards", "badges", "GCash", "vouchers"];
@@ -40,9 +40,9 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
   const stats = await loadStats();
   const STATS = stats
     ? [
-        { value: stats.plants, label: "Trees planted" },
+        { value: stats.plants, label: "Trees Planted" },
         { value: stats.planters, label: "Planters" },
-        { value: stats.cities, label: "Cities greening" },
+        { value: stats.cities, label: "Cities Greening" },
       ].filter((s) => s.value > 0) // "0+" undersells; a new install shows no numbers yet
     : [];
 
@@ -67,7 +67,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
             <span className="leading-tight">
               <span className="block text-lg font-bold tracking-tight">EcoQuest PH</span>
               <span className="block text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-300/80">
-                Gamified climate action
+                Gamified Climate Action
               </span>
             </span>
           </Link>

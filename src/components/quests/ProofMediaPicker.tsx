@@ -112,7 +112,7 @@ export default function ProofMediaPicker({
             disabled={disabled}
             className="shrink-0 rounded-lg px-2 py-1.5 font-semibold text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-50"
           >
-            Choose another
+            Choose Another
           </button>
         </div>
       </div>
@@ -134,15 +134,15 @@ export default function ProofMediaPicker({
           <div className="hidden grid-cols-3 gap-2 pointer-coarse:grid">
             <button type="button" onClick={() => photoInput.current?.click()} disabled={disabled} className={optionBtn}>
               <CameraIcon className="h-6 w-6 text-emerald-400" />
-              Take photo
+              Take Photo
             </button>
             <button type="button" onClick={() => videoInput.current?.click()} disabled={disabled} className={optionBtn}>
               <VideoIcon className="h-6 w-6 text-emerald-400" />
-              Record video
+              Record Video
             </button>
             <button type="button" onClick={() => fileInput.current?.click()} disabled={disabled} className={optionBtn}>
               <ImageIcon className="h-6 w-6 text-emerald-400" />
-              Photos & files
+              Photos & Files
             </button>
           </div>
 
@@ -170,7 +170,7 @@ export default function ProofMediaPicker({
           >
             <UploadIcon className="mx-auto h-7 w-7 text-emerald-400" />
             <p className="mt-2 text-sm font-medium text-ink-2">
-              {dragging ? "Drop it here" : "Drag & drop a photo or video here"}
+              {dragging ? "Drop It Here" : "Drag & drop a photo or video here"}
             </p>
             <p className="text-xs text-ink-3">or</p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -180,7 +180,7 @@ export default function ProofMediaPicker({
                 disabled={disabled}
                 className="flex items-center gap-1.5 rounded-lg bg-emerald-400 px-3 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
               >
-                <ImageIcon className="h-4 w-4" /> Browse files
+                <ImageIcon className="h-4 w-4" /> Browse Files
               </button>
               <button
                 type="button"
@@ -191,7 +191,7 @@ export default function ProofMediaPicker({
                 disabled={disabled}
                 className="flex items-center gap-1.5 rounded-lg border border-line bg-card px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-card-2 disabled:opacity-50"
               >
-                <CameraIcon className="h-4 w-4" /> Use webcam
+                <CameraIcon className="h-4 w-4" /> Use Webcam
               </button>
             </div>
           </div>

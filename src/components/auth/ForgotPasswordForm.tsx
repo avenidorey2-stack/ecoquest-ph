@@ -70,7 +70,7 @@ export default function ForgotPasswordForm({ initialEmail, devMailbox }: { initi
         disabled={busy}
         className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {busy ? "Sending…" : "Email me a reset link"}
+        {busy ? "Sending…" : "Email Me a Reset Link"}
       </button>
     </form>
   );

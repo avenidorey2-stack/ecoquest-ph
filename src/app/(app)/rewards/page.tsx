@@ -34,7 +34,7 @@ export default async function RewardsPage() {
   const lastNumber = history.find((h) => h.eWalletNumber)?.eWalletNumber ?? null;
   const pending = history.filter((h) => h.status === "PENDING").length;
   const sections = [
-    { title: "E-wallet cashouts", items: rewards.filter((r) => r.rewardType === "EWALLET_CASH") },
+    { title: "E-Wallet Cash-Outs", items: rewards.filter((r) => r.rewardType === "EWALLET_CASH") },
     { title: "Vouchers", items: rewards.filter((r) => r.rewardType === "VOUCHER") },
   ];
 
@@ -46,7 +46,7 @@ export default async function RewardsPage() {
           <p className="text-sm text-ink-3">Turn your planting points into GCash, Maya, Grab and Shopee rewards.</p>
         </div>
         <div className="rounded-xl bg-emerald-400/10 px-4 py-2 text-right">
-          <p className="text-xs text-emerald-400">Your balance</p>
+          <p className="text-xs text-emerald-400">Your Balance</p>
           <p className="text-2xl font-bold text-emerald-300">{user.points.toLocaleString("en-PH")} pts</p>
         </div>
       </header>
@@ -100,7 +100,7 @@ export default async function RewardsPage() {
       )}
 
       <section>
-        <h2 className="mb-2 font-semibold">My redemptions</h2>
+        <h2 className="mb-2 font-semibold">My Redemptions</h2>
         {history.length === 0 ? (
           <p className="text-sm text-ink-3">Nothing redeemed yet.</p>
         ) : (

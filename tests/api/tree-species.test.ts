@@ -161,7 +161,7 @@ describe("GET /api/trees/art/:slug", () => {
   it("redirects to the species photo, cacheably", async () => {
     const res = await artRoute(new Request("http://test.local/api/trees/art/narra"), ctx({ slug: "narra" }));
     expect(res.status).toBe(307);
-    expect(res.headers.get("Location")).toBe("http://test.local/trees/narra-sm.jpg");
+    expect(res.headers.get("Location")).toBe("http://test.local/trees/narra-sm.webp");
     expect(res.headers.get("Cache-Control")).toContain("public");
   });
 

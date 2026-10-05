@@ -197,7 +197,7 @@ export default function SlotManager({
                       </p>
 
                       {asking === "permanent" ? (
-                        <div role="alertdialog" aria-label="Delete slot permanently" className="space-y-2 rounded-lg border border-red-400/30 bg-red-400/10 p-3 text-xs text-red-200">
+                        <div role="alertdialog" aria-label="Delete Slot Permanently" className="space-y-2 rounded-lg border border-red-400/30 bg-red-400/10 p-3 text-xs text-red-200">
                           <p className="font-semibold">Delete this slot permanently?</p>
                           <p>
                             The slot is removed from every map and list for good.
@@ -221,7 +221,7 @@ export default function SlotManager({
                               disabled={!acknowledged || busy}
                               className="rounded-md bg-red-600 px-3 py-1 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                             >
-                              {busy ? "Deleting…" : "Delete permanently"}
+                              {busy ? "Deleting…" : "Delete Permanently"}
                             </button>
                             <button onClick={() => setConfirm(null)} className="rounded-md px-3 py-1 hover:bg-red-400/15">
                               Cancel
@@ -273,7 +273,7 @@ export default function SlotManager({
                                 onClick={() => ask(slot.id, "permanent")}
                                 className={`${btn} text-red-300 hover:border-red-400/30 hover:bg-red-400/10`}
                               >
-                                Delete permanently
+                                Delete Permanently
                               </button>
                             </>
                           ) : (

@@ -48,7 +48,7 @@ export default async function TreeDirectoryPage() {
           ? `Active in: ${city}`
           : s.totalPlanted > 0
             ? "Active in: National"
-            : "Awaiting first planting",
+            : "Awaiting First Planting",
     };
   });
 

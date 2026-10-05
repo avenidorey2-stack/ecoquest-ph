@@ -74,7 +74,7 @@ export async function getLeaderboard({
     return {
       rank,
       userId: row.id,
-      name: row.name ?? "Anonymous planter",
+      name: row.name ?? "Anonymous Planter",
       image: displayAvatar(row),
       level: row.level,
       city: row.city,

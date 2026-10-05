@@ -11,7 +11,7 @@ const ORDER_LIMIT = 100;
 const STATUS_FILTERS: (OrderStatus | "OPEN" | "ALL")[] = ["OPEN", "PENDING", "PACKED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "ALL"];
 const OPEN_STATUSES: OrderStatus[] = ["PENDING", "PACKED", "OUT_FOR_DELIVERY"];
 const filterLabel = (f: (typeof STATUS_FILTERS)[number]) =>
-  f === "OPEN" ? "Needs action" : f === "ALL" ? "All" : ORDER_STATUS_LABELS[f];
+  f === "OPEN" ? "Needs Action" : f === "ALL" ? "All" : ORDER_STATUS_LABELS[f];
 
 export default async function AdminShopPage({ searchParams }: PageProps<"/admin/shop">) {
   await requireAdminPage();
@@ -117,7 +117,7 @@ export default async function AdminShopPage({ searchParams }: PageProps<"/admin/
               currencyUsed: o.currencyUsed,
               status: o.status,
               productName: o.product.species.name,
-              customerName: o.user.name ?? "Unnamed planter",
+              customerName: o.user.name ?? "Unnamed Planter",
               customerEmail: o.user.email,
               customerCity: o.user.city,
               packedAt: o.packedAt?.toISOString() ?? null,

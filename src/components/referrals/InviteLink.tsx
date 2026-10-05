@@ -34,7 +34,7 @@ export default function InviteLink({ url }: { url: string }) {
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          aria-label="Your invite link"
+          aria-label="Your Invite Link"
           className="min-w-0 flex-1 rounded-xl border border-line bg-card-2 px-3.5 py-2.5 font-mono text-base sm:text-sm"
         />
         <button onClick={copy} className={`${button} bg-emerald-400 text-emerald-950 hover:bg-emerald-300`}>

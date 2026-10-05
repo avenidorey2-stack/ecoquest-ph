@@ -101,7 +101,7 @@ export async function getPublicProfile(
   const level = levelForXp(user.xp);
   return {
     id: user.id,
-    name: user.name ?? "Anonymous planter",
+    name: user.name ?? "Anonymous Planter",
     image: displayAvatar(user),
     level,
     title: levelTitle(level),

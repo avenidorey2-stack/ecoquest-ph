@@ -14,7 +14,7 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps<"/f
       <ForgotPasswordForm initialEmail={typeof email === "string" ? email : ""} devMailbox={isDevMailboxEnabled()} />
       <p className="text-center text-sm">
         <Link href="/login" className="text-emerald-400">
-          Back to sign in
+          Back to Sign In
         </Link>
       </p>
     </div>

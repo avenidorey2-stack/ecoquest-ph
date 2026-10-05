@@ -52,7 +52,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
             onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(groups.map(groupKey)))}
             className="min-h-11 rounded-lg border border-line-strong bg-card px-3 text-sm text-ink-2 hover:bg-card-2"
           >
-            {allCollapsed ? "Expand all" : "Collapse all"}
+            {allCollapsed ? "Expand All" : "Collapse All"}
           </button>
         )}
       </div>
@@ -85,7 +85,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
                     <PinIcon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold text-ink">{g.city ?? "No location yet"}</span>
+                    <span className="block truncate font-semibold text-ink">{g.city ?? "No Location Yet"}</span>
                     <span className="block truncate text-xs text-ink-3">
                       {g.cityCode ? [g.province, g.region].filter(Boolean).join(" · ") : "Haven't set their city or town yet"}
                     </span>
@@ -103,7 +103,7 @@ export default function UserDirectory({ groups }: { groups: LocationGroup[] }) {
                 {open && (
                   <ul className="divide-y divide-line border-t border-line">
                     {g.users.map((u) => {
-                      const label = u.name ?? "Unnamed planter";
+                      const label = u.name ?? "Unnamed Planter";
                       return (
                         <li key={u.id} className="flex items-center gap-3 px-4 py-2.5">
                           {u.image ? (

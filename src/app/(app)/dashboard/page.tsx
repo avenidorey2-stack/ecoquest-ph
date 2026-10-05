@@ -47,13 +47,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const [d, origin, viewer, query] = await Promise.all([getDashboardData(userId, now), getAppOrigin(), getCurrentUser(), searchParams]);
   // "Take the tour" in the menu replays the guided tour for anyone.
   const replayTour = query.tour === "1";
-  // "New slot" notifications link here with ?slot=<id>: the map zooms to it with its popup open.
+  // "New Slot" notifications link here with ?slot=<id>: the map zooms to it with its popup open.
   const focusSlotId = typeof query.slot === "string" ? query.slot : undefined;
   // Admins see every slot nationwide on the dashboard map (not just their home city).
   const isAdmin = viewer?.role === "ADMIN";
 
   const healthy = d.health.filter((h) => h.ok).length;
-  const healthLabel = healthy === d.health.length ? "Excellent" : healthy >= 3 ? "Good" : "Needs attention";
+  const healthLabel = healthy === d.health.length ? "Excellent" : healthy >= 3 ? "Good" : "Needs Attention";
   const healthTone =
     healthy === d.health.length ? "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20" : healthy >= 3 ? "bg-sky-400/10 text-sky-300 ring-sky-400/30" : "bg-amber-400/10 text-amber-300 ring-amber-400/30";
   const latest = d.latestApproved;
@@ -68,7 +68,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       {/* ── Main grid: 3 columns on desktop, 2 on tablets, stacked on phones ── */}
       <div className="eq-stagger eq-spring grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {/* 1 · Eco-impact score */}
-        <Card title="Eco-impact score" tour="impact" icon={<SproutIcon className="h-4 w-4" />}>
+        <Card title="Eco-Impact Score" tour="impact" icon={<SproutIcon className="h-4 w-4" />}>
           <div className="flex items-center gap-5">
             <div className="relative grid h-28 w-28 shrink-0 place-items-center">
               <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
@@ -99,21 +99,21 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             </div>
             <dl className="grid flex-1 grid-cols-1 gap-2.5 text-sm">
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-ink-3">National rank</dt>
+                <dt className="text-ink-3">National Rank</dt>
                 <dd className="font-semibold text-ink">
                   {d.ranks.national ? `#${d.ranks.national}` : "—"}
                   {d.ranks.national && <span className="ml-1 text-xs font-normal text-ink-4">/ {d.ranks.nationalTotal}</span>}
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-ink-3">{city ? "City rank" : "Local rank"}</dt>
+                <dt className="text-ink-3">{city ? "City Rank" : "Local Rank"}</dt>
                 <dd className="font-semibold text-ink">
                   {d.ranks.local ? `#${d.ranks.local}` : "—"}
                   {d.ranks.local && <span className="ml-1 text-xs font-normal text-ink-4">/ {d.ranks.localTotal}</span>}
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-ink-3">This week</dt>
+                <dt className="text-ink-3">This Week</dt>
                 <dd className="font-semibold text-emerald-400">{d.user.weeklyPoints.toLocaleString("en-PH")} pts</dd>
               </div>
             </dl>
@@ -141,7 +141,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   </span>
                 ) : (
                   <Link href="/profile" className="shrink-0 text-xs font-semibold text-emerald-400">
-                    Set your city
+                    Set Your City
                   </Link>
                 )}
               </div>
@@ -164,7 +164,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
           <div className="mt-3 rounded-xl bg-card-2 p-3.5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold text-ink-2">Account health</p>
+              <p className="text-xs font-semibold text-ink-2">Account Health</p>
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${healthTone}`}>{healthLabel}</span>
             </div>
             <ul className="space-y-1.5 text-xs">
@@ -189,7 +189,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </Card>
 
         {/* 3 · Latest submission */}
-        <Card title="Latest submission" icon={<CameraIcon className="h-4 w-4" />} bodyClassName="p-4">
+        <Card title="Latest Submission" icon={<CameraIcon className="h-4 w-4" />} bodyClassName="p-4">
           {latest ? (
             <figure className="space-y-3">
               <div className="overflow-hidden rounded-xl bg-canvas">
@@ -226,7 +226,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 <circle cx="37" cy="27" r="6" fill="none" stroke="#5e7f70" strokeWidth="2" />
               </svg>
               <div>
-                <p className="text-sm font-semibold text-ink">No approved planting yet</p>
+                <p className="text-sm font-semibold text-ink">No Approved Planting Yet</p>
                 <p className="mt-1 text-xs text-ink-3">Claim a slot on the map, plant, and upload a photo — it shows up here once verified.</p>
               </div>
             </div>
@@ -234,10 +234,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </Card>
 
         {/* 4 · Reward wallet */}
-        <Card title="Reward wallet" tour="wallet" icon={<WalletIcon className="h-4 w-4" />} action={{ href: "/rewards", label: "Rewards" }}>
+        <Card title="Reward Wallet" tour="wallet" icon={<WalletIcon className="h-4 w-4" />} action={{ href: "/rewards", label: "Rewards" }}>
           <div className="rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-4 text-white">
             <p className="flex items-center gap-1.5 text-xs text-emerald-200">
-              <CoinIcon className="h-4 w-4" /> Points balance
+              <CoinIcon className="h-4 w-4" /> Points Balance
             </p>
             <p className="mt-1 text-3xl font-bold tracking-tight">{d.wallet.points.toLocaleString("en-PH")}</p>
             <p className="text-xs text-emerald-200/80">Redeem for GCash, Maya, Grab and Shopee rewards</p>
@@ -245,7 +245,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <dl className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-line p-3">
               <dt className="flex items-center gap-1.5 text-xs text-ink-3">
-                <WalletIcon className="h-4 w-4 text-sky-400" /> Pending cashouts
+                <WalletIcon className="h-4 w-4 text-sky-400" /> Pending Cash-Outs
               </dt>
               <dd className="mt-1 text-xl font-bold text-ink">{d.wallet.pendingCashouts}</dd>
               <dd className="text-[11px] text-ink-4">
@@ -254,7 +254,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             </div>
             <div className="rounded-xl border border-line p-3">
               <dt className="flex items-center gap-1.5 text-xs text-ink-3">
-                <TicketIcon className="h-4 w-4 text-amber-400" /> Vouchers claimed
+                <TicketIcon className="h-4 w-4 text-amber-400" /> Vouchers Claimed
               </dt>
               <dd className="mt-1 text-xl font-bold text-ink">{d.wallet.vouchersClaimed}</dd>
               <dd className="text-[11px] text-ink-4">Grab / Shopee</dd>
@@ -269,10 +269,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         {/* 5 · Geofenced action map */}
         <Card
-          title={isAdmin ? "All planting slots · admin view" : "Geofenced action map"}
+          title={isAdmin ? "All planting slots · admin view" : "Geofenced Action Map"}
           tour="map"
           icon={<MapIcon className="h-4 w-4" />}
-          action={isAdmin ? { href: "/admin/slots", label: "Manage slots" } : city ? undefined : { href: "/profile", label: "Set city" }}
+          action={isAdmin ? { href: "/admin/slots", label: "Manage Slots" } : city ? undefined : { href: "/profile", label: "Set City" }}
           bodyClassName="flex flex-col"
         >
           {/* Taller on phones (full-width card); the map's Expand button goes full screen. */}
@@ -283,7 +283,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 <div>
                   <p className="text-sm font-semibold text-ink">Set your home city to see slots near you</p>
                   <Link href="/profile" className="mt-2 inline-block rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950">
-                    Choose city
+                    Choose City
                   </Link>
                 </div>
               </div>
@@ -292,16 +292,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-5 py-2.5 text-[11px] text-ink-3">
             {isAdmin ? (
               <>
-                <span className="font-medium text-ink-2">All regions</span>
+                <span className="font-medium text-ink-2">All Regions</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Open</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" /> Full</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-line-strong" /> Closed</span>
               </>
             ) : (
               <>
-                <span className="font-medium text-ink-2">{city ? `${city}, ${d.place?.province}` : "No city set"}</span>
+                <span className="font-medium text-ink-2">{city ? `${city}, ${d.place?.province}` : "No City Set"}</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Claimable</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" /> Your quest</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-600" /> Your Quest</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-line-strong" /> Full</span>
               </>
             )}
@@ -310,14 +310,14 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         {/* 6 · Local leaderboard */}
         <Card
-          title="Local leaderboard"
+          title="Local Leaderboard"
           tour="leaderboard"
           icon={<TrophyIcon className="h-4 w-4" />}
-          action={{ href: city ? "/leaderboard?scope=local" : "/leaderboard?scope=national", label: "Full board" }}
+          action={{ href: city ? "/leaderboard?scope=local" : "/leaderboard?scope=national", label: "Full Board" }}
         >
           {!city ? (
             <p className="text-sm text-ink-3">
-              <Link href="/profile" className="font-medium text-emerald-400">Set your home city</Link> to compete with planters near you.
+              <Link href="/profile" className="font-medium text-emerald-400">Set Your Home City</Link> to compete with planters near you.
             </p>
           ) : d.localLeaders.length === 0 ? (
             <div className="py-6 text-center text-sm text-ink-3">
@@ -370,7 +370,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <div className="eq-stagger eq-spring grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="rounded-xl border border-line bg-card p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
-              <BellIcon className="h-4 w-4 text-emerald-400" /> Recent admin updates
+              <BellIcon className="h-4 w-4 text-emerald-400" /> Recent Admin Updates
             </h3>
             {d.notices.length === 0 ? (
               <p className="text-sm text-ink-3">No updates in the last 30 days.</p>
@@ -395,7 +395,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
           <div data-tour="referral" className="rounded-xl border border-line bg-card p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
-              <LinkIcon className="h-4 w-4 text-emerald-400" /> Your referral link
+              <LinkIcon className="h-4 w-4 text-emerald-400" /> Your Referral Link
             </h3>
             <CopyField value={`${origin}/r/${d.user.referralCode}`} label="Copy your invite link:" />
             <dl className="mt-3 grid grid-cols-2 gap-2 text-center">

@@ -58,35 +58,35 @@ function tourSteps(hasCity: boolean): Step[] {
       target: "nav",
       ...SIDEBAR,
       Icon: DashboardIcon,
-      title: "Your main menu",
+      title: "Your Main Menu",
       body: "Every part of EcoQuest PH is one tap away. You can always come back to the Dashboard — your home base.",
     },
     {
       target: "nav-profile",
       ...SIDEBAR,
       Icon: PinIcon,
-      title: "Set your home city first",
+      title: "Set Your Home City First",
       body: "In Profile, choose your city or municipality. It decides which planting slots you can claim and which local leaderboard you're on.",
       bullets: ["Verify your email too, so your location shows as Active"],
     },
     {
       target: "impact",
       Icon: SproutIcon,
-      title: "Your eco-impact score",
+      title: "Your Eco-Impact Score",
       body: "A snapshot of everything you've planted so far.",
       bullets: ["Plants planted, plus your national and city rank", "Points earned this week", "Your level and an account health checklist"],
     },
     {
       target: "map",
       Icon: MapIcon,
-      title: "Claim a slot on the map",
+      title: "Claim a Slot on the Map",
       body: "Pins are planting sites in your city. Tap a pin, then press “Claim slot”.",
       bullets: ["Green — open, ready to claim", "Blue — a quest you already claimed", "Gray — full for now"],
     },
     {
       target: "quests",
       Icon: FlagIcon,
-      title: "Plant, then upload proof",
+      title: "Plant, Then Upload Proof",
       body: "Every slot you claim becomes a quest here.",
       bullets: [
         "Plant the listed tree species at the site",
@@ -97,13 +97,13 @@ function tourSteps(hasCity: boolean): Step[] {
     {
       target: "points",
       Icon: CoinIcon,
-      title: "Your points balance",
+      title: "Your Points Balance",
       body: "Points come from verified plantings and referral bonuses. Tap this anytime to open Rewards.",
     },
     {
       target: "wallet",
       Icon: WalletIcon,
-      title: "Turn points into rewards",
+      title: "Turn Points Into Rewards",
       body: "Your reward wallet keeps track of what you've redeemed.",
       bullets: ["Cash out to GCash or Maya", "Claim Grab and Shopee vouchers", "See pending cash-outs at a glance"],
     },
@@ -118,20 +118,20 @@ function tourSteps(hasCity: boolean): Step[] {
       target: "nav-transactions",
       ...SIDEBAR,
       Icon: GiftIcon,
-      title: "Track orders and rewards",
+      title: "Track Orders and Rewards",
       body: "Transactions lists every seedling order and reward redemption, with live status updates.",
     },
     {
       target: "leaderboard",
       Icon: TrophyIcon,
-      title: "Climb the leaderboard",
+      title: "Climb the Leaderboard",
       body: "See this week's top planters in your city.",
       bullets: ["Weekly points reset every Monday", "Open “Full board” for the national ranking", "Tap a planter to see their profile"],
     },
     {
       target: "level",
       Icon: MedalIcon,
-      title: "Level up and earn badges",
+      title: "Level Up and Earn Badges",
       body: "Every verified planting gives you XP that raises your level. See your badges — and the ones still ahead — in Achievements.",
     },
     {
@@ -143,7 +143,7 @@ function tourSteps(hasCity: boolean): Step[] {
     {
       target: "referral",
       Icon: UsersIcon,
-      title: "Invite friends, earn more",
+      title: "Invite Friends, Earn More",
       body: "Share your invite link. You get 100 bonus points when each friend's first planting is verified.",
     },
     {
@@ -673,7 +673,7 @@ function TourLayer({
                 onClick={() => onClose()}
                 className="h-11 flex-1 rounded-full text-sm font-medium text-ink-3 transition-colors hover:bg-card-2 hover:text-ink-2"
               >
-                Skip tour
+                Skip Tour
               </button>
             )}
             {!last ? (
@@ -683,7 +683,7 @@ function TourLayer({
                 onClick={() => go(1)}
                 className="h-11 flex-1 rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
-                {index === 0 ? "Show me around" : "Next"}
+                {index === 0 ? "Show Me Around" : "Next"}
               </button>
             ) : hasCity ? (
               <button
@@ -692,7 +692,7 @@ function TourLayer({
                 onClick={() => onClose()}
                 className="h-11 flex-1 rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
-                Start planting
+                Start Planting
               </button>
             ) : (
               <Link
@@ -701,7 +701,7 @@ function TourLayer({
                 onClick={() => onClose(true)}
                 className="grid h-11 flex-1 place-items-center rounded-full bg-emerald-400 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300"
               >
-                Set my city
+                Set My City
               </Link>
             )}
           </div>
@@ -730,7 +730,7 @@ export default function ProductTour({
 }: {
   hasCity: boolean;
   invitedBy: string | null;
-  /** Opened from "Take the tour": closing returns to the plain dashboard URL. */
+  /** Opened from "Take the Tour": closing returns to the plain dashboard URL. */
   replay?: boolean;
 }) {
   const router = useRouter();

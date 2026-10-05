@@ -63,15 +63,15 @@ export default async function SeedlingShopPage() {
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-400/10 bg-gradient-to-br from-emerald-800 to-emerald-950 p-5 text-white shadow-sm sm:p-6">
         <div className="max-w-xl">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
-            <SproutIcon className="h-4 w-4" /> Seedling shop
+            <SproutIcon className="h-4 w-4" /> Seedling Shop
           </p>
-          <h2 className="mt-1 text-xl font-bold sm:text-2xl">Grow the next forest</h2>
+          <h2 className="mt-1 text-xl font-bold sm:text-2xl">Grow the Next Forest</h2>
           <p className="mt-1 text-sm text-emerald-100/80">
             Order native Philippine seedlings with your planting points, or pay in pesos cash on delivery. Tap a seedling to order.
           </p>
         </div>
         <div className="rounded-xl bg-white/10 px-4 py-3 text-right ring-1 ring-white/15">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200">Your balance</p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200">Your Balance</p>
           <p className="flex items-center justify-end gap-1.5 text-2xl font-bold">
             <CoinIcon className="h-5 w-5 text-amber-300" />
             {user.points.toLocaleString("en-PH")}
@@ -96,9 +96,9 @@ export default async function SeedlingShopPage() {
 
       <section className="eq-panel overflow-hidden rounded-2xl border border-line/80 bg-card">
         <header className="flex items-center justify-between border-b border-line px-5 py-3.5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">My seedling orders</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">My Seedling Orders</h2>
           <Link href="/transactions" className="eq-hit relative text-xs font-medium text-emerald-400 hover:text-emerald-200">
-            Full history
+            Full History
           </Link>
         </header>
         {orders.length === 0 ? (

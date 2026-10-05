@@ -34,7 +34,7 @@ function sendWithProgress(
       }
       resolve({ status: xhr.status, data });
     };
-    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.onerror = () => reject(new Error("Network Error"));
     xhr.send(body);
   });
 }
@@ -136,7 +136,7 @@ export default function ProofUploadForm({
       {/* min-w-0: a fieldset is never narrower than its content by default, so a long file name
           (e.g. from Messenger) would stretch the dialog past the screen. */}
       <fieldset className="min-w-0">
-        <legend className="mb-1.5 text-sm font-medium text-ink-2">Photo or video proof</legend>
+        <legend className="mb-1.5 text-sm font-medium text-ink-2">Photo or Video Proof</legend>
         <ProofMediaPicker
           file={file}
           onChange={(next) => {
@@ -149,7 +149,7 @@ export default function ProofUploadForm({
 
       <div>
         <label htmlFor={`qty-${questId}`} className="text-sm font-medium text-ink-2">
-          Plants in this proof
+          Plants in This Proof
         </label>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <div className="flex items-center overflow-hidden rounded-xl border border-line bg-card">
@@ -214,7 +214,7 @@ export default function ProofUploadForm({
           ? progress < 100
             ? `Uploading… ${progress}%`
             : "Saving…"
-          : `Submit proof for ${valid ? quantity : "…"} plant${quantity === 1 ? "" : "s"}`}
+          : `Submit Proof for ${valid ? quantity : "…"} Plant${quantity === 1 ? "" : "s"}`}
       </button>
     </form>
   );

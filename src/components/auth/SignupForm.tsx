@@ -44,7 +44,7 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
         <p className="text-4xl" aria-hidden>
           📬
         </p>
-        <h2 className="font-semibold">Check your inbox</h2>
+        <h2 className="font-semibold">Check Your Inbox</h2>
         <p className="text-sm text-ink-2">
           If <strong>{sentTo}</strong> can be registered, we&apos;ve sent it a link to confirm your email and set your
           password. It expires in 24 hours — check your spam folder too.
@@ -64,10 +64,10 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
           disabled={busy || cooldown > 0}
           className="w-full rounded-xl border border-line-strong bg-card py-2.5 text-sm font-medium transition hover:bg-card-2 motion-safe:active:scale-[0.98] disabled:text-ink-4"
         >
-          {cooldown > 0 ? `Resend in ${cooldown}s` : busy ? "Sending…" : "Resend email"}
+          {cooldown > 0 ? `Resend in ${cooldown}s` : busy ? "Sending…" : "Resend Email"}
         </button>
         <button onClick={() => setSentTo(null)} className="text-sm text-emerald-400">
-          Use a different email
+          Use a Different Email
         </button>
       </div>
     );
@@ -106,7 +106,7 @@ export default function SignupForm({ devMailbox = false }: { devMailbox?: boolea
         disabled={busy}
         className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {busy ? "Sending…" : "Email me a confirmation link"}
+        {busy ? "Sending…" : "Email Me a Confirmation Link"}
       </button>
       <p className="text-xs text-ink-3">You&apos;ll set your password after confirming your email.</p>
     </form>

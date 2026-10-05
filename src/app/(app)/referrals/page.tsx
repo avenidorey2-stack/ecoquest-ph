@@ -40,7 +40,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
       </header>
 
       <section className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-5">
-        <h2 className="mb-3 font-semibold">Your invite link</h2>
+        <h2 className="mb-3 font-semibold">Your Invite Link</h2>
         <InviteLink url={inviteUrl} />
         <p className="mt-3 text-xs text-ink-3">
           Invite code: <span className="font-mono">{user.referralCode}</span>
@@ -51,7 +51,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
         {[
           ["Invited", summary.invited],
           ["Planted", summary.qualified],
-          ["Bonus pts", summary.pointsEarned],
+          ["Bonus Pts", summary.pointsEarned],
         ].map(([label, value]) => (
           <div key={label} className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-3">
             <p className="text-2xl font-bold text-emerald-400">{value}</p>
@@ -77,7 +77,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
       )}
 
       <section>
-        <h2 className="mb-2 font-semibold">Friends you invited</h2>
+        <h2 className="mb-2 font-semibold">Friends You Invited</h2>
         {summary.referrals.length === 0 ? (
           <p className="text-sm text-ink-3">No one yet — share your link to get started.</p>
         ) : (
@@ -93,7 +93,7 @@ export default async function ReferralsPage({ searchParams }: PageProps<"/referr
                     +{REFERRAL_BONUS_POINTS} pts
                   </span>
                 ) : (
-                  <span className="rounded-full bg-card-2 px-2 py-0.5 text-xs text-ink-2">Waiting for first planting</span>
+                  <span className="rounded-full bg-card-2 px-2 py-0.5 text-xs text-ink-2">Waiting for First Planting</span>
                 )}
               </li>
             ))}

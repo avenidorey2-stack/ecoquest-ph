@@ -22,10 +22,10 @@ type Field = Exclude<keyof DeliveryDetails, "contactNumber" | "instructions">;
 
 /** Required text fields: label for errors, and allowed length. */
 const TEXT_FIELDS: Record<Field, { label: string; min: number; max: number }> = {
-  recipientName: { label: "Recipient name", min: 2, max: 80 },
-  streetAddress: { label: "House no. / street", min: 3, max: 160 },
+  recipientName: { label: "Recipient Name", min: 2, max: 80 },
+  streetAddress: { label: "House No. / Street", min: 3, max: 160 },
   barangay: { label: "Barangay", min: 2, max: 80 },
-  cityProvince: { label: "City / province", min: 2, max: 80 },
+  cityProvince: { label: "City / Province", min: 2, max: 80 },
   landmark: { label: "Landmark", min: 3, max: 120 },
 };
 export const MAX_INSTRUCTIONS = 300;

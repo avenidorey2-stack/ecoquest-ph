@@ -33,8 +33,8 @@ export default function ClaimCodeForm({ initialCode }: { initialCode: string }) 
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Invite code"
-          aria-label="Invite code"
+          placeholder="Invite Code"
+          aria-label="Invite Code"
           required
           className="min-w-0 flex-1 rounded-xl border border-line-strong bg-card px-3.5 py-2.5 font-mono text-base shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/20 sm:text-sm"
         />

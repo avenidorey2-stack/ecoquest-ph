@@ -133,7 +133,7 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
                   {ORDER_STATUS_LABELS[o.status]}
                 </span>
                 <p className="mt-1 text-sm font-semibold text-ink">{formatAmount(o.totalPrice, o.currencyUsed)}</p>
-                <p className="text-xs text-ink-3">{o.currencyUsed === "PESOS" ? "Cash on delivery" : "Paid with points"}</p>
+                <p className="text-xs text-ink-3">{o.currencyUsed === "PESOS" ? "Cash on Delivery" : "Paid with Points"}</p>
               </div>
             </div>
 
@@ -170,7 +170,7 @@ export default function OrderManager({ orders }: { orders: AdminOrder[] }) {
                       onClick={() => setConfirmCancel(o.id)}
                       className="rounded-lg px-3 py-1.5 text-sm text-red-300 hover:bg-red-400/10"
                     >
-                      Cancel order
+                      Cancel Order
                     </button>
                   ))}
                 {error?.id === o.id && <span className="text-xs text-red-400">{error.text}</span>}

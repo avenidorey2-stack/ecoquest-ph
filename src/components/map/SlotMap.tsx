@@ -106,7 +106,7 @@ const ADMIN_LEGEND: [label: string, color: string][] = [
 ];
 const PLANTER_LEGEND: [label: string, color: string][] = [
   ["Claimable", PLANTER_COLORS.claimable],
-  ["Your quest", PLANTER_COLORS.yours],
+  ["Your Quest", PLANTER_COLORS.yours],
   ["Full", PLANTER_COLORS.other],
 ];
 
@@ -208,7 +208,7 @@ export default function SlotMap({
   }
 
   const legend = adminView ? ADMIN_LEGEND : PLANTER_LEGEND;
-  const areaLabel = adminView ? "All regions" : cityName;
+  const areaLabel = adminView ? "All Regions" : cityName;
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (up to 1000) from escaping above page overlays.
@@ -275,7 +275,7 @@ export default function SlotMap({
                       href={`/admin/slots?edit=${encodeURIComponent(slot.id)}`}
                       className="mt-1 inline-block rounded-lg bg-emerald-400 px-3 py-2 font-semibold text-emerald-950! no-underline hover:bg-emerald-300"
                     >
-                      Edit slot
+                      Edit Slot
                     </a>
                   </>
                 ) : slot.alreadyClaimed ? (
@@ -293,7 +293,7 @@ export default function SlotMap({
                       disabled={claiming !== null}
                       className="mt-2 w-full rounded-lg bg-emerald-400 px-3 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50"
                     >
-                      {claiming === slot.id ? "Claiming…" : "Claim slot"}
+                      {claiming === slot.id ? "Claiming…" : "Claim Slot"}
                     </button>
                     <p className="text-xs text-ink-3">You&apos;ll have 7 days to plant once you claim.</p>
                   </>

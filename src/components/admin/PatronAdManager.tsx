@@ -48,12 +48,12 @@ function AdForm({ ad, onDone }: { ad?: AdminPatronAd; onDone: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3 text-sm">
       <label className="block">
-        Company name
+        Company Name
         <input className={input} value={values.companyName} maxLength={80} required
           onChange={(e) => setValues({ ...values, companyName: e.target.value })} />
       </label>
       <label className="block">
-        Banner image URL <span className="text-xs text-ink-3">(https, wide image ~ 4:1, e.g. 1200×300)</span>
+        Banner Image URL <span className="text-xs text-ink-3">(https, wide image ~ 4:1, e.g. 1200×300)</span>
         <input className={input} type="url" value={values.imageUrl} required placeholder="https://…"
           onChange={(e) => setValues({ ...values, imageUrl: e.target.value })} />
       </label>
@@ -69,7 +69,7 @@ function AdForm({ ad, onDone }: { ad?: AdminPatronAd; onDone: () => void }) {
       {error && <p className="text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button disabled={busy} className="rounded bg-emerald-400 px-4 py-1.5 font-medium text-emerald-950 disabled:opacity-50">
-          {ad ? "Save" : "Add banner"}
+          {ad ? "Save" : "Add Banner"}
         </button>
         {ad && (
           <button type="button" onClick={onDone} className="rounded px-4 py-1.5 text-ink-2 hover:bg-card-2">
@@ -120,7 +120,7 @@ function AdCard({ ad }: { ad: AdminPatronAd }) {
                 Edit
               </button>
               <button disabled={busy} onClick={() => act("PATCH", { isActive: !ad.isActive })} className="rounded border px-3 py-1 hover:bg-card-2">
-                {ad.isActive ? "Pause" : "Go live"}
+                {ad.isActive ? "Pause" : "Go Live"}
               </button>
               <button disabled={busy} onClick={() => act("DELETE")} className="rounded px-3 py-1 text-red-300 hover:bg-red-400/10">
                 Delete

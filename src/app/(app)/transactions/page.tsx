@@ -41,9 +41,9 @@ export default async function TransactionsPage() {
   ]);
 
   const summary = [
-    { label: "Current balance", value: formatPoints(user.points) },
-    { label: "Points spent", value: formatPoints(spent._sum.amount ?? 0) },
-    { label: "Points refunded", value: formatPoints(refunded._sum.amount ?? 0) },
+    { label: "Current Balance", value: formatPoints(user.points) },
+    { label: "Points Spent", value: formatPoints(spent._sum.amount ?? 0) },
+    { label: "Points Refunded", value: formatPoints(refunded._sum.amount ?? 0) },
   ];
 
   return (
@@ -63,7 +63,7 @@ export default async function TransactionsPage() {
         <header className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">History</h2>
           <span className="flex items-center gap-1.5 text-xs text-ink-4">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden /> Live status
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden /> Live Status
           </span>
         </header>
 
@@ -101,7 +101,7 @@ export default async function TransactionsPage() {
                         <p className="font-medium text-ink">{t.description}</p>
                         <p className="text-xs text-ink-3">
                           {fmtDateTime(t.createdAt)} ·{" "}
-                          {t.kind === "SEEDLING_ORDER" ? "Seedling order" : t.kind === "REWARD_REDEMPTION" ? "Reward" : "Refund"}
+                          {t.kind === "SEEDLING_ORDER" ? "Seedling Order" : t.kind === "REWARD_REDEMPTION" ? "Reward" : "Refund"}
                           {t.kind === "SEEDLING_ORDER" && t.currency === "PESOS" && " · cash on delivery"}
                         </p>
                       </div>
@@ -117,7 +117,7 @@ export default async function TransactionsPage() {
                           {ORDER_STATUS_LABELS[orderStatus]}
                         </span>
                         {orderStatus !== "CANCELLED" && (
-                          <ol className="flex flex-1 items-center gap-1" aria-label="Delivery progress">
+                          <ol className="flex flex-1 items-center gap-1" aria-label="Delivery Progress">
                             {ORDER_STEPS.map((step, i) => (
                               <li
                                 key={step}

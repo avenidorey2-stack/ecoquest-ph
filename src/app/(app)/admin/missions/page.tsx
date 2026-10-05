@@ -45,9 +45,9 @@ export default async function AdminMissionsPage({ searchParams }: PageProps<"/ad
               : "Side quests can be completed once while they run (start → end date)."}
           </p>
         </div>
-        <nav className="flex gap-1 rounded-xl bg-card-2 p-1" aria-label="Quest type">
-          {tab("daily", "Daily quests")}
-          {tab("side", "Side quests")}
+        <nav className="flex gap-1 rounded-xl bg-card-2 p-1" aria-label="Quest Type">
+          {tab("daily", "Daily Quests")}
+          {tab("side", "Side Quests")}
         </nav>
       </div>
       <MissionManager

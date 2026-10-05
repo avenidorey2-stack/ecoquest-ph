@@ -69,7 +69,7 @@ export default function VoucherArt({
           {brand} {amount}
         </span>
         <span className="shrink-0 text-[3.3cqw] font-medium text-[#3d4a44]">
-          {isCash ? "Sent to your number" : "Code in your history"}
+          {isCash ? "Sent to Your Number" : "Code in Your History"}
         </span>
       </div>
     </div>

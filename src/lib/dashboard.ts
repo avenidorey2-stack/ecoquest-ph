@@ -250,7 +250,7 @@ export async function getDashboardData(userId: string, now = new Date()) {
     allQuests.push({
       id: "m-city",
       kind: "milestone",
-      title: "Set your home city",
+      title: "Set Your Home City",
       detail: "Unlocks planting slots near you",
       progressLabel: "0 of 1 done",
       current: 0,
@@ -271,7 +271,7 @@ export async function getDashboardData(userId: string, now = new Date()) {
       progressLabel: of(user.totalPlants, plantGoal, "planted"),
       detail: pendingPlants
         ? `${user.totalPlants} verified + ${pendingPlants} awaiting review`
-        : "Lifetime verified plants",
+        : "Lifetime Verified Plants",
       current: user.totalPlants,
       pending: pendingPlants,
       target: plantGoal,
@@ -318,20 +318,20 @@ export async function getDashboardData(userId: string, now = new Date()) {
     })),
     ...allQuests
       .filter((q) => q.status === "done")
-      .map((q) => ({ id: q.id, title: q.title, detail: "Goal reached", completedAt: null, kind: "milestone" as const })),
+      .map((q) => ({ id: q.id, title: q.title, detail: "Goal Reached", completedAt: null, kind: "milestone" as const })),
     ...reachedTiers
       .slice()
       .reverse()
-      .map((t) => ({ id: `tier-${t}`, title: `Plant ${t} trees`, detail: "Tree milestone reached", completedAt: null, kind: "milestone" as const })),
+      .map((t) => ({ id: `tier-${t}`, title: `Plant ${t} trees`, detail: "Tree Milestone Reached", completedAt: null, kind: "milestone" as const })),
   ];
 
   // ── Account health ──
   const hasRejection = openQuests.some((q) => q.status === "ACTIVE" && q.verifications[0]?.status === "REJECTED");
   const health = [
-    { label: "Email verified", ok: !!user.emailVerified },
-    { label: "Home city set — geofence active", ok: !!place },
-    { label: "Planted in the last 30 days", ok: recentCompletions > 0 },
-    { label: "No rejected submissions", ok: !hasRejection },
+    { label: "Email Verified", ok: !!user.emailVerified },
+    { label: "Home City Set — Geofence Active", ok: !!place },
+    { label: "Planted in the Last 30 Days", ok: recentCompletions > 0 },
+    { label: "No Rejected Submissions", ok: !hasRejection },
   ];
 
   // ── Notifications ──
