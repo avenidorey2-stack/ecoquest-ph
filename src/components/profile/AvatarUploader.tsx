@@ -68,7 +68,7 @@ export default function AvatarUploader({
         onClick={() => input.current?.click()}
         disabled={busy}
         className="group relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-emerald-400/20 focus:outline-none focus-visible:ring-emerald-400"
-        aria-label="Change profile picture"
+        aria-label="Change Profile Picture"
       >
         <AnimatePresence mode="wait">
           {shown ? (
@@ -103,7 +103,7 @@ export default function AvatarUploader({
       />
       {hasUpload && !busy && (
         <button type="button" onClick={remove} className="text-[11px] text-ink-3 hover:text-rose-400">
-          Remove photo
+          Remove Photo
         </button>
       )}
       {error && (

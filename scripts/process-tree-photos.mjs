@@ -5,7 +5,8 @@
  *
  * Writes two optimised JPEGs per species:
  *   - public/trees/<slug>.jpg     1200x900, quality 86 (details view)
- *   - public/trees/<slug>-sm.jpg   640x800, quality 80 (portrait card tiles, 4:5 like the tiles)
+ *   - public/trees/<slug>-sm.webp  480x600 WebP, quality 58 (portrait card tiles, 4:5 like the
+ *     tiles; small enough for phones on a weak signal)
  *
  * Existing files are never replaced silently: pass --overwrite to replace them. The first time a
  * file is replaced, the original is copied to .ai-images/backup/<same path>. Crops keep the most
@@ -64,7 +65,7 @@ export async function processTreeImage(inputPath, slug, { overwrite = false } = 
   await fs.mkdir(TARGET_DIR, { recursive: true });
 
   const fullDest = path.join(TARGET_DIR, `${slug}.jpg`);
-  const smDest = path.join(TARGET_DIR, `${slug}-sm.jpg`);
+  const smDest = path.join(TARGET_DIR, `${slug}-sm.webp`);
   if (!overwrite && ((await exists(fullDest)) || (await exists(smDest)))) {
     console.log(`- Skipped ${slug}: public/trees/${slug}.jpg already exists (pass --overwrite to replace it)`);
     return false;
@@ -73,21 +74,21 @@ export async function processTreeImage(inputPath, slug, { overwrite = false } = 
   const inputBuffer = await fs.readFile(inputPath);
   const variants = [
     { dest: fullDest, w: 1200, h: 900, quality: 86 },
-    { dest: smDest, w: 640, h: 800, quality: 80 },
+    { dest: smDest, w: 480, h: 600, quality: 58, webp: true },
   ];
-  for (const { dest, w, h, quality } of variants) {
+  for (const { dest, w, h, quality, webp } of variants) {
     await backupOnce(dest);
     const tmp = `${dest}.tmp`;
     await sharp(inputBuffer)
       .rotate() // auto-orient from EXIF
       .resize(w, h, { fit: "cover", position: "attention" })
-      .jpeg({ quality, mozjpeg: true })
+      [webp ? "webp" : "jpeg"](webp ? { quality, effort: 6 } : { quality, mozjpeg: true })
       .toFile(tmp);
     await fs.rename(tmp, dest);
   }
   await forgetAiImage(slug);
 
-  console.log(`✓ Processed ${slug}: public/trees/${slug}.jpg + ${slug}-sm.jpg`);
+  console.log(`✓ Processed ${slug}: public/trees/${slug}.jpg + ${slug}-sm.webp`);
   return true;
 }
 

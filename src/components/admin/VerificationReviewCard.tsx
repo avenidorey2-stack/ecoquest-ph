@@ -50,13 +50,13 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
           <video src={item.mediaUrl} controls className="mx-auto max-h-80 w-full" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- auth-gated media route
-          <img src={item.mediaUrl} alt="Planting proof" className="mx-auto max-h-80 object-contain" />
+          <img src={item.mediaUrl} alt="Planting Proof" className="mx-auto max-h-80 object-contain" />
         )}
       </div>
 
       <div className="space-y-3 p-4 text-sm">
         <div>
-          <p className="font-medium">{item.user.name ?? item.user.email ?? "Unknown user"}</p>
+          <p className="font-medium">{item.user.name ?? item.user.email ?? "Unknown User"}</p>
           <p className="text-ink-2">
             {item.slot.requiredPlantType} · {item.slot.city}, {item.slot.province}
           </p>
@@ -65,7 +65,7 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
 
         <div className="flex items-end gap-3">
           <label className="block">
-            Verified plants
+            Verified Plants
             <input
               type="number"
               min={1}
@@ -91,7 +91,7 @@ export default function VerificationReviewCard({ item }: { item: PendingVerifica
         <input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Rejection reason (shown to user)"
+          placeholder="Rejection Reason (Shown to User)"
           className="block w-full rounded border px-2 py-1"
         />
 

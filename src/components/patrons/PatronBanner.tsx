@@ -23,7 +23,7 @@ export default function PatronBanner({ ads }: { ads: Ad[] }) {
 
   return (
     <section
-      aria-label="Our patrons"
+      aria-label="Our Patrons"
       className="relative"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

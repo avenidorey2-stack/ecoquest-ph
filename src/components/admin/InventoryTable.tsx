@@ -34,7 +34,7 @@ export default function InventoryTable({ rows }: { rows: InventoryRow[] }) {
             <th className="px-3 py-3 font-semibold">Price (points)</th>
             <th className="px-3 py-3 font-semibold">Price (₱, COD)</th>
             <th className="px-3 py-3 font-semibold">Stock</th>
-            <th className="px-3 py-3 font-semibold">In shop</th>
+            <th className="px-3 py-3 font-semibold">In Shop</th>
             <th className="px-4 py-3" />
           </tr>
         </thead>

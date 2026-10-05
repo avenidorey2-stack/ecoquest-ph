@@ -69,7 +69,7 @@ export default function CompleteSignupForm({
         <span className="text-xs text-ink-3">At least {minPasswordLength} characters.</span>
       </label>
       <label className="block text-sm font-medium text-ink-2">
-        Confirm password
+        Confirm Password
         <input
           type="password"
           value={confirm}
@@ -88,7 +88,7 @@ export default function CompleteSignupForm({
         disabled={busy}
         className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {busy ? "Creating account…" : "Create account"}
+        {busy ? "Creating Account…" : "Create Account"}
       </button>
     </form>
   );

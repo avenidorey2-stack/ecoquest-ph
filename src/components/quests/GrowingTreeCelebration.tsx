@@ -7,7 +7,7 @@ import { CoinIcon } from "@/components/ui/icons";
 
 // Growth stages: the same glowing vase in every frame, only the plant grows.
 const STAGES = [
-  { src: "/images/grow/stage-1.jpg", label: "Planting seed…" },
+  { src: "/images/grow/stage-1.jpg", label: "Planting Seed…" },
   { src: "/images/grow/stage-2.jpg", label: "Sprouting…" },
   { src: "/images/grow/stage-3.jpg", label: "Seedling…" },
   { src: "/images/grow/stage-4.jpg", label: "Growing…" },
@@ -86,7 +86,7 @@ export default function GrowingTreeCelebration({
           transition={{ type: "spring", stiffness: 260, damping: 22 }}
         >
           {done && <Confetti />}
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Quest verified</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Quest Verified</p>
 
           {/* The plant: stages cross-fade and swell as it grows. */}
           <div className="relative mx-auto mt-3 h-60 w-60 sm:h-64 sm:w-64" aria-hidden>

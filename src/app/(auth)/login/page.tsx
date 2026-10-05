@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Welcome back</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Welcome Back</h1>
         <p className="mt-1 text-sm text-ink-3">Sign in to continue your planting quests.</p>
       </div>
 
@@ -68,7 +68,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <p className="text-center text-sm text-ink-2">
         New here?{" "}
         <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-emerald-400">
-          Create an account
+          Create an Account
         </Link>
       </p>
     </div>

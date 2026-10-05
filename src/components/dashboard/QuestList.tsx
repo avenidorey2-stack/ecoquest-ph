@@ -145,7 +145,7 @@ export default function QuestList({
           <div
             id={panelId}
             role="region"
-            aria-label="Completed tasks"
+            aria-label="Completed Tasks"
             inert={!showCompleted}
             className={`grid transition-[grid-template-rows] duration-300 ease-out ${showCompleted ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >

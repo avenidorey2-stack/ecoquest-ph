@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { PublicProfile } from "@/lib/public-profile";
 import { CloseIcon, CoinIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
 import ProofLightbox from "@/components/profile/ProofLightbox";
+import FriendButton from "@/components/social/FriendButton";
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric" });
@@ -91,6 +92,9 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                     {profile.city}, {profile.province}
                   </p>
                 )}
+                <div className="mt-2 flex">
+                  <FriendButton userId={profile.id} initial={profile.friendState} />
+                </div>
               </div>
             </div>
           ) : (
@@ -98,7 +102,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
               <span className="h-20 w-20 shrink-0 animate-pulse rounded-2xl bg-white/10" />
               <div className="flex-1 space-y-2">
                 <h2 id={titleId} className="sr-only">
-                  Planter profile
+                  Planter Profile
                 </h2>
                 <span className="block h-5 w-40 animate-pulse rounded bg-white/10" />
                 <span className="block h-4 w-24 animate-pulse rounded bg-white/10" />
@@ -110,13 +114,13 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
             <dl className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
                 <dt className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-emerald-200">
-                  <TreeIcon className="h-3.5 w-3.5" /> Trees planted
+                  <TreeIcon className="h-3.5 w-3.5" /> Trees Planted
                 </dt>
                 <dd className="text-2xl font-bold">{profile.totalPlants.toLocaleString("en-PH")}</dd>
               </div>
               <div className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
                 <dt className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] text-emerald-200">
-                  <CoinIcon className="h-3.5 w-3.5" /> Current points
+                  <CoinIcon className="h-3.5 w-3.5" /> Current Points
                 </dt>
                 <dd className="text-2xl font-bold">{profile.points.toLocaleString("en-PH")}</dd>
               </div>
@@ -142,11 +146,17 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
 
           {profile && (
             <>
-              <section aria-label="Proof gallery">
+              <section aria-label="Proof Gallery">
                 <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
-                  Proof gallery {profile.totalProofs > 0 && `· ${profile.totalProofs}`}
+                  Proof Gallery {profile.totalProofs > 0 && `· ${profile.totalProofs}`}
                 </h3>
-                {profile.proofs.length === 0 ? (
+                {profile.photosHiddenBy ? (
+                  <p className="rounded-xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">
+                    {profile.photosHiddenBy === "FRIENDS"
+                      ? `${profile.name} shares planting photos with friends only.`
+                      : `${profile.name} keeps their planting photos private.`}
+                  </p>
+                ) : profile.proofs.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">
                     No approved plantings yet.
                   </p>
@@ -250,7 +260,7 @@ export default function PlanterProfileModal({ userId, onClose }: { userId: strin
                   href={`/planters/${profile.id}`}
                   className="rounded-lg bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-300"
                 >
-                  View full profile
+                  View Full Profile
                 </Link>
               </div>
             </>

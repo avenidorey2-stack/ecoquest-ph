@@ -49,7 +49,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
   return (
     <div className="eq-stagger mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-ink sm:px-6 lg:py-8">
       <header>
-        <h1 className="text-xl font-semibold">Weekly leaderboard</h1>
+        <h1 className="text-xl font-semibold">Weekly Leaderboard</h1>
         {board && weekEnd && (
           <p className="text-sm text-ink-3">
             {fmtDay(board.weekStart)} – {fmtDay(weekEnd)} · resets in {timeUntil(board.resetsAt)} (Monday 12:00 AM PHT)
@@ -67,7 +67,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
           href="/profile"
           className="block rounded-lg border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-300 hover:bg-amber-400/15"
         >
-          <span className="font-medium">Set your home city</span> to see how you rank against planters near you
+          <span className="font-medium">Set Your Home City</span> to see how you rank against planters near you
         </Link>
       ) : (
         board && (
@@ -75,7 +75,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
             {viewer.role === "USER" && (
               <section className="flex items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.09] p-4 shadow-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-emerald-400">Your rank</p>
+                  <p className="text-xs uppercase tracking-wide text-emerald-400">Your Rank</p>
                   <p className="text-2xl font-bold text-emerald-300">
                     {board.viewer.rank ? `#${board.viewer.rank}` : "—"}
                     {board.viewer.rank && (

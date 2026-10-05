@@ -86,7 +86,7 @@ function ConfirmOrderDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 id="confirm-order-title" className="text-lg font-bold text-ink">
-          Confirm your order
+          Confirm Your Order
         </h3>
         <div id="confirm-order-summary" className="mt-3 space-y-3 text-sm">
           <dl className="space-y-1.5 rounded-xl bg-card-2 p-3 text-ink-2">
@@ -102,7 +102,7 @@ function ConfirmOrderDialog({
             </div>
             <div className={row}>
               <dt>Payment</dt>
-              <dd className="text-right text-ink">{cod ? "Cash on delivery" : "Points (deducted now)"}</dd>
+              <dd className="text-right text-ink">{cod ? "Cash on Delivery" : "Points (deducted now)"}</dd>
             </div>
           </dl>
           <div className="rounded-xl bg-card-2 p-3 text-ink-2">
@@ -131,7 +131,7 @@ function ConfirmOrderDialog({
             disabled={busy}
             className="min-h-12 flex-1 rounded-xl border border-line-strong text-sm font-semibold text-ink-2 transition-colors hover:bg-card-2 disabled:opacity-50"
           >
-            Edit order
+            Edit Order
           </button>
           <button
             type="button"
@@ -139,7 +139,7 @@ function ConfirmOrderDialog({
             disabled={busy}
             className="min-h-12 flex-1 rounded-xl bg-emerald-400 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-300 disabled:opacity-60"
           >
-            {busy ? "Placing order…" : "Confirm order"}
+            {busy ? "Placing Order…" : "Confirm Order"}
           </button>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function OrderSeedlingForm({
     setReview(details.data);
   }
 
-  /** "Confirm order": place it. */
+  /** "Confirm Order": place it. */
   async function confirm() {
     if (!review || busy) return;
     setBusy(true);
@@ -297,10 +297,10 @@ export default function OrderSeedlingForm({
 
       {!soldOut && (
         <fieldset className="space-y-2.5 rounded-xl border border-line bg-card/60 p-3">
-          <legend className="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Delivery details</legend>
+          <legend className="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">Delivery Details</legend>
           <p className="text-[11px] leading-snug text-ink-3">Only you and our delivery team can see these.</p>
-          {field("recipientName", "Recipient name", { autoComplete: "name", maxLength: 80 })}
-          {field("contactNumber", "Mobile number", {
+          {field("recipientName", "Recipient Name", { autoComplete: "name", maxLength: 80 })}
+          {field("contactNumber", "Mobile Number", {
             type: "tel",
             inputMode: "tel",
             autoComplete: "tel",
@@ -310,11 +310,11 @@ export default function OrderSeedlingForm({
           {field("streetAddress", "House no. / street", { autoComplete: "address-line1", maxLength: 160 })}
           <div className="grid gap-2.5 sm:grid-cols-2">
             {field("barangay", "Barangay", { autoComplete: "address-level3", maxLength: 80 })}
-            {field("cityProvince", "City / province", { autoComplete: "address-level2", maxLength: 80 })}
+            {field("cityProvince", "City / Province", { autoComplete: "address-level2", maxLength: 80 })}
           </div>
           {field("landmark", "Landmark", { placeholder: "e.g. beside the barangay hall, green gate", maxLength: 120 })}
           <label className="block text-xs font-medium text-ink-2">
-            Delivery instructions <span className="font-normal text-ink-4">(optional)</span>
+            Delivery Instructions <span className="font-normal text-ink-4">(optional)</span>
             <textarea
               name="instructions"
               value={delivery.instructions}
@@ -371,7 +371,7 @@ export default function OrderSeedlingForm({
         className="min-h-12 w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-card-2 disabled:text-ink-4 disabled:shadow-none"
       >
         {soldOut
-          ? "Out of stock"
+          ? "Out of Stock"
           : cooldown > 0
             ? `You can order again in ${cooldown}s`
             : valid && !affordable

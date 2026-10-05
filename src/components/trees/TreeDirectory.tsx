@@ -181,7 +181,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
           <p className="text-[15px] leading-relaxed text-ink-2">{tree.description}</p>
 
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Ecological benefits</h3>
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Ecological Benefits</h3>
             <ul className="mt-2 space-y-2">
               {tree.benefits.map((b) => (
                 <li key={b} className="flex gap-2.5 text-sm text-ink-2">
@@ -196,13 +196,13 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-line bg-card-2 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">National progress</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">National Progress</p>
               <div className="mt-2">
                 <Progress tree={tree} />
               </div>
             </div>
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">{city ? `In ${city}` : "Near you"}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">{city ? `In ${city}` : "Near You"}</p>
               {city ? (
                 <p className="mt-2 text-sm text-ink-2">
                   <strong className="text-lg text-emerald-300">{fmt(tree.localPlanted)}</strong> planted locally
@@ -215,7 +215,7 @@ function DetailsModal({ tree, city, onClose }: { tree: TreeCard; city: string | 
               ) : (
                 <p className="mt-2 text-sm text-ink-2">
                   <Link href="/profile" className="font-semibold text-emerald-400">
-                    Set your home city
+                    Set Your Home City
                   </Link>{" "}
                   to see local stats.
                 </p>
@@ -291,7 +291,7 @@ function TreeTile({
         </div>
         {tree.credit?.shows && (
           <span className="absolute right-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur">
-            Related species
+            Related Species
           </span>
         )}
         <div className="absolute inset-x-0 bottom-0 p-4">

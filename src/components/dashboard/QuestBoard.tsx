@@ -78,7 +78,7 @@ function MissionRow({ m }: { m: MissionView }) {
             {busy ? "Claiming…" : `Claim +${m.rewardPoints.toLocaleString("en-PH")} pts`}
           </button>
         ) : m.status === "claimed" ? (
-          <span className="text-xs font-medium text-emerald-400">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & claimed"}</span>
+          <span className="text-xs font-medium text-emerald-400">{m.kind === "DAILY" ? "Claimed today — new one tomorrow" : "Completed & Claimed"}</span>
         ) : (
           <Link href={meta.href} className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 text-sm font-medium text-ink-2 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-300">
             {meta.action}

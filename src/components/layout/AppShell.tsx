@@ -17,18 +17,21 @@ import {
   LogoutIcon,
   MenuIcon,
   PinIcon,
+  SettingsIcon,
   ShieldIcon,
   TrophyIcon,
   UsersIcon,
   MedalIcon,
   SproutIcon,
   TreeIcon,
+  UserCheckIcon,
   WalletIcon,
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
 import EcoBackground from "./EcoBackground";
 import ScrollReveal, { TOUR_MENU_EVENT } from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
+import UserSearch from "@/components/social/UserSearch";
 
 export type ShellUser = {
   name: string | null;
@@ -46,20 +49,23 @@ export type ShellStatus = {
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", hint: null, Icon: DashboardIcon },
-  { href: "/profile", label: "Profile", hint: "Location settings", Icon: PinIcon },
+  { href: "/profile", label: "Profile", hint: "Location Settings", Icon: PinIcon },
   { href: "/leaderboard", label: "Leaderboard", hint: "Local / National", Icon: TrophyIcon },
-  { href: "/shop", label: "Shop", hint: "Order seedlings", Icon: SproutIcon },
-  { href: "/rewards", label: "Rewards", hint: "GCash, Maya & vouchers", Icon: GiftIcon },
-  { href: "/transactions", label: "Transactions", hint: "Orders & redemptions", Icon: WalletIcon },
+  { href: "/friends", label: "Friends", hint: "Requests & Friends", Icon: UserCheckIcon },
+  { href: "/shop", label: "Shop", hint: "Order Seedlings", Icon: SproutIcon },
+  { href: "/rewards", label: "Rewards", hint: "GCash, Maya & Vouchers", Icon: GiftIcon },
+  { href: "/transactions", label: "Transactions", hint: "Orders & Redemptions", Icon: WalletIcon },
   { href: "/referrals", label: "Referral Hub", hint: null, Icon: UsersIcon },
-  { href: "/achievements", label: "Achievements", hint: "Badges & levels", Icon: MedalIcon },
-  { href: "/trees", label: "Tree Directory", hint: "Native PH trees", Icon: TreeIcon },
+  { href: "/achievements", label: "Achievements", hint: "Badges & Levels", Icon: MedalIcon },
+  { href: "/trees", label: "Tree Directory", hint: "Native PH Trees", Icon: TreeIcon },
+  { href: "/settings", label: "Settings", hint: "Privacy, Password & Help", Icon: SettingsIcon },
 ];
 const ADMIN = { href: "/admin", label: "Admin Portal", hint: null, Icon: ShieldIcon };
 
 const PAGE_TITLES: [prefix: string, title: string, subtitle: string][] = [
   ["/profile", "Profile & Location", "Your account details and verified home city."],
   ["/leaderboard", "Leaderboard", "This week's top planters, locally and nationally."],
+  ["/friends", "Friends", "Friend requests and your planting friends."],
   ["/shop", "Seedling Shop", "Order native tree seedlings with your planting points."],
   ["/rewards", "Rewards", "Turn your planting points into GCash, Maya and vouchers."],
   ["/transactions", "Transactions", "Your seedling orders and reward redemptions, with live status."],
@@ -68,6 +74,7 @@ const PAGE_TITLES: [prefix: string, title: string, subtitle: string][] = [
   ["/admin", "Admin Portal", "Slots, verifications, rewards and patrons."],
   ["/achievements", "Achievements", "Badges you've earned and the ones still ahead."],
   ["/trees", "Tree Directory", "Native Philippine trees worth planting."],
+  ["/settings", "Settings", "Privacy, notifications, password and help."],
 ];
 
 function Avatar({ user, size = "h-10 w-10" }: { user: ShellUser; size?: string }) {
@@ -148,12 +155,12 @@ function SidebarContent({
         </ul>
       </nav>
 
-      <div className="space-y-3 p-4">
-        <section aria-label="System status" className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/70">System status</p>
+      <div className="space-y-2.5 p-4">
+        <section aria-label="System Status" className="rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/70">System Status</p>
           <dl className="mt-2.5 space-y-2 text-xs">
             <div>
-              <dt className="text-emerald-100/50">PSGC location</dt>
+              <dt className="text-emerald-100/50">PSGC Location</dt>
               <dd className="mt-0.5 font-medium text-white">
                 {status.location ? (
                   <>
@@ -185,16 +192,16 @@ function SidebarContent({
           href="/dashboard?tour=1"
           onClick={onNavigate}
           data-tour="tour-replay"
-          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2.5 text-sm font-semibold text-emerald-200 transition-colors hover:border-emerald-300/60 hover:bg-emerald-400/20 hover:text-white"
         >
-          <FlagIcon className="h-4 w-4" /> Take the tour
+          <FlagIcon className="h-4 w-4" /> Take the Tour
         </Link>
         <form action={signOutAction}>
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm text-emerald-100/70 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-400/35 bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:border-rose-300/60 hover:bg-rose-500/20 hover:text-white"
           >
-            <LogoutIcon className="h-4 w-4" /> Log out
+            <LogoutIcon className="h-4 w-4" /> Log Out
           </button>
         </form>
       </div>
@@ -248,7 +255,7 @@ export default function AppShell({
 
   const firstName = (user.name ?? "Planter").trim().split(/\s+/)[0];
   const page = PAGE_TITLES.find(([prefix]) => pathname.startsWith(prefix));
-  const title = page ? page[1] : `Welcome back, ${firstName}`;
+  const title = page ? page[1] : `Welcome Back, ${firstName}`;
   const subtitle = page ? page[2] : "Your environmental impact and active quests overview.";
 
   return (
@@ -328,6 +335,7 @@ export default function AppShell({
             </Link>
           </div>
         </header>
+        <UserSearch />
 
         <main className="flex flex-1 flex-col">{children}</main>
       </div>

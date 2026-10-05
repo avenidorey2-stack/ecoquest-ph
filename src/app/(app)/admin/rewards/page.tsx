@@ -13,7 +13,7 @@ export default async function AdminRewardsPage() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 font-semibold">Reward catalogue</h1>
+      <h1 className="mb-1 font-semibold">Reward Catalogue</h1>
       <p className="mb-4 text-sm text-ink-3">
         Hidden rewards disappear from the shop but keep their history. Price changes don&apos;t affect requests already
         made.

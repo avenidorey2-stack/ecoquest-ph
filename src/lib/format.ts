@@ -1,7 +1,7 @@
-/** Compact relative time, e.g. "just now", "5m ago", "3h ago", "2d ago", else a date. */
+/** Compact relative time, e.g. "Just Now", "5m ago", "3h ago", "2d ago", else a date. */
 export function timeAgo(date: Date, now: Date) {
   const s = Math.max(0, Math.round((now.getTime() - date.getTime()) / 1000));
-  if (s < 60) return "just now";
+  if (s < 60) return "Just Now";
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   if (s < 86_400) return `${Math.floor(s / 3600)}h ago`;
   if (s < 7 * 86_400) return `${Math.floor(s / 86_400)}d ago`;

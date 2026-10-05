@@ -71,7 +71,7 @@ function LevelUp({ data, onClose }: { data: NonNullable<PendingCelebrations["lev
         autoFocus
         className="mt-6 w-full rounded-xl bg-emerald-400 py-2.5 font-semibold text-emerald-950 hover:bg-emerald-300"
       >
-        Keep planting
+        Keep Planting
       </button>
     </Modal>
   );
@@ -80,10 +80,10 @@ function LevelUp({ data, onClose }: { data: NonNullable<PendingCelebrations["lev
 function Badges({ items, onClose }: { items: PendingCelebrations["achievements"]; onClose: () => void }) {
   const totalXp = items.reduce((sum, a) => sum + a.xpReward, 0);
   return (
-    <Modal onClose={onClose} label="Achievements unlocked">
+    <Modal onClose={onClose} label="Achievements Unlocked">
       <Confetti />
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
-        {items.length === 1 ? "Achievement unlocked" : `${items.length} achievements unlocked`}
+        {items.length === 1 ? "Achievement Unlocked" : `${items.length} achievements unlocked`}
       </p>
       <ul className="mt-5 space-y-2.5">
         {items.slice(0, 5).map((a, i) => (
@@ -110,7 +110,7 @@ function Badges({ items, onClose }: { items: PendingCelebrations["achievements"]
           onClick={onClose}
           className="flex-1 rounded-xl border border-line py-2.5 text-sm font-semibold text-ink-2 hover:bg-card-2"
         >
-          View all
+          View All
         </Link>
         <button
           onClick={onClose}
@@ -162,7 +162,7 @@ function RankToast({ data, onClose }: { data: NonNullable<PendingCelebrations["r
             )}
           </p>
           <Link href={`/leaderboard?scope=${data.scope}`} onClick={onClose} className="mt-1 inline-block text-xs font-semibold text-emerald-400">
-            See leaderboard
+            See Leaderboard
           </Link>
         </div>
         <button onClick={onClose} aria-label="Dismiss" className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-ink-3 hover:bg-card-2 hover:text-ink">

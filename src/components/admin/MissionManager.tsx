@@ -145,7 +145,7 @@ function MissionForm({
           </span>
         </label>
         <label className="block text-sm">
-          Reward points
+          Reward Points
           <input className={input} type="number" min={0} max={MAX_MISSION_POINTS} value={d.rewardPoints} onChange={(e) => set("rewardPoints", e.target.value)} required />
         </label>
         <label className="block text-sm">
@@ -161,7 +161,7 @@ function MissionForm({
           <input className={input} type="date" value={d.endDate} min={d.startDate} onChange={(e) => set("endDate", e.target.value)} />
         </label>
         <label className="block text-sm">
-          Display order
+          Display Order
           <input className={input} type="number" min={-1000} max={1000} value={d.sortOrder} onChange={(e) => set("sortOrder", e.target.value)} />
         </label>
         <label className="flex items-center gap-2 self-end pb-2 text-sm">
@@ -172,7 +172,7 @@ function MissionForm({
       {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button disabled={saving} className="rounded-lg bg-emerald-400 px-4 py-1.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 disabled:opacity-50">
-          {saving ? "Saving…" : mission ? "Save changes" : "Create quest"}
+          {saving ? "Saving…" : mission ? "Save Changes" : "Create Quest"}
         </button>
         <button type="button" onClick={onCancel} className="rounded-lg px-4 py-1.5 text-sm text-ink-2 hover:bg-card-2">
           Cancel
@@ -272,7 +272,7 @@ export default function MissionManager({ kind, missions }: { kind: MissionKind; 
                       disabled={busy === m.id}
                       className="rounded-md border border-line px-3 py-1 text-xs font-medium text-ink-2 hover:bg-card-2 disabled:opacity-50"
                     >
-                      {m.isActive ? "Turn off" : "Turn on"}
+                      {m.isActive ? "Turn Off" : "Turn on"}
                     </button>
                     <button onClick={() => setConfirmDelete(m.id)} className="rounded-md border border-line px-3 py-1 text-xs font-medium text-red-300 hover:border-red-400/30 hover:bg-red-400/10">
                       Delete

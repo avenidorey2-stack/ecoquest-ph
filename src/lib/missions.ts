@@ -307,12 +307,12 @@ export function parseMission(body: Record<string, unknown>, { create }: { create
 // ─── Starter content (prisma/seed.ts) ───────────────────────────────────────
 
 const STARTER_MISSIONS: Omit<Prisma.MissionCreateManyInput, "id">[] = [
-  { kind: "DAILY", title: "Daily proof", description: "Get a planting proof approved today.", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, sortOrder: 1 },
-  { kind: "DAILY", title: "Green day", description: "Get 3 plants approved today.", objective: "PLANT_TREES", target: 3, rewardPoints: 50, rewardXp: 20, sortOrder: 2 },
-  { kind: "DAILY", title: "Seedling run", description: "Buy a seedling from the shop today.", objective: "BUY_SEEDLINGS", target: 1, rewardPoints: 15, rewardXp: 5, sortOrder: 3 },
-  { kind: "SIDE", title: "Stock the nursery", description: "Buy 5 seedlings from the shop.", objective: "BUY_SEEDLINGS", target: 5, rewardPoints: 100, rewardXp: 30, sortOrder: 1 },
-  { kind: "SIDE", title: "Grow the movement", description: "Invite 3 friends who sign up with your link.", objective: "INVITE_FRIENDS", target: 3, rewardPoints: 150, rewardXp: 50, sortOrder: 2 },
-  { kind: "SIDE", title: "Treat yourself", description: "Redeem your first reward.", objective: "REDEEM_REWARD", target: 1, rewardPoints: 30, rewardXp: 10, sortOrder: 3 },
+  { kind: "DAILY", title: "Daily Proof", description: "Get a planting proof approved today.", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, sortOrder: 1 },
+  { kind: "DAILY", title: "Green Day", description: "Get 3 plants approved today.", objective: "PLANT_TREES", target: 3, rewardPoints: 50, rewardXp: 20, sortOrder: 2 },
+  { kind: "DAILY", title: "Seedling Run", description: "Buy a seedling from the shop today.", objective: "BUY_SEEDLINGS", target: 1, rewardPoints: 15, rewardXp: 5, sortOrder: 3 },
+  { kind: "SIDE", title: "Stock the Nursery", description: "Buy 5 seedlings from the shop.", objective: "BUY_SEEDLINGS", target: 5, rewardPoints: 100, rewardXp: 30, sortOrder: 1 },
+  { kind: "SIDE", title: "Grow the Movement", description: "Invite 3 friends who sign up with your link.", objective: "INVITE_FRIENDS", target: 3, rewardPoints: 150, rewardXp: 50, sortOrder: 2 },
+  { kind: "SIDE", title: "Treat Yourself", description: "Redeem your first reward.", objective: "REDEEM_REWARD", target: 1, rewardPoints: 30, rewardXp: 10, sortOrder: 3 },
 ];
 
 /** Adds starter daily/side quests — only when there are no missions yet (admin edits are never overwritten). */

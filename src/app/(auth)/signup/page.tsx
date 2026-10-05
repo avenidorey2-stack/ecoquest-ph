@@ -15,7 +15,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Create your account</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Create Your Account</h1>
         <p className="mt-1 text-sm text-ink-3">Start planting native trees and earning rewards.</p>
       </div>
 
@@ -23,7 +23,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
         <>
           <form action={loginWithGoogle}>
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
-            <GoogleButton label="Sign up with Google" />
+            <GoogleButton label="Sign Up with Google" />
           </form>
           <div className="flex items-center gap-3 text-xs text-ink-4">
             <span className="h-px flex-1 bg-card-3" /> or with email <span className="h-px flex-1 bg-card-3" />

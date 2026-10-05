@@ -1,4 +1,4 @@
-// Photos for the tree directory and seedling shop (public/trees/<slug>.jpg + a 640px "-sm" card
+// Photos for the tree directory and seedling shop (public/trees/<slug>.jpg + a 480px "-sm.webp" card
 // version), from the EcoQuest PH tree photo collection (processed with
 // scripts/process-tree-photos.mjs). Other app images listed in ai-images.json were made by
 // scripts/generate-ai-images.mjs and are credited as AI. Credit is shown wherever an image is opened.
@@ -50,5 +50,5 @@ export function imageSourcesNote(credits: (PhotoCredit | null)[]): string {
 /** Card-size and full-size photo paths for a species, or null when it has no photo. */
 export function treePhoto(slug: string): { card: string; full: string; credit: PhotoCredit } | null {
   const credit = isAiImage(`tree:${slug}`) ? AI_CREDIT : TREE_PHOTO_SLUGS.has(slug) ? COLLECTION_CREDIT : null;
-  return credit ? { card: `/trees/${slug}-sm.jpg`, full: `/trees/${slug}.jpg`, credit } : null;
+  return credit ? { card: `/trees/${slug}-sm.webp`, full: `/trees/${slug}.jpg`, credit } : null;
 }

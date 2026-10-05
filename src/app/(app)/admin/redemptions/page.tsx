@@ -26,7 +26,7 @@ export default async function AdminRedemptionsPage() {
             return (
               <li key={r.id} className="grid grid-cols-1 gap-3 rounded-xl border bg-card p-4 text-sm shadow-sm md:grid-cols-3">
                 <div>
-                  <p className="font-medium">{r.user.name ?? r.user.email ?? "Unknown user"}</p>
+                  <p className="font-medium">{r.user.name ?? r.user.email ?? "Unknown User"}</p>
                   <p className="text-xs text-ink-3">{r.createdAt.toLocaleString("en-PH")}</p>
                 </div>
                 <div>

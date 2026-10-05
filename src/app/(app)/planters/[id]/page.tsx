@@ -5,21 +5,24 @@ import { getPublicProfile, PROOF_PAGE_SIZE } from "@/lib/public-profile";
 import { formatDate } from "@/lib/format";
 import AchievementShowcase from "@/components/profile/AchievementShowcase";
 import ProofGallery from "@/components/profile/ProofGallery";
-import { CoinIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
+import FriendButton from "@/components/social/FriendButton";
+import BlockButton from "@/components/social/BlockButton";
+import { CoinIcon, LockIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Planter profile · EcoQuest PH" };
 
 /** Public planter profile: any signed-in user can visit it (linked from the leaderboards). */
-export default async function PlanterProfilePage({ params }: PageProps<"/planters/[id]">) {
+export default async function PlanterProfilePage({ params, searchParams }: PageProps<"/planters/[id]">) {
   const viewerId = await requirePageUserId();
   const { id } = await params;
+  const { photo } = await searchParams;
   const profile = await getPublicProfile(id, viewerId, { proofLimit: PROOF_PAGE_SIZE });
   if (!profile) notFound();
   const isMe = profile.id === viewerId;
 
   const stats = [
-    { label: "Trees planted", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
-    { label: "Current points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
+    { label: "Trees Planted", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
+    { label: "Current Points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
     { label: "Achievements", value: profile.achievements.length.toLocaleString("en-PH"), Icon: MedalIcon },
   ];
 
@@ -50,16 +53,21 @@ export default async function PlanterProfilePage({ params }: PageProps<"/planter
               {profile.city && `${profile.city}, ${profile.province} · `}Planting since {formatDate(profile.memberSince)}
             </p>
           </div>
-          {isMe && (
+          {isMe ? (
             <Link href="/profile" className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-white/20 hover:bg-white/20">
-              Edit profile
+              Edit Profile
             </Link>
+          ) : (
+            <div className="flex basis-full items-start justify-end gap-1 sm:basis-auto">
+              <BlockButton userId={profile.id} name={profile.name} />
+              <FriendButton userId={profile.id} initial={profile.friendState} />
+            </div>
           )}
         </div>
         <dl className="mt-5 grid grid-cols-3 gap-3">
           {stats.map(({ label, value, Icon }) => (
             <div key={label} className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
-              <dt className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-emerald-200 sm:text-[11px]">
+              <dt className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.06em] text-emerald-200 sm:text-[11px] sm:tracking-[0.14em]">
                 <Icon className="h-3.5 w-3.5 shrink-0" /> {label}
               </dt>
               <dd className="text-xl font-bold sm:text-2xl">{value}</dd>
@@ -72,11 +80,23 @@ export default async function PlanterProfilePage({ params }: PageProps<"/planter
         achievements={profile.achievements}
         emptyText={isMe ? "Plant your first tree to earn your first badge." : `${profile.name} hasn't earned any badges yet.`}
       />
-      <ProofGallery
-        proofs={profile.proofs}
-        total={profile.totalProofs}
-        emptyText={isMe ? "Your approved planting photos and videos will appear here." : "No approved plantings yet."}
-      />
+      {profile.photosHiddenBy ? (
+        <section className="eq-panel flex items-start gap-3 rounded-2xl border border-line/80 bg-card p-5 text-sm text-ink-2 shadow-sm">
+          <LockIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+          <p>
+            {profile.photosHiddenBy === "FRIENDS"
+              ? `${profile.name} shares planting photos with friends only. Add them as a friend to see their ${profile.totalProofs.toLocaleString("en-PH")} approved planting${profile.totalProofs === 1 ? "" : "s"}.`
+              : `${profile.name} keeps their planting photos private.`}
+          </p>
+        </section>
+      ) : (
+        <ProofGallery
+          proofs={profile.proofs}
+          total={profile.totalProofs}
+          openId={typeof photo === "string" ? photo : undefined}
+          emptyText={isMe ? "Your approved planting photos and videos will appear here." : "No approved plantings yet."}
+        />
+      )}
     </div>
   );
 }

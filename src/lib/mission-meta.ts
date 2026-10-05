@@ -7,35 +7,35 @@ export const MISSION_OBJECTIVES: Record<
   { label: string; unit: string; href: string; action: string; describe: (n: number) => string }
 > = {
   PLANT_TREES: {
-    label: "Plant trees (approved)",
+    label: "Plant Trees (Approved)",
     unit: "planted",
     href: "/dashboard",
     action: "Plant",
     describe: (n) => `Get ${n} plant${n === 1 ? "" : "s"} approved`,
   },
   SUBMIT_PROOF: {
-    label: "Planting proofs (approved)",
+    label: "Planting Proofs (Approved)",
     unit: "approved",
     href: "/dashboard",
     action: "Submit",
     describe: (n) => `Get ${n} planting proof${n === 1 ? "" : "s"} approved`,
   },
   BUY_SEEDLINGS: {
-    label: "Buy seedlings from the shop",
+    label: "Buy Seedlings from the Shop",
     unit: "bought",
     href: "/shop",
     action: "Shop",
     describe: (n) => `Buy ${n} seedling${n === 1 ? "" : "s"} from the shop`,
   },
   INVITE_FRIENDS: {
-    label: "Invite friends (sign-ups)",
+    label: "Invite Friends (Sign-Ups)",
     unit: "joined",
     href: "/referrals",
     action: "Invite",
     describe: (n) => `Invite ${n} friend${n === 1 ? "" : "s"} who sign up`,
   },
   REDEEM_REWARD: {
-    label: "Redeem rewards",
+    label: "Redeem Rewards",
     unit: "redeemed",
     href: "/rewards",
     action: "Redeem",
@@ -43,7 +43,7 @@ export const MISSION_OBJECTIVES: Record<
   },
 };
 
-export const MISSION_KIND_LABELS: Record<MissionKind, string> = { DAILY: "Daily quest", SIDE: "Side quest" };
+export const MISSION_KIND_LABELS: Record<MissionKind, string> = { DAILY: "Daily Quest", SIDE: "Side Quest" };
 
 export const MAX_MISSION_TARGET = 1_000;
 export const MAX_MISSION_POINTS = 100_000;

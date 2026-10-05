@@ -50,7 +50,7 @@ function ClaimRow({ claim, onSaved }: { claim: Claim; onSaved: (notice: string) 
   const badge = claim.expired
     ? { text: "Expired", cls: "bg-rose-500/15 text-rose-300 ring-rose-500/30" }
     : claim.status === "PENDING_VERIFICATION"
-      ? { text: "Proof in review", cls: "bg-amber-400/15 text-amber-300 ring-amber-400/30" }
+      ? { text: "Proof in Review", cls: "bg-amber-400/15 text-amber-300 ring-amber-400/30" }
       : { text: "Active", cls: "bg-emerald-400/15 text-emerald-300 ring-emerald-400/30" };
 
   return (
@@ -66,12 +66,12 @@ function ClaimRow({ claim, onSaved }: { claim: Claim; onSaved: (notice: string) 
         Claimed {fmt(claim.createdAt)} · {claim.plantCount}/{claim.targetPlants} planted
       </p>
       <p className={`text-xs ${claim.expired ? "text-rose-300" : "text-ink-2"}`}>
-        {claim.expiresAt ? `${claim.expired ? "Expired" : "Ends"} ${fmt(claim.expiresAt)}` : "No end date"}
+        {claim.expiresAt ? `${claim.expired ? "Expired" : "Ends"} ${fmt(claim.expiresAt)}` : "No End Date"}
       </p>
 
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <label className="min-w-0 flex-1 text-xs text-ink-2">
-          New end date
+          New End Date
           <input
             type="date"
             value={day}
@@ -146,7 +146,7 @@ export default function SlotClaims({ slotId }: { slotId: string }) {
         <p className="text-sm text-red-400">
           Couldn&apos;t load claims.{" "}
           <button type="button" onClick={load} className="font-medium text-emerald-400 underline">
-            Try again
+            Try Again
           </button>
         </p>
       ) : claims === null ? (

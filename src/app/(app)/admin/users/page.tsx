@@ -11,9 +11,9 @@ export default async function AdminUsersPage() {
   const noLocation = groups.find((g) => !g.cityCode)?.users.length ?? 0;
 
   const stats = [
-    { label: "Total users", value: total },
-    { label: "Cities & towns", value: located.length },
-    { label: "No location yet", value: noLocation },
+    { label: "Total Users", value: total },
+    { label: "Cities & Towns", value: located.length },
+    { label: "No Location Yet", value: noLocation },
   ];
 
   return (

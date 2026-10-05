@@ -46,10 +46,10 @@ export default async function ProfilePage() {
       <section className="eq-panel flex items-center gap-4 rounded-2xl border border-line/80 bg-card shadow-sm p-5">
         <AvatarUploader src={displayAvatar(user)} initials={initials} hasUpload={!!user.avatarUrl} />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold">{user.name ?? "Unnamed planter"}</h1>
+          <h1 className="truncate text-lg font-semibold">{user.name ?? "Unnamed Planter"}</h1>
           <p className="truncate text-sm text-ink-3">{user.email}</p>
           <p className="text-xs text-ink-3">
-            {place ? `${place.city}, ${place.province}` : "No home city set"} · Member since{" "}
+            {place ? `${place.city}, ${place.province}` : "No Home City Set"} · Member since{" "}
             {user.createdAt.toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
             {user.role !== "USER" && (
               <span className="ml-2 rounded bg-emerald-400/15 px-1.5 py-0.5 font-medium text-emerald-300">{user.role}</span>
@@ -69,8 +69,8 @@ export default async function ProfilePage() {
 
       <section className="eq-stagger eq-spring grid grid-cols-3 gap-3 text-center">
         {[
-          ["Total points", user.points],
-          ["This week", currentWeeklyPoints(user)],
+          ["Total Points", user.points],
+          ["This Week", currentWeeklyPoints(user)],
           ["Plants", user.totalPlants],
         ].map(([label, value]) => (
           <div key={label} className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-3">
@@ -81,7 +81,7 @@ export default async function ProfilePage() {
       </section>
 
       <section className="eq-panel rounded-2xl border border-line/80 bg-card shadow-sm p-5">
-        <h2 className="mb-4 font-semibold">Edit profile</h2>
+        <h2 className="mb-4 font-semibold">Edit Profile</h2>
         <ProfileForm
           regions={listRegions()}
           name={user.name ?? ""}
@@ -95,7 +95,7 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-ink-2">Your achievements and approved plantings are permanent and public.</p>
             <Link href={`/planters/${userId}`} className="eq-hit relative shrink-0 text-sm font-medium text-emerald-400 hover:text-emerald-200">
-              View as others see it
+              View as Others See It
             </Link>
           </div>
           <AchievementShowcase achievements={publicProfile.achievements} emptyText="Plant your first tree to earn your first badge." />
@@ -112,7 +112,7 @@ export default async function ProfilePage() {
         className="eq-panel flex items-center justify-between rounded-2xl border border-line/80 bg-card shadow-sm p-5 text-sm hover:border-emerald-500"
       >
         <span>
-          <span className="block font-semibold">Invite friends</span>
+          <span className="block font-semibold">Invite Friends</span>
           Your code: <span className="font-mono text-emerald-400">{user.referralCode}</span>
         </span>
         <span className="text-emerald-400">Referral Hub</span>

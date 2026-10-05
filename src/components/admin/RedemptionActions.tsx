@@ -41,7 +41,7 @@ export default function RedemptionActions({ id, isCash }: { id: string; isCash: 
           disabled={busy}
           className="rounded bg-emerald-400 px-3 py-1 text-sm font-medium text-emerald-950 disabled:opacity-50"
         >
-          Mark fulfilled
+          Mark Fulfilled
         </button>
         <button
           onClick={() => process("reject")}

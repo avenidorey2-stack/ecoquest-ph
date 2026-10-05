@@ -14,10 +14,10 @@ export default async function AdminOverviewPage() {
   ]);
 
   const metrics = [
-    { label: "Total users", value: totalUsers, hint: "Registered planters", Icon: UsersIcon, href: "/admin/users" },
-    { label: "Total trees", value: trees._sum.count ?? 0, hint: "Verified plantings", Icon: TreeIcon, href: null },
-    { label: "Active slots", value: activeSlots, hint: "Open for claims", Icon: PinIcon, href: "/admin/slots" },
-    { label: "Pending orders", value: pendingOrders, hint: "Seedlings to pack", Icon: SproutIcon, href: "/admin/shop?tab=orders" },
+    { label: "Total Users", value: totalUsers, hint: "Registered Planters", Icon: UsersIcon, href: "/admin/users" },
+    { label: "Total Trees", value: trees._sum.count ?? 0, hint: "Verified Plantings", Icon: TreeIcon, href: null },
+    { label: "Active Slots", value: activeSlots, hint: "Open for Claims", Icon: PinIcon, href: "/admin/slots" },
+    { label: "Pending Orders", value: pendingOrders, hint: "Seedlings to Pack", Icon: SproutIcon, href: "/admin/shop?tab=orders" },
   ];
 
   return (

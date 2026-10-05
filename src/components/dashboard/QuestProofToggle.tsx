@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import ProofUploadForm, { type ProofContext } from "@/components/quests/ProofUploadForm";
 import { CloseIcon } from "@/components/ui/icons";
 
-/** "Submit proof" button that opens the Submit Proof modal (upload + plant quantity) for a slot quest. */
+/** "Submit Proof" button that opens the Submit Proof modal (upload + plant quantity) for a slot quest. */
 export default function QuestProofToggle({ questId, context }: { questId: string; context?: ProofContext }) {
   const [open, setOpen] = useState(false);
   return (
@@ -14,7 +14,7 @@ export default function QuestProofToggle({ questId, context }: { questId: string
         onClick={() => setOpen(true)}
         className="mt-2 inline-flex min-h-11 items-center rounded-xl bg-emerald-400 px-4 text-sm font-bold text-emerald-950 hover:bg-emerald-300"
       >
-        Submit proof
+        Submit Proof
       </button>
       {open && <ProofModal questId={questId} context={context} onClose={() => setOpen(false)} />}
     </>
@@ -50,9 +50,9 @@ function ProofModal({ questId, context, onClose }: { questId: string; context?: 
           >
             <CloseIcon className="h-5 w-5" />
           </button>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Submit proof</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Submit Proof</p>
           <h2 id={titleId} className="mt-0.5 pr-8 text-lg font-bold">
-            {context ? `${context.plantType} planting` : "Upload your planting proof"}
+            {context ? `${context.plantType} planting` : "Upload Your Planting Proof"}
           </h2>
           {context && (
             <p className="text-xs text-emerald-100/80">

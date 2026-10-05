@@ -208,7 +208,7 @@ function NewRewardForm({ brands }: { brands: Record<RewardType, readonly string[
           />
         </label>
         <button disabled={busy || hint !== null} className="min-h-11 rounded-lg bg-emerald-400 px-4 font-bold text-emerald-950 disabled:opacity-50">
-          Add reward
+          Add Reward
         </button>
         {hint && <p className="w-full text-amber-300">{hint}</p>}
         {error && <p className="w-full text-red-400">{error}</p>}

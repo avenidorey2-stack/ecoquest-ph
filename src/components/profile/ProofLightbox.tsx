@@ -4,25 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import type { PublicProof } from "@/lib/public-profile";
 import { formatDate } from "@/lib/format";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/ui/icons";
+import PhotoSocial, { type Reactions } from "@/components/social/PhotoSocial";
 
 /**
  * Full-screen viewer for proof photos and videos, in place of opening them in a new tab.
  * Mount it to open; `onClose` fires when it's dismissed (X, Escape, or a tap beside the media).
  * Arrows, the arrow keys or a swipe move between proofs. A native modal <dialog>, so it stacks
- * above other dialogs (e.g. the planter profile popup) with focus trapped inside.
+ * above other dialogs (e.g. the planter profile popup) with focus trapped inside. Below the
+ * photo: likes and comments (`onReact` reports new counts to the gallery).
  */
 export default function ProofLightbox({
   proofs,
   startIndex,
   onClose,
+  onReact,
 }: {
   proofs: PublicProof[];
   startIndex: number;
   onClose: () => void;
+  onReact?: (proofId: string, r: Reactions) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const [index, setIndex] = useState(() => Math.min(Math.max(startIndex, 0), proofs.length - 1));
+  // Reactions changed while viewing, so moving away and back shows the new counts.
+  const [reacted, setReacted] = useState<Record<string, Reactions>>({});
   const proof = proofs[index];
   const hasPrev = index > 0;
   const hasNext = index < proofs.length - 1;
@@ -67,7 +73,8 @@ export default function ProofLightbox({
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         e.stopPropagation();
-        if (e.target instanceof HTMLVideoElement) return; // arrow keys seek the video there
+        // Arrow keys seek a video and move the caret in the comment box — not between proofs.
+        if (e.target instanceof HTMLVideoElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
         if (e.key === "ArrowLeft") go(-1);
         if (e.key === "ArrowRight") go(1);
       }}
@@ -142,11 +149,22 @@ export default function ProofLightbox({
           )}
         </div>
 
-        <div className="px-4 pb-5 pt-3 text-center">
-          <p className="text-base font-semibold">{label}</p>
-          <p className="text-sm text-white/70">
-            {proof.city}, {proof.province} · Acquired on <time dateTime={acquired}>{formatDate(acquired)}</time>
-          </p>
+        <div className="space-y-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 text-center">
+          <div>
+            <p className="text-base font-semibold">{label}</p>
+            <p className="text-sm text-white/70">
+              {proof.city}, {proof.province} · Acquired on <time dateTime={acquired}>{formatDate(acquired)}</time>
+            </p>
+          </div>
+          <PhotoSocial
+            key={proof.id}
+            photoId={proof.id}
+            initial={reacted[proof.id] ?? { likeCount: proof.likeCount, commentCount: proof.commentCount, likedByMe: proof.likedByMe }}
+            onChange={(r) => {
+              setReacted((m) => ({ ...m, [proof.id]: r }));
+              onReact?.(proof.id, r);
+            }}
+          />
         </div>
       </div>
     </dialog>

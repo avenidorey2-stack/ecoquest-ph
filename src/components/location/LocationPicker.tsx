@@ -63,7 +63,7 @@ export default function LocationPicker({
           }}
           required
         >
-          <option value="">Select region…</option>
+          <option value="">Select Region…</option>
           {regions.map((r) => (
             <option key={r.code} value={r.code}>
               {r.name}
@@ -85,7 +85,7 @@ export default function LocationPicker({
           disabled={!provinces}
           required
         >
-          <option value="">{loading ? "Loading…" : "Select province…"}</option>
+          <option value="">{loading ? "Loading…" : "Select Province…"}</option>
           {provinces?.map((p) => (
             <option key={p.code} value={p.code}>
               {p.name}
@@ -95,7 +95,7 @@ export default function LocationPicker({
       </label>
 
       <label className="block text-sm font-medium text-ink-2">
-        City / municipality
+        City / Municipality
         <select
           className={select}
           value={cityCode}
@@ -106,7 +106,7 @@ export default function LocationPicker({
           disabled={!effectiveProvince || cities.length === 0}
           required
         >
-          <option value="">Select city/municipality…</option>
+          <option value="">Select City/Municipality…</option>
           {cities.map((c) => (
             <option key={c.code} value={c.code}>
               {c.name}

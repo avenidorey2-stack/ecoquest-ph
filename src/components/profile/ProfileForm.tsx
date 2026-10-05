@@ -55,7 +55,7 @@ export default function ProfileForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <label className="block text-sm font-medium text-ink-2">
-        Display name
+        Display Name
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -66,7 +66,7 @@ export default function ProfileForm({
       </label>
 
       <div>
-        <p className="text-sm font-medium">Home city</p>
+        <p className="text-sm font-medium">Home City</p>
         <p className="mb-2 text-xs text-ink-3">
           You can only claim planting slots in this city/municipality. It also sets your local leaderboard.
         </p>
@@ -95,7 +95,7 @@ export default function ProfileForm({
         disabled={saving}
         className="min-h-11 rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-emerald-950 shadow-sm transition hover:bg-emerald-300 motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {saving ? "Saving…" : "Save profile"}
+        {saving ? "Saving…" : "Save Profile"}
       </button>
     </form>
   );

@@ -142,7 +142,7 @@ export default function SlotForm({
       return;
     }
     if (!cityCode) {
-      setError("Choose the slot's city/municipality.");
+      setError("Choose the Slot's city/municipality.");
       return;
     }
     if (isNew && !values.speciesId) {
@@ -185,7 +185,7 @@ export default function SlotForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <h2 className="font-semibold">{isNew ? "Add planting slot" : "Edit slot rules"}</h2>
+        <h2 className="font-semibold">{isNew ? "Add Planting Slot" : "Edit Slot Rules"}</h2>
         {isNew ? (
           <p className="text-xs text-ink-3">Pin captured from the map — adjust the coordinates if needed.</p>
         ) : (
@@ -234,7 +234,7 @@ export default function SlotForm({
           ))}
         </div>
       ) : isNew && located?.place && !manualPlace ? (
-        <section aria-label="Detected location" className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.07] p-3">
+        <section aria-label="Detected Location" className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.07] p-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-emerald-300">📍 Auto-filled from pin</p>
             <button
@@ -300,7 +300,7 @@ export default function SlotForm({
       )}
 
       <label className="block text-sm">
-        Tree species
+        Tree Species
         <select
           className={input}
           value={values.speciesId}
@@ -324,7 +324,7 @@ export default function SlotForm({
       </label>
 
       <label className="block text-sm">
-        Points per plant
+        Points per Plant
         <input
           className={input}
           type="number"
@@ -355,7 +355,7 @@ export default function SlotForm({
       </label>
 
       <label className="block text-sm">
-        Max participants
+        Max Participants
         <input
           className={input}
           type="number"
@@ -398,7 +398,7 @@ export default function SlotForm({
           disabled={saving || locating}
           className="rounded bg-emerald-400 px-4 py-1.5 text-sm font-medium text-emerald-950 disabled:opacity-50"
         >
-          {saving ? "Saving…" : isNew ? "Create slot" : "Save changes"}
+          {saving ? "Saving…" : isNew ? "Create Slot" : "Save Changes"}
         </button>
         <button type="button" onClick={onCancel} className="rounded px-4 py-1.5 text-sm text-ink-2 hover:bg-card-2">
           Cancel
