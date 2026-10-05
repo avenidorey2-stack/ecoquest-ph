@@ -290,6 +290,11 @@ body {
   background-image: url("/images/auth-bg.jpg");
   opacity: 0.5;
 }
+/* PauseWhileScrolling: the scene holds still while the page is touched or scrolled. */
+.eq-eco-bg--paused *,
+.eq-eco-bg--paused *::before {
+  animation-play-state: paused !important;
+}
 /* Faint dot grid, fading out toward the bottom: the "eco tech" texture. */
 .eq-eco-grid {
   position: absolute;
@@ -347,6 +352,14 @@ body {
   overflow: hidden;
   pointer-events: none;
 }
+/* Every backdrop keyframe below uses fixed values (no var()) and animates only transform,
+   translate/rotate/scale or opacity of a whole element, so the GPU runs it without the main
+   thread. Chrome keeps an animation on the main thread when it targets an <svg> with
+   rotate/scale/translate, or when it can't be seen (e.g. inside a closed drawer) — and one such
+   animation makes every frame a main-thread frame, stalling taps and scrolling on budget phones.
+   Per-leaf variety comes from durations, delays, directions and modifier classes.
+   Each restart of an animation's loop also costs a main-thread style update, so one iteration
+   packs several falls, swings and pulses (same speeds as single ones, far fewer restarts). */
 .eq-eco-leaf {
   position: absolute;
   top: -40px;
@@ -354,13 +367,35 @@ body {
   width: var(--s, 18px);
   height: var(--s, 18px);
   color: var(--c, rgb(16 185 129 / 0.35));
-  animation: eq-leaf-fall var(--d, 26s) linear var(--delay, 0s) infinite;
+  /* One iteration = 2 falls of --d each. */
+  animation: eq-leaf-fall calc(var(--d, 26s) * 2) linear var(--delay, 0s) infinite;
   will-change: transform;
 }
-.eq-eco-leaf > svg {
+.eq-eco-leaf--left {
+  animation-name: eq-leaf-fall-left;
+}
+/* The inner span sways, spins (reversed by --spin-dir) and, with --flip, slowly turns over.
+   A span, not the svg: see above. */
+.eq-eco-leaf > span,
+.eq-eco-leaf svg {
+  display: block;
   width: 100%;
   height: 100%;
-  animation: eq-leaf-sway calc(var(--d, 26s) / 6) ease-in-out infinite alternate;
+}
+.eq-eco-leaf > span {
+  animation-name: eq-leaf-sway, eq-leaf-spin;
+  animation-duration: calc(var(--d, 26s) * 2), calc(var(--d, 26s) * 2);
+  animation-timing-function: ease-in-out, linear;
+  animation-delay: 0s, var(--delay, 0s);
+  animation-iteration-count: infinite;
+  animation-direction: normal, var(--spin-dir, normal);
+}
+.eq-eco-leaf--flip > span {
+  animation-name: eq-leaf-sway, eq-leaf-spin, eq-leaf-flip;
+  animation-duration: calc(var(--d, 26s) * 2), calc(var(--d, 26s) * 2), calc(var(--flip, 4s) * 8);
+  animation-timing-function: ease-in-out, linear, ease-in-out;
+  animation-delay: 0s, var(--delay, 0s), 0s;
+  animation-direction: normal, var(--spin-dir, normal), normal;
 }
 
 @keyframes eq-drift-a {
@@ -370,33 +405,40 @@ body {
   to { transform: translate3d(7vmax, -4vmax, 0) scale(1.12); }
 }
 @keyframes eq-leaf-fall {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
-  8% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translate3d(var(--drift, 80px), 110vh, 0) rotate(var(--spin, 300deg)); opacity: 0; }
+  0%, 50.01% { transform: translate3d(0, 0, 0); opacity: 0; }
+  4%, 54% { opacity: 1; }
+  42.5%, 92.5% { opacity: 1; }
+  50%, 100% { transform: translate3d(90px, 110vh, 0); opacity: 0; }
 }
-/* Some leaves slowly turn over as they fall (squash to edge-on and back). */
-.eq-leaf-flip {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: eq-leaf-flip var(--flip, 4s) ease-in-out infinite alternate;
+@keyframes eq-leaf-fall-left {
+  0%, 50.01% { transform: translate3d(0, 0, 0); opacity: 0; }
+  4%, 54% { opacity: 1; }
+  42.5%, 92.5% { opacity: 1; }
+  50%, 100% { transform: translate3d(-90px, 110vh, 0); opacity: 0; }
 }
+/* One turn per fall. */
+@keyframes eq-leaf-spin {
+  to { rotate: 720deg; }
+}
+/* Some leaves slowly turn over as they fall (squash to edge-on and back), 4 times per loop. */
 @keyframes eq-leaf-flip {
-  from { transform: scaleX(1); }
-  to { transform: scaleX(0.4); }
+  0%, 25%, 50%, 75%, 100% { scale: 1 1; }
+  12.5%, 37.5%, 62.5%, 87.5% { scale: 0.4 1; }
 }
+/* 12 swings per loop: one every --d / 6, as before. */
 @keyframes eq-leaf-sway {
-  from { transform: translateX(-14px) rotate(-18deg); }
-  to { transform: translateX(14px) rotate(18deg); }
+  0%, 16.667%, 33.333%, 50%, 66.667%, 83.333%, 100% { transform: translateX(-14px) rotate(-18deg); }
+  8.333%, 25%, 41.667%, 58.333%, 75%, 91.667% { transform: translateX(14px) rotate(18deg); }
 }
 .eq-eco-tree {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: eq-tree-sway 7s ease-in-out infinite alternate;
+  animation: eq-tree-sway 28s ease-in-out infinite;
 }
+/* 4 sways of 7s per loop. */
 @keyframes eq-tree-sway {
-  from { transform: rotate(-1.6deg); }
-  to { transform: rotate(1.6deg); }
+  0%, 50%, 100% { transform: rotate(-1.6deg); }
+  25%, 75% { transform: rotate(1.6deg); }
 }
 /* Fewer leaves on small screens (the sign-in pages keep a fuller fall). */
 @media (max-width: 640px) {
@@ -421,6 +463,11 @@ body {
   background: radial-gradient(closest-side, rgb(52 211 153 / 0.12), transparent);
   animation: eq-drift-b 30s ease-in-out infinite alternate;
 }
+/* A closed drawer is invisible; an unseen animation can't run on the GPU, so it would tick on
+   the main thread every frame. */
+.invisible > .eq-sidebar-glow::before {
+  animation: none;
+}
 
 /* ─── Living Bioluminescent Fireflies & Spore Particles ──────────────────── */
 .eq-fireflies {
@@ -435,7 +482,8 @@ body {
   left: var(--x);
   width: var(--s, 6px);
   height: var(--s, 6px);
-  animation: eq-firefly-rise var(--d, 22s) linear var(--delay, 0s) infinite;
+  /* One iteration = 3 rises of --d each. */
+  animation: eq-firefly-rise calc(var(--d, 22s) * 3) linear var(--delay, 0s) infinite;
   will-change: transform, opacity;
 }
 /* The glowing dot. Sway (`translate`) and pulse (`scale`) animate separate properties, so
@@ -448,23 +496,31 @@ body {
   background: var(--c, #34d399);
   box-shadow: 0 0 12px 3px var(--c, #34d399);
   animation:
-    eq-firefly-sway calc(var(--d, 22s) / 4) ease-in-out infinite alternate,
-    eq-firefly-pulse calc(var(--d, 22s) / 6) ease-in-out infinite alternate;
+    eq-firefly-sway calc(var(--d, 22s) * 3) ease-in-out infinite,
+    eq-firefly-pulse calc(var(--d, 22s) * 3) ease-in-out infinite;
 }
 
 @keyframes eq-firefly-rise {
-  0% { transform: translateY(0); opacity: 0; }
-  8% { opacity: 0.95; }
-  85% { opacity: 0.9; }
-  100% { transform: translateY(-115vh); opacity: 0; }
+  0%, 33.343%, 66.677% { transform: translate3d(0, 0, 0); opacity: 0; }
+  2.667%, 36%, 69.333% { opacity: 0.95; }
+  28.333%, 61.667%, 95% { opacity: 0.9; }
+  33.333%, 66.667%, 100% { transform: translate3d(0, -115vh, 0); opacity: 0; }
 }
+.eq-firefly--wide > span {
+  animation-name: eq-firefly-sway-wide, eq-firefly-pulse;
+}
+/* 12 swings per loop (one every --d / 4) and 18 pulses (one every --d / 6), as before. */
 @keyframes eq-firefly-sway {
-  from { translate: calc(var(--drift, 30px) * -1) 0; }
-  to { translate: var(--drift, 30px) 0; }
+  0%, 16.667%, 33.333%, 50%, 66.667%, 83.333%, 100% { translate: -30px 0; }
+  8.333%, 25%, 41.667%, 58.333%, 75%, 91.667% { translate: 30px 0; }
+}
+@keyframes eq-firefly-sway-wide {
+  0%, 16.667%, 33.333%, 50%, 66.667%, 83.333%, 100% { translate: -55px 0; }
+  8.333%, 25%, 41.667%, 58.333%, 75%, 91.667% { translate: 55px 0; }
 }
 @keyframes eq-firefly-pulse {
-  0%, 100% { scale: 0.6; opacity: 0.35; }
-  50% { scale: 1.4; opacity: 1; }
+  0%, 5.556%, 11.111%, 16.667%, 22.222%, 27.778%, 33.333%, 38.889%, 44.444%, 50%, 55.556%, 61.111%, 66.667%, 72.222%, 77.778%, 83.333%, 88.889%, 94.444%, 100% { scale: 0.6; opacity: 0.35; }
+  2.778%, 8.333%, 13.889%, 19.444%, 25%, 30.556%, 36.111%, 41.667%, 47.222%, 52.778%, 58.333%, 63.889%, 69.444%, 75%, 80.556%, 86.111%, 91.667%, 97.222% { scale: 1.4; opacity: 1; }
 }
 
 /* Atmospheric canopy light sweep */
@@ -475,7 +531,6 @@ body {
   width: 140%;
   height: 60%;
   background: radial-gradient(ellipse at 50% 0%, rgb(52 211 153 / 0.12) 0%, rgb(163 230 53 / 0.04) 40%, transparent 70%);
-  filter: blur(48px);
   animation: eq-sweep-drift 24s ease-in-out infinite alternate;
   pointer-events: none;
 }
@@ -508,8 +563,7 @@ body {
   .eq-eco-glow,
   .eq-eco-photo,
   .eq-sidebar-glow::before,
-  .eq-eco-leaf > svg,
-  .eq-leaf-flip,
+  .eq-eco-leaf > span,
   .eq-firefly,
   .eq-firefly > span,
   .eq-eco-sweep,
@@ -522,28 +576,11 @@ body {
   }
 }
 
-/* ─── Phones & touch screens: a still scene ────────────────────────────────
-   On a budget phone the moving backdrop kept the main thread busy nearly all the time (leaves
-   and fireflies animate custom properties, which can't leave the main thread), so taps and
-   scrolling stuttered on every page. Phones keep the same scene, held still, without the
-   falling leaves, fireflies and blurred light sweep. Frosted-glass blur is dropped too: it
-   re-blurs everything behind it on each scroll frame; the panels' tinted fill stays. */
+/* ─── Phones & touch screens ───────────────────────────────────────────────
+   No frosted-glass blur: it re-blurs everything behind it on every frame while the backdrop
+   moves or the page scrolls, which budget phones can't keep up with. The panels' tinted fill
+   stays (the sticky header is solid there instead). */
 @media (max-width: 1023px), (pointer: coarse) {
-  .eq-fireflies,
-  .eq-leaves,
-  .eq-eco-sweep {
-    display: none;
-  }
-  .eq-eco-bg,
-  .eq-eco-bg *,
-  .eq-sidebar-glow::before,
-  .eq-kenburns,
-  .eq-gradient-text {
-    animation: none !important;
-  }
-  .eq-eco-glow {
-    will-change: auto;
-  }
   *,
   ::before,
   ::after,
@@ -625,6 +662,14 @@ body {
 }
 @keyframes eq-gradient-flow {
   to { background-position: 300% 0; }
+}
+/* Phones: the headline flows once, then rests. A moving text gradient repaints on the main
+   thread every frame (there's no GPU path for it), which cost a budget phone more than the
+   whole animated backdrop. */
+@media (max-width: 1023px), (pointer: coarse) {
+  .eq-gradient-text {
+    animation-iteration-count: 1;
+  }
 }
 .eq-auth-card {
   box-shadow:
