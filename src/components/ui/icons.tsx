@@ -211,11 +211,20 @@ export const ChatIcon = (p: IconProps) => (
     <path d="M5 18.5 3.5 21l.6-4.2A8 8 0 1 1 7.8 19.3 8 8 0 0 1 5 18.5Z" />
   </Svg>
 );
-/** Messages (header icon): a chat bubble with the lightning zigzag. */
-export const MessengerIcon = (p: IconProps) => (
+/** Messages: a solid speech bubble with three dots (cut out, so they show what's behind). */
+export const MessagesIcon = ({ className = "h-5 w-5" }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path
+      fillRule="evenodd"
+      d="M5 3.5h14A2.5 2.5 0 0 1 21.5 6v9a2.5 2.5 0 0 1-2.5 2.5h-9L6 21v-3.5H5A2.5 2.5 0 0 1 2.5 15V6A2.5 2.5 0 0 1 5 3.5Zm2.5 5.6a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z"
+    />
+  </svg>
+);
+/** New message: a pencil over a page. */
+export const ComposeIcon = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M12 3.5c-4.8 0-8.5 3.5-8.5 8 0 2.4 1 4.5 2.8 6v3l2.7-1.5c.9.3 1.9.4 3 .4 4.8 0 8.5-3.5 8.5-8s-3.7-7.9-8.5-7.9Z" />
-    <path d="m7.5 13.6 3-3.3 2.2 1.9 3.8-2.8-3 3.3-2.2-1.9-3.8 2.8Z" />
+    <path d="M11 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V13" />
+    <path d="M17.6 3.9a1.9 1.9 0 0 1 2.7 2.7l-7.6 7.6-3.4.7.7-3.4 7.6-7.6Z" />
   </Svg>
 );
 export const MoreIcon = (p: IconProps) => (

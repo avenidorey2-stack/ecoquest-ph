@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { areFriends, pairKey } from "@/lib/friends";
+import { areFriends, listFriends, pairKey } from "@/lib/friends";
 import { blockedIds, isBlockedEitherWay } from "@/lib/blocks";
 import { displayAvatar } from "@/lib/avatar-url";
 import { messageText } from "@/lib/chat-attachments";
@@ -245,6 +245,12 @@ export async function listConversations(viewerId: string): Promise<ConversationR
       },
     ];
   });
+}
+
+/** Friends to start a chat with, most recently active first (so "Active Now" ones lead). */
+export async function chatFriends(viewerId: string) {
+  const { friends } = await listFriends(viewerId);
+  return friends.sort((a, b) => (b.activeAt ?? "").localeCompare(a.activeAt ?? ""));
 }
 
 /**

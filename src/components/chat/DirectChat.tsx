@@ -9,7 +9,7 @@ import ChatFrame, { ChatHeader } from "./ChatFrame";
 import ChatComposer from "./ChatComposer";
 import MessageList, { type ChatItem } from "./MessageList";
 import { ActiveLabel, PresenceAvatar } from "./Presence";
-import { ChevronLeftIcon, MessengerIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, MessagesIcon } from "@/components/ui/icons";
 
 const MESSAGE_MAX = 2000; // = MESSAGE_MAX in lib/messages (server-validated)
 /** Fallback when live pings aren't available (local development, or the connection dropped). */
@@ -118,7 +118,7 @@ export default function DirectChat({ initial }: { initial: Thread }) {
                 <PresenceAvatar person={partner} size="h-16 w-16" />
                 <p className="mt-3 text-base font-semibold text-ink">{partner.name}</p>
                 <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-ink-3">
-                  <MessengerIcon className="h-4 w-4 text-emerald-300" /> Say hi to your planting friend!
+                  <MessagesIcon className="h-4 w-4 text-emerald-300" /> Say hi to your planting friend!
                 </p>
               </div>
             }

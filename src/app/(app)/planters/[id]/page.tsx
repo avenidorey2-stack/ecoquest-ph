@@ -8,7 +8,7 @@ import ProofGallery from "@/components/profile/ProofGallery";
 import FriendButton from "@/components/social/FriendButton";
 import BlockButton from "@/components/social/BlockButton";
 import { ActiveLabel } from "@/components/chat/Presence";
-import { CoinIcon, LockIcon, MedalIcon, MessengerIcon, TreeIcon } from "@/components/ui/icons";
+import { CoinIcon, LockIcon, MedalIcon, MessagesIcon, TreeIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Planter profile · EcoQuest PH" };
 
@@ -67,7 +67,7 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
                   href={`/messages/${profile.id}`}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/10 px-3 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/20"
                 >
-                  <MessengerIcon className="h-4 w-4" /> Message
+                  <MessagesIcon className="h-4 w-4" /> Message
                 </Link>
               )}
               <FriendButton userId={profile.id} initial={profile.friendState} />
