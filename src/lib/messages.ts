@@ -6,6 +6,7 @@ import { messageText } from "@/lib/chat-attachments";
 import { chatMedia, type StoredMedia } from "@/lib/storage";
 import { visiblePresence, type Presence } from "@/lib/active-status";
 import { queuePush } from "@/lib/push";
+import { isReaction } from "@/lib/reactions";
 
 // Messages between friends: one conversation per pair of planters, text and/or a photo or video.
 // Only friends can send; the history stays readable after unfriending, and disappears for both
@@ -22,8 +23,6 @@ export const SENDS_PER_MINUTE = 30;
 export const REACTS_PER_MINUTE = 60;
 /** While online, lastActiveAt is written at most this often per user (the app checks in every 30 s). */
 const ACTIVE_WRITE_MS = 20_000;
-/** Reactions, like Messenger's. One per person per message. */
-export const REACTIONS = ["❤️", "😆", "😮", "😢", "😠", "👍"] as const;
 
 export const chatPath = (userId: string) => `/messages/${userId}`;
 /** Upload scope: a file uploaded by `senderId` for the chat with `otherId` can't be sent elsewhere. */
@@ -220,7 +219,8 @@ export async function sendDirectMessage(senderId: string, otherId: string, rawBo
  * message's reactions. The author gets a push when someone else reacts.
  */
 export async function reactToMessage(viewerId: string, otherId: string, messageId: string, emoji: unknown) {
-  if (emoji !== null && !REACTIONS.includes(emoji as (typeof REACTIONS)[number])) return fail(400, "Choose a reaction.");
+  // One reaction per person per message, from the app's list (lib/reactions).
+  if (emoji !== null && !isReaction(emoji)) return fail(400, "Choose a reaction.");
   const denied = await canMessage(viewerId, otherId);
   if (denied) return denied;
   const msg = await prisma.directMessage.findFirst({
