@@ -97,6 +97,32 @@ export const ImageIcon = (p: IconProps) => (
     <path d="m21 16-5-5-9 9" />
   </Svg>
 );
+/** Two-tone camera for the chat box: rounded body, raised lens housing, flash dot. */
+export const ChatCameraIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      d="M3 9a2.5 2.5 0 0 1 2.5-2.5h1.7l1.3-1.9a1.5 1.5 0 0 1 1.24-.66h4.52a1.5 1.5 0 0 1 1.24.66l1.3 1.9h1.7A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9Z"
+      fill="currentColor"
+      fillOpacity=".16"
+    />
+    <circle cx="12" cy="13" r="3.6" />
+    <circle cx="17.6" cy="9.6" r=".4" fill="currentColor" />
+  </Svg>
+);
+/** Two-tone gallery for the chat box: a photo with mountains and sun, another photo behind it. */
+export const GalleryIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M7 3.5h11A2.5 2.5 0 0 1 20.5 6v11" strokeOpacity=".55" />
+    <rect x="3.5" y="7" width="14" height="13.5" rx="2.5" fill="currentColor" fillOpacity=".16" />
+    <circle cx="8" cy="11.5" r="1.4" fill="currentColor" />
+    <path d="m3.8 18.2 4.2-3.9 2.8 2.5 2.4-2.1 4.3 3.8" />
+  </Svg>
+);
+export const PlusIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Svg>
+);
 export const UploadIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />

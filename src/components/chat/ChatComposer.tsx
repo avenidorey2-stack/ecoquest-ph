@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { fileWithType, formatSize, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
 import WebcamCapture from "@/components/quests/WebcamCapture";
-import { CameraIcon, CloseIcon, ImageIcon, ReplyIcon, SendIcon } from "@/components/ui/icons";
+import { ChatCameraIcon, CloseIcon, GalleryIcon, PlusIcon, ReplyIcon, SendIcon } from "@/components/ui/icons";
 
 /** The text box grows up to this many pixels, then scrolls. */
 const MAX_INPUT_PX = 128;
@@ -31,9 +31,14 @@ function Thumb({ file }: { file: File }) {
 const iconBtn =
   "grid h-11 w-11 shrink-0 place-items-center rounded-full text-emerald-300 transition-colors hover:bg-emerald-400/10 active:bg-emerald-400/20 disabled:opacity-40";
 
+/** Camera / gallery / "+" buttons: a soft tinted circle that dips when pressed. */
+const toolBtn =
+  "eq-tool-in grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/15 transition-[background-color,transform,box-shadow] duration-150 hover:bg-emerald-400/20 hover:ring-emerald-400/30 motion-safe:active:scale-90 disabled:opacity-40 aria-pressed:bg-emerald-400 aria-pressed:text-emerald-950";
+
 /**
  * Message box: camera (phones: take a photo or record a video; computers: webcam photo), photo &
- * video picker, a text box that grows as you type, and Send. On a computer, Enter sends and
+ * video picker, a text box that grows as you type, and Send. Once you type, camera and gallery fold
+ * into one "+" (like Messenger) so the text box gets the room; "+" brings them back. On a computer, Enter sends and
  * Shift+Enter adds a line; on phones Enter adds a line (Send is the button). Sending keeps the
  * keyboard open, like Messenger.
  */
@@ -61,6 +66,8 @@ export default function ChatComposer({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [webcam, setWebcam] = useState(false);
+  /** "+" was tapped: show camera and gallery again until the next keystroke. */
+  const [toolsOpen, setToolsOpen] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
   // Unique per box: two pop-up chat windows can be open at once.
   const inputId = useId();
@@ -96,6 +103,7 @@ export default function ChatComposer({
   }
 
   const canSend = !busy && (!!text.trim() || !!file);
+  const folded = !!text.trim() && !toolsOpen && !webcam;
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
@@ -158,26 +166,57 @@ export default function ChatComposer({
       <input ref={cameraInput} type="file" accept="image/*,video/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
       <input ref={fileInput} type="file" accept={MEDIA_ACCEPT} onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
 
-      <div className="flex items-end gap-1">
-        <button type="button" onClick={() => cameraInput.current?.click()} disabled={busy} aria-label="Take a photo or video" className={`${iconBtn} hidden pointer-coarse:grid`}>
-          <CameraIcon className="h-6 w-6" />
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setWebcam((v) => !v);
-          }}
-          disabled={busy}
-          aria-label="Take a photo with your webcam"
-          aria-pressed={webcam}
-          className={`${iconBtn} pointer-coarse:hidden`}
-        >
-          <CameraIcon className="h-6 w-6" />
-        </button>
-        <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} aria-label="Send a photo or video" className={iconBtn}>
-          <ImageIcon className="h-6 w-6" />
-        </button>
+      <div className="flex items-end gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
+          {folded ? (
+            <button
+              type="button"
+              onClick={() => setToolsOpen(true)}
+              disabled={busy}
+              aria-label="Show camera and photos"
+              title="Camera and Photos"
+              className={toolBtn}
+            >
+              <PlusIcon className="h-5 w-5" />
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => cameraInput.current?.click()}
+                disabled={busy}
+                aria-label="Take a photo or video"
+                className={`${toolBtn} hidden pointer-coarse:grid`}
+              >
+                <ChatCameraIcon className="h-[22px] w-[22px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setWebcam((v) => !v);
+                }}
+                disabled={busy}
+                aria-label="Take a photo with your webcam"
+                title="Camera"
+                aria-pressed={webcam}
+                className={`${toolBtn} pointer-coarse:hidden`}
+              >
+                <ChatCameraIcon className="h-[22px] w-[22px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                disabled={busy}
+                aria-label="Send a photo or video"
+                title="Photos and Videos"
+                className={toolBtn}
+              >
+                <GalleryIcon className="h-[22px] w-[22px]" />
+              </button>
+            </>
+          )}
+        </div>
         <label htmlFor={inputId} className="sr-only">
           Message
         </label>
@@ -186,7 +225,10 @@ export default function ChatComposer({
           id={inputId}
           data-chat-input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setToolsOpen(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Escape" && replyingTo) {
               e.preventDefault();
@@ -212,9 +254,9 @@ export default function ChatComposer({
           // Keep focus (and the phone keyboard) in the text box when tapping Send.
           onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:bg-card-3 disabled:text-ink-4"
+          className="group/send grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 shadow-[0_0_0_1px_rgb(110_231_183/0.35),0_8px_22px_-8px_rgb(52_211_153/0.7)] transition-[background-color,box-shadow,transform] duration-200 hover:bg-emerald-300 motion-safe:active:scale-90 disabled:bg-card-3 disabled:text-ink-4 disabled:shadow-none"
         >
-          <SendIcon className="h-5 w-5" />
+          <SendIcon className="h-5 w-5 transition-transform duration-200 ease-[var(--ease-spring)] group-enabled/send:motion-safe:translate-x-px group-enabled/send:motion-safe:-rotate-12 group-enabled/send:motion-safe:scale-110" />
         </button>
       </div>
       {error && (

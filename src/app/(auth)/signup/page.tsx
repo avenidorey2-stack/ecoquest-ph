@@ -33,7 +33,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
         </>
       )}
 
-      <SignupForm devMailbox={isDevMailboxEnabled()} initialEmail={email} />
+      <SignupForm devMailbox={isDevMailboxEnabled()} initialEmail={email} callbackUrl={callbackUrl} />
 
       <p className="text-center text-sm text-ink-2">
         Already have an account?{" "}

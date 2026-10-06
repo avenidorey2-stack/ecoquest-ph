@@ -56,6 +56,18 @@ describe("planter search", () => {
     expect(Object.keys(results[0]).sort()).toEqual(["activeAt", "city", "id", "image", "level", "name", "online", "province", "state"]);
   });
 
+  it("lowercase finds every capitalization, best name matches first", async () => {
+    signInAs(await createUser({ name: "Juan Searcher" }));
+    // The "inside a word" match has the most plants, so ranking must beat the busiest-first order.
+    for (const [name, totalPlants] of [["Ligaba Cruz", 99], ["Ma. Gabby Santos", 5], ["Gabriel Reyes", 3], ["GAB", 1], ["Gab", 2], ["gab", 0]] as const) {
+      await createUser({ name, totalPlants });
+    }
+    await createUser({ name: "Gina Bautista" });
+
+    const { results } = await (await search(req("http://test.local/api/users/search?q=gab"))).json();
+    expect(results.map((r: { name: string }) => r.name)).toEqual(["Gab", "GAB", "gab", "Gabriel Reyes", "Ma. Gabby Santos", "Ligaba Cruz"]);
+  });
+
   it("needs two characters and a session", async () => {
     signInAs(await createUser({ name: "Juan" }));
     await createUser({ name: "Ana" });

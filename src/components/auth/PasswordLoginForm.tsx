@@ -69,7 +69,7 @@ export default function PasswordLoginForm({ callbackUrl, email: initialEmail }: 
         disabled={pending}
         className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-semibold text-emerald-950 shadow-sm shadow-black/20 transition hover:bg-emerald-300 hover:shadow-md motion-safe:active:scale-[0.98] disabled:opacity-50"
       >
-        {pending ? "Signing Inâ€¦" : "Sign In"}
+        {pending ? "Signing In…" : "Sign In"}
       </button>
     </form>
   );

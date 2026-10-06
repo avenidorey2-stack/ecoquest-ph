@@ -187,7 +187,9 @@ export default function UserSearch() {
                       className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 hover:text-emerald-200">
                       <Avatar card={p} />
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>
+                        <span className="block truncate text-sm font-semibold text-ink">
+                          <Highlight text={p.name} query={q} />
+                        </span>
                         <span className="block truncate text-xs text-ink-3">
                           Lv {p.level}
                           {p.city && ` · ${p.city}`}
@@ -203,6 +205,19 @@ export default function UserSearch() {
         )}
       </div>
     </div>
+  );
+}
+
+/** `text` with the first case-insensitive match of `query` highlighted ("gab" in "Ma. Gabby"). */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const at = query ? text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) : -1;
+  if (at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="rounded-sm bg-emerald-400/20 text-emerald-200">{text.slice(at, at + query.length)}</mark>
+      {text.slice(at + query.length)}
+    </>
   );
 }
 

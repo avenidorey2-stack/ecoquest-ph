@@ -212,6 +212,16 @@ body {
 @keyframes eq-pop-in {
   from { opacity: 0; transform: translateY(18px) scale(0.96); }
 }
+/* Chat box camera / gallery / "+" buttons swapping in. */
+@keyframes eq-tool-in {
+  from { opacity: 0; transform: scale(0.6); }
+}
+.eq-tool-in {
+  animation: eq-tool-in var(--dur-base) var(--ease-spring) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eq-tool-in { animation: none; }
+}
 @keyframes eq-fill {
   from { transform: scaleX(0); }
 }

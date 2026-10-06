@@ -172,18 +172,43 @@ export async function countIncomingRequests(userId: string) {
 
 export const SEARCH_MIN = 2;
 const SEARCH_LIMIT = 20;
+/** Matches fetched before ranking, so a name that starts with the query isn't cut by a busier "contains" match. */
+const SEARCH_POOL = 100;
 
-/** Planters whose name contains `query` (case-insensitive), each with the viewer's friend state. */
+/**
+ * How well `name` matches `q`, ignoring case: 0 = the whole name, 1 = the name starts with it,
+ * 2 = a later word starts with it ("Ma. Gabby" for "gab"), 3 = somewhere inside a word.
+ */
+export function nameMatchRank(name: string, q: string) {
+  const n = name.toLocaleLowerCase();
+  const k = q.trim().toLocaleLowerCase();
+  if (n === k) return 0;
+  if (n.startsWith(k)) return 1;
+  if (n.split(/[\s.\-']+/).some((word) => word.startsWith(k))) return 2;
+  return 3;
+}
+
+/**
+ * Planters whose name contains `query`, in any mix of upper and lower case ("gab" finds Gab, GAB,
+ * Gabriel and Ma. Gabby), each with the viewer's friend state. Best name matches first, then the
+ * busiest planters.
+ */
 export async function searchPlanters(viewerId: string, query: string): Promise<PlanterCard[]> {
   const q = query.trim().slice(0, 60);
   if (q.length < SEARCH_MIN) return [];
   const hidden = await blockedIds(viewerId);
-  const users = await prisma.user.findMany({
+  const pool = await prisma.user.findMany({
     where: { role: "USER", id: { notIn: [viewerId, ...hidden] }, name: { contains: q, mode: "insensitive" } },
     orderBy: [{ totalPlants: "desc" }, { name: "asc" }],
-    take: SEARCH_LIMIT,
+    take: SEARCH_POOL,
     select: cardSelect,
   });
+  // A stable sort keeps the busiest-first order within each rank.
+  const users = pool
+    .map((u) => ({ u, rank: nameMatchRank(u.name ?? "", q) }))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, SEARCH_LIMIT)
+    .map(({ u }) => u);
   if (!users.length) return [];
   const rows = await prisma.friendship.findMany({
     where: { pairKey: { in: users.map((u) => pairKey(viewerId, u.id)) } },
