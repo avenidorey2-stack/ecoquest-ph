@@ -1,6 +1,7 @@
 import { requirePageUserId } from "@/lib/authz";
 import { listFriends, type PlanterCard } from "@/lib/friends";
 import FriendRow from "@/components/social/FriendRow";
+import AutoRefresh from "@/components/layout/AutoRefresh";
 import { SearchIcon, UserCheckIcon, UserPlusIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Friends · EcoQuest PH" };
@@ -35,6 +36,8 @@ export default async function FriendsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-6 text-ink sm:px-6 lg:py-8">
+      {/* Keeps friends' "Active Now / Active 2m ago" current. */}
+      <AutoRefresh seconds={30} />
       <p className="flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
         <SearchIcon className="h-4 w-4 shrink-0 text-emerald-300" />
         Find planters with the search bar at the top, then tap Add Friend.

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
+import { disablePush } from "@/lib/push-client";
 import LiveClock from "./LiveClock";
 import LevelBar from "@/components/gamification/LevelBar";
 import { levelForXp } from "@/lib/levels";
@@ -31,6 +32,8 @@ import {
 import NotificationBell from "./NotificationBell";
 import MessagesButton from "./MessagesButton";
 import { LiveChannel } from "./live";
+import PresenceReporter from "./PresenceReporter";
+import ChatDockProvider from "@/components/chat/ChatDock";
 import EcoBackground from "./EcoBackground";
 import ScrollReveal, { TOUR_MENU_EVENT } from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
@@ -201,7 +204,8 @@ function SidebarContent({
         >
           <FlagIcon className="h-4 w-4" /> Take the Tour
         </Link>
-        <form action={signOutAction}>
+        {/* Signing out also stops this device's notifications (someone else may sign in next). */}
+        <form action={signOutAction} onSubmit={() => void disablePush()}>
           <button
             type="submit"
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-400/35 bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:border-rose-300/60 hover:bg-rose-500/20 hover:text-white"
@@ -268,11 +272,16 @@ export default function AppShell({
 
   return (
     <LiveChannel value={notifyChannel}>
+    <ChatDockProvider>
     <div className="min-h-dvh text-ink">
       <EcoBackground />
       <ScrollReveal />
+      <PresenceReporter />
+      {/* Very wide or zoomed-out screens: the menu and the page stay side by side in the middle
+          (like Facebook) instead of the menu stuck at the far left edge. */}
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[1680px] min-[1680px]:border-r min-[1680px]:border-line/70">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-[1100] hidden w-64 border-r border-line bg-gradient-to-b from-card to-canvas lg:block">
+      <aside className="sticky top-0 z-[1100] hidden h-dvh w-64 shrink-0 border-r border-line bg-gradient-to-b from-card to-canvas lg:block">
         <SidebarAmbience />
         <SidebarContent navId="nav-desktop" user={user} status={status} pathname={pathname} />
       </aside>
@@ -296,7 +305,7 @@ export default function AppShell({
         <SidebarContent navId="nav-drawer" user={user} status={status} pathname={pathname} onNavigate={() => setOpen(false)} />
       </aside>
 
-      <div className="flex min-h-dvh flex-col lg:pl-64">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas lg:bg-canvas/75 lg:backdrop-blur-md">
           <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
             <button
@@ -353,7 +362,9 @@ export default function AppShell({
 
         <main className="flex flex-1 flex-col">{children}</main>
       </div>
+      </div>
     </div>
+    </ChatDockProvider>
     </LiveChannel>
   );
 }

@@ -159,6 +159,7 @@ export default function ProofLightbox({
           <PhotoSocial
             key={proof.id}
             photoId={proof.id}
+            commentsOff={proof.commentsOff}
             initial={reacted[proof.id] ?? { likeCount: proof.likeCount, commentCount: proof.commentCount, likedByMe: proof.likedByMe }}
             onChange={(r) => {
               setReacted((m) => ({ ...m, [proof.id]: r }));

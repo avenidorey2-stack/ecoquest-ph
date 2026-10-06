@@ -80,10 +80,12 @@ export default function ProofGallery({
                       <HeartIcon filled={p.likedByMe} className={`h-3.5 w-3.5 ${p.likedByMe ? "text-rose-400" : ""}`} />
                       {p.likeCount}
                     </span>
-                    <span className="flex items-center gap-1" aria-label={`${p.commentCount} comments`}>
-                      <ChatIcon className="h-3.5 w-3.5" />
-                      {p.commentCount}
-                    </span>
+                    {!(p.commentsOff && p.commentCount === 0) && (
+                      <span className="flex items-center gap-1" aria-label={`${p.commentCount} comments`}>
+                        <ChatIcon className="h-3.5 w-3.5" />
+                        {p.commentCount}
+                      </span>
+                    )}
                   </p>
                 </div>
               </li>

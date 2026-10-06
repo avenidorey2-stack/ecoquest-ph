@@ -20,7 +20,7 @@ export default function FriendRow({ card }: { card: PlanterCard }) {
             Lv {card.level}
             {card.city && ` · ${card.city}, ${card.province}`}
           </span>
-          <ActiveLabel activeAt={card.activeAt} className="block truncate text-xs" />
+          <ActiveLabel presence={card} className="block truncate text-xs" />
         </span>
       </Link>
       {card.state === "FRIENDS" && (

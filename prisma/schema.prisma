@@ -139,7 +139,12 @@ model User {
   notifyComments         Boolean         @default(true)
   // "Active now / Active 2h ago", shown to friends unless the user turns it off.
   lastActiveAt           DateTime?
+  // True while the app is open (heartbeats); cleared the moment they leave, so friends see
+  // "Active 1m ago" counting from lastActiveAt instead of a lingering "Active Now".
+  isOnline               Boolean         @default(false)
   showActiveStatus       Boolean         @default(true)
+  // Privacy: whether others can comment on this planter's planting photos.
+  allowComments          Boolean         @default(true)
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
@@ -167,6 +172,8 @@ model User {
   supportMessages        SupportMessage[]
   conversations          ConversationMember[]
   directMessages         DirectMessage[]
+  messageReactions       MessageReaction[]
+  pushSubscriptions      PushSubscription[]
 
   // Leaderboards: national, and local (per city).
   @@index([weeklyPointsWeekStart, weeklyPoints])
@@ -777,10 +784,46 @@ model DirectMessage {
   mediaType      String?
   // Set when the sender unsends it: the text and file are wiped, a "removed" stub stays.
   deletedAt      DateTime?
+  // The earlier message in the same chat this one replies to.
+  replyToId      String?
   createdAt      DateTime  @default(now())
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      DirectMessage?    @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      DirectMessage[]   @relation("MessageReplies")
+  reactions    MessageReaction[]
 
   @@index([conversationId, createdAt])
+  @@index([replyToId])
+}
+
+// One emoji reaction per person per message (reacting again changes it), like Messenger.
+model MessageReaction {
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([userId])
+}
+
+// ─── Phone / browser push notifications ─────────────────────────────────────
+// One row per browser or installed app that allowed notifications (Web Push).
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

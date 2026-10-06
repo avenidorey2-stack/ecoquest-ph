@@ -5,6 +5,7 @@ import { GET as thread } from "@/app/api/photos/[id]/route";
 import { DELETE as unlike, POST as like } from "@/app/api/photos/[id]/like/route";
 import { POST as comment } from "@/app/api/photos/[id]/comments/route";
 import { DELETE as deleteComment } from "@/app/api/comments/[id]/route";
+import { PATCH as patchSettings } from "@/app/api/settings/route";
 import { getPublicProfile } from "@/lib/public-profile";
 import { listFriends } from "@/lib/friends";
 import { prisma } from "@/lib/prisma";
@@ -52,7 +53,7 @@ describe("planter search", () => {
     expect(results.map((r: { name: string }) => r.name).sort()).toEqual(["Ana Reyes", "Anabel Cruz"]);
     expect(results.find((r: { id: string }) => r.id === anabel.id).state).toBe("REQUESTED");
     expect(results.find((r: { id: string }) => r.id === ana.id).state).toBe("NONE");
-    expect(Object.keys(results[0]).sort()).toEqual(["activeAt", "city", "id", "image", "level", "name", "province", "state"]);
+    expect(Object.keys(results[0]).sort()).toEqual(["activeAt", "city", "id", "image", "level", "name", "online", "province", "state"]);
   });
 
   it("needs two characters and a session", async () => {
@@ -192,6 +193,29 @@ describe("comments and replies", () => {
     ]);
     expect((await inbox(ana.id)).map((n) => n.message)).toEqual(["Ben replied to your comment: “Agreed”"]);
     expect((await inbox(ben.id)).map((n) => n.message)).toEqual(["Ana replied to your comment: “Thanks Ben”"]);
+  });
+
+  it("can be turned off by the owner: no new comments, and only the owner still sees old ones", async () => {
+    const { owner, photo } = await planterWithPhoto();
+    const ana = await createUser({ name: "Ana" });
+    signInAs(ana);
+    expect((await post(photo.id, { body: "Nice!" })).status).toBe(201);
+
+    signInAs(owner);
+    expect((await patchSettings(jsonRequest({ allowComments: false }, "PATCH"))).status).toBe(200);
+    expect(await (await getThread(photo.id)).json()).toMatchObject({ commentsOff: true, commentCount: 1 });
+
+    signInAs(ana);
+    expect((await post(photo.id, { body: "Again" })).status).toBe(403);
+    expect(await (await getThread(photo.id)).json()).toMatchObject({ commentsOff: true, commentCount: 0, comments: [] });
+    expect((await getPublicProfile(owner.id, ana.id))?.proofs[0]).toMatchObject({ commentsOff: true, commentCount: 0 });
+    expect((await getPublicProfile(owner.id, owner.id))?.proofs[0]).toMatchObject({ commentsOff: true, commentCount: 1 });
+
+    signInAs(owner);
+    await patchSettings(jsonRequest({ allowComments: true }, "PATCH"));
+    signInAs(ana);
+    expect(await (await getThread(photo.id)).json()).toMatchObject({ commentsOff: false, commentCount: 1 });
+    expect((await post(photo.id, { body: "Again" })).status).toBe(201);
   });
 
   it("validates the text and the reply target", async () => {

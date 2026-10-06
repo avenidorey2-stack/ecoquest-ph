@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as thread, POST as send } from "@/app/api/messages/[userId]/route";
 import { POST as startUpload } from "@/app/api/messages/[userId]/upload/route";
 import { DELETE as unsend } from "@/app/api/messages/[userId]/[messageId]/route";
+import { DELETE as unreact, PUT as react } from "@/app/api/messages/[userId]/[messageId]/reaction/route";
+import { POST as presence } from "@/app/api/presence/route";
+import { DELETE as unsubscribePush, POST as subscribePush } from "@/app/api/push/route";
 import { GET as inbox } from "@/app/api/messages/route";
 import { GET as unread } from "@/app/api/messages/unread/route";
 import { GET as chatMediaFile } from "@/app/api/chat-media/[key]/route";
@@ -172,7 +175,123 @@ describe("messages between friends", () => {
   });
 });
 
+describe("replies and reactions", () => {
+  const reactTo = (to: string, messageId: string, emoji: string) => react(jsonRequest({ emoji }, "PUT"), ctx({ userId: to, messageId }));
+
+  it("replies quote the earlier message, only within the same chat", async () => {
+    const { a, b } = await friends();
+    const c = await createUser({ name: "Cy" });
+    await prisma.friendship.create({ data: { pairKey: pairKey(a.id, c.id), requesterId: a.id, addresseeId: c.id, status: "ACCEPTED" } });
+    signInAs(a);
+    const first = (await (await say(b.id, "Plant at 7?")).json()).message;
+    const other = (await (await say(c.id, "Hi Cy")).json()).message;
+
+    signInAs(b);
+    const res = await send(jsonRequest({ body: "Yes!", replyTo: first.id }), ctx({ userId: a.id }));
+    expect(res.status).toBe(201);
+    expect((await res.json()).message.replyTo).toMatchObject({ id: first.id, mine: false, preview: "Plant at 7?", deleted: false });
+    // A message from another chat can't be quoted.
+    expect((await send(jsonRequest({ body: "?", replyTo: other.id }), ctx({ userId: a.id }))).status).toBe(404);
+
+    signInAs(a);
+    const t = await (await thread(req(), ctx({ userId: b.id }))).json();
+    expect(t.messages.at(-1).replyTo).toMatchObject({ id: first.id, mine: true, preview: "Plant at 7?" });
+    // Unsending the original leaves "Message unsent" in the quote.
+    await unsend(req(), ctx({ userId: b.id, messageId: first.id }));
+    const after = await (await thread(req(), ctx({ userId: b.id }))).json();
+    expect(after.messages.at(-1).replyTo).toMatchObject({ deleted: true, preview: "Message unsent", media: null });
+  });
+
+  it("one reaction per person per message: change it, remove it; photos too; friends only", async () => {
+    const { a, b } = await friends();
+    signInAs(a);
+    const photoMsg = (await (await send(form({ body: "", file: jpeg() }), ctx({ userId: b.id }))).json()).message;
+
+    signInAs(b);
+    expect((await (await reactTo(a.id, photoMsg.id, "❤️")).json()).reactions).toEqual([{ emoji: "❤️", mine: true }]);
+    expect((await (await reactTo(a.id, photoMsg.id, "😆")).json()).reactions).toEqual([{ emoji: "😆", mine: true }]);
+    expect((await reactTo(a.id, photoMsg.id, "🍕")).status).toBe(400);
+
+    signInAs(a);
+    await reactTo(b.id, photoMsg.id, "👍");
+    const t = await (await thread(req(), ctx({ userId: b.id }))).json();
+    expect(t.messages[0].reactions).toEqual([
+      { emoji: "😆", mine: false },
+      { emoji: "👍", mine: true },
+    ]);
+    const removed = await (await unreact(req(), ctx({ userId: b.id, messageId: photoMsg.id }))).json();
+    expect(removed.reactions).toEqual([{ emoji: "😆", mine: false }]);
+
+    // Unfriended: no more reacting. Unsent messages lose their reactions.
+    await prisma.friendship.deleteMany();
+    signInAs(b);
+    expect((await reactTo(a.id, photoMsg.id, "❤️")).status).toBe(403);
+    await prisma.friendship.create({ data: { pairKey: pairKey(a.id, b.id), requesterId: a.id, addresseeId: b.id, status: "ACCEPTED" } });
+    signInAs(a);
+    await unsend(req(), ctx({ userId: b.id, messageId: photoMsg.id }));
+    expect(await prisma.messageReaction.count()).toBe(0);
+    signInAs(b);
+    expect((await reactTo(a.id, photoMsg.id, "❤️")).status).toBe(404);
+  });
+
+  it("can't react to a message in someone else's chat", async () => {
+    const { a, b } = await friends();
+    const c = await createUser();
+    await prisma.friendship.create({ data: { pairKey: pairKey(c.id, b.id), requesterId: c.id, addresseeId: b.id, status: "ACCEPTED" } });
+    signInAs(a);
+    const msg = (await (await say(b.id, "private")).json()).message;
+    signInAs(c);
+    expect((await reactTo(b.id, msg.id, "❤️")).status).toBe(404);
+  });
+});
+
+describe("phone notifications", () => {
+  const sub = (endpoint: string) => ({ endpoint, keys: { p256dh: "BNcR".padEnd(87, "x"), auth: "tBHI".padEnd(22, "y") } });
+
+  it("saves this device's subscription, moves it to whoever signs in there, and forgets it", async () => {
+    const { a, b } = await friends();
+    signInAs(a);
+    expect((await subscribePush(jsonRequest(sub("https://push.example.com/abc")))).status).toBe(201);
+    expect((await subscribePush(jsonRequest(sub("http://insecure.example.com/x")))).status).toBe(400);
+    expect((await subscribePush(jsonRequest({ endpoint: "https://push.example.com/y" }))).status).toBe(400);
+    signInAs(b);
+    await subscribePush(jsonRequest(sub("https://push.example.com/abc")));
+    expect(await prisma.pushSubscription.findMany({ select: { userId: true } })).toEqual([{ userId: b.id }]);
+    // Someone else can't remove it.
+    signInAs(a);
+    await unsubscribePush(jsonRequest({ endpoint: "https://push.example.com/abc" }, "DELETE"));
+    expect(await prisma.pushSubscription.count()).toBe(1);
+    signInAs(b);
+    await unsubscribePush(jsonRequest({ endpoint: "https://push.example.com/abc" }, "DELETE"));
+    expect(await prisma.pushSubscription.count()).toBe(0);
+  });
+});
+
 describe("active status", () => {
+  it("shows Active Now while open, and counts up the moment they leave", async () => {
+    const { a, b } = await friends();
+    signInAs(b);
+    await unread(); // the app's check-in
+    signInAs(a);
+    let partner = (await (await thread(req(), ctx({ userId: b.id }))).json()).partner;
+    expect(partner.online).toBe(true);
+
+    signInAs(b);
+    expect((await presence(jsonRequest({ state: "away" }))).status).toBe(204);
+    signInAs(a);
+    partner = (await (await thread(req(), ctx({ userId: b.id }))).json()).partner;
+    expect(partner.online).toBe(false);
+    expect(partner.activeAt).not.toBeNull();
+
+    // Back again: online right away, even within the check-in throttle.
+    signInAs(b);
+    await presence(jsonRequest({ state: "active" }));
+    signInAs(a);
+    expect((await (await thread(req(), ctx({ userId: b.id }))).json()).partner.online).toBe(true);
+    signInAs(b);
+    expect((await presence(jsonRequest({ state: "bogus" }))).status).toBe(400);
+  });
+
   it("is recorded while the app is open and shown to friends only, unless turned off", async () => {
     const { a, b } = await friends();
     const stranger = await createUser();

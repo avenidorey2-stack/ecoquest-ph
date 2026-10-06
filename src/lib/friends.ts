@@ -1,5 +1,6 @@
 import type { PhotoVisibility } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { visiblePresence } from "@/lib/active-status";
 import { notify } from "@/lib/notifications";
 import { displayAvatar } from "@/lib/avatar-url";
 import { levelForXp } from "@/lib/levels";
@@ -103,8 +104,9 @@ export type PlanterCard = {
   province: string | null;
   level: number;
   state: FriendState;
-  /** Last active (friends only, if they share it): "Active Now" / "Active 2h ago". */
+  /** Last active (friends only, if they share it): "Active Now" / "Active 2m ago". */
   activeAt: string | null;
+  online: boolean;
 };
 
 const cardSelect = {
@@ -116,6 +118,7 @@ const cardSelect = {
   province: true,
   xp: true,
   lastActiveAt: true,
+  isOnline: true,
   showActiveStatus: true,
 } as const;
 type CardUser = {
@@ -127,6 +130,7 @@ type CardUser = {
   province: string | null;
   xp: number;
   lastActiveAt: Date | null;
+  isOnline: boolean;
   showActiveStatus: boolean;
 };
 
@@ -139,7 +143,7 @@ function toCard(u: CardUser, state: FriendState): PlanterCard {
     province: u.province,
     level: levelForXp(u.xp),
     state,
-    activeAt: state === "FRIENDS" && u.showActiveStatus && u.lastActiveAt ? u.lastActiveAt.toISOString() : null,
+    ...visiblePresence(u, state === "FRIENDS"),
   };
 }
 

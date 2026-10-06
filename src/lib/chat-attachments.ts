@@ -41,26 +41,27 @@ export async function startChatUpload(userId: string, scope: string, input: unkn
 }
 
 /**
- * Reads a send request: JSON `{ body, key?, token? }` (the file is already in storage) or a
- * multipart form with `body` and an optional `file` (local disk), which is stored here.
- * The caller removes `media` if the message then isn't saved.
+ * Reads a send request: JSON `{ body, key?, token?, replyTo? }` (the file is already in storage)
+ * or a multipart form with `body`, `replyTo` and an optional `file` (local disk), which is stored
+ * here. The caller removes `media` if the message then isn't saved.
  */
-export async function readChatSend(req: Request, scope: string): Promise<{ ok: true; body: unknown; media: StoredMedia | null } | Fail> {
+export async function readChatSend(req: Request, scope: string): Promise<{ ok: true; body: unknown; replyTo: unknown; media: StoredMedia | null } | Fail> {
   if (req.headers.get("content-type")?.includes("multipart/form-data")) {
     const form = await req.formData().catch(() => null);
     if (!form) return fail(400, "Invalid request.");
     const file = form.get("file");
-    if (!(file instanceof File) || file.size === 0) return { ok: true, body: form.get("body"), media: null };
+    const fields = { body: form.get("body"), replyTo: form.get("replyTo") };
+    if (!(file instanceof File) || file.size === 0) return { ok: true, ...fields, media: null };
     try {
-      return { ok: true, body: form.get("body"), media: await chatMedia.save(file) };
+      return { ok: true, ...fields, media: await chatMedia.save(file) };
     } catch (err) {
       return fail(400, (err as Error).message);
     }
   }
 
-  const json = (await req.json().catch(() => null)) as { body?: unknown; key?: unknown; token?: unknown } | null;
+  const json = (await req.json().catch(() => null)) as { body?: unknown; key?: unknown; token?: unknown; replyTo?: unknown } | null;
   if (!json || typeof json !== "object") return fail(400, "Invalid request.");
-  if (json.key === undefined || json.key === null) return { ok: true, body: json.body, media: null };
+  if (json.key === undefined || json.key === null) return { ok: true, body: json.body, replyTo: json.replyTo, media: null };
   if (typeof json.key !== "string" || typeof json.token !== "string" || !chatMedia.isValidToken(scope, json.key, json.token)) {
     return fail(400, "Upload expired or invalid. Please try again.");
   }
@@ -70,7 +71,7 @@ export async function readChatSend(req: Request, scope: string): Promise<{ ok: t
   });
   if (!checked) return fail(502, "Couldn't check your upload. Please try again.");
   if ("error" in checked) return fail(400, checked.error);
-  return { ok: true, body: json.body, media: checked.media };
+  return { ok: true, body: json.body, replyTo: json.replyTo, media: checked.media };
 }
 
 /**

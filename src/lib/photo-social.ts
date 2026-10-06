@@ -5,7 +5,9 @@ import { canSeePhotos } from "@/lib/friends";
 
 // Likes, comments and replies on approved planting photos/videos (Verification rows). Everything
 // here is gated by the owner's photo privacy (canSeePhotos): a viewer who can't see a photo can't
-// read, like or comment on it either.
+// read, like or comment on it either. Planters can also turn comments off for their photos
+// (Settings → Privacy): then nobody can add one, and only the owner (and admins) still see the
+// old ones.
 
 export const COMMENT_MAX = 500;
 const THREAD_LIMIT = 200;
@@ -22,7 +24,7 @@ async function visiblePhoto(verificationId: string, viewer: Viewer) {
     where: { id: verificationId, status: "APPROVED" },
     select: {
       id: true,
-      quest: { select: { user: { select: { id: true, name: true, photoVisibility: true, notifyLikes: true, notifyComments: true } } } },
+      quest: { select: { user: { select: { id: true, name: true, photoVisibility: true, notifyLikes: true, notifyComments: true, allowComments: true } } } },
     },
   });
   if (!v || !(await canSeePhotos(v.quest.user, viewer))) return null;
@@ -40,17 +42,27 @@ export type PhotoComment = {
   replies: PhotoComment[];
 };
 
-export type PhotoThread = { likeCount: number; likedByMe: boolean; commentCount: number; comments: PhotoComment[] };
+export type PhotoThread = {
+  likeCount: number;
+  likedByMe: boolean;
+  commentCount: number;
+  comments: PhotoComment[];
+  /** The owner turned comments off: no new ones, and only the owner and admins see old ones. */
+  commentsOff: boolean;
+};
 
 /** Likes and the comment thread (oldest first, replies under their comment). */
 export async function getPhotoThread(verificationId: string, viewer: Viewer): Promise<{ ok: true; thread: PhotoThread } | Fail> {
   const photo = await visiblePhoto(verificationId, viewer);
   if (!photo) return notFound;
+  const mayModerate = viewer.id === photo.owner.id || viewer.role === "ADMIN";
+  const commentsOff = !photo.owner.allowComments;
+  const hideComments = commentsOff && !mayModerate;
   const [likeCount, mine, rows] = await Promise.all([
     prisma.photoLike.count({ where: { verificationId } }),
     prisma.photoLike.findUnique({ where: { verificationId_userId: { verificationId, userId: viewer.id } } }),
     prisma.photoComment.findMany({
-      where: { verificationId },
+      where: hideComments ? { id: { in: [] } } : { verificationId },
       orderBy: { createdAt: "asc" },
       take: THREAD_LIMIT,
       select: {
@@ -63,7 +75,6 @@ export async function getPhotoThread(verificationId: string, viewer: Viewer): Pr
     }),
   ]);
 
-  const mayModerate = viewer.id === photo.owner.id || viewer.role === "ADMIN";
   const byId = new Map<string, PhotoComment>();
   const top: PhotoComment[] = [];
   for (const r of rows) {
@@ -80,7 +91,7 @@ export async function getPhotoThread(verificationId: string, viewer: Viewer): Pr
     if (parent) parent.replies.push(c);
     else if (!r.parentId) top.push(c);
   }
-  return { ok: true, thread: { likeCount, likedByMe: !!mine, commentCount: rows.length, comments: top } };
+  return { ok: true, thread: { likeCount, likedByMe: !!mine, commentCount: rows.length, comments: top, commentsOff } };
 }
 
 /** Likes (`like` true) or unlikes a photo. The owner is notified of a new like from someone else. */
@@ -118,6 +129,7 @@ export async function addComment(verificationId: string, viewer: Viewer, rawBody
   if (body.length > COMMENT_MAX) return { ok: false, status: 400, error: `Comments can be up to ${COMMENT_MAX} characters.` } satisfies Fail;
   const photo = await visiblePhoto(verificationId, viewer);
   if (!photo) return notFound;
+  if (!photo.owner.allowComments) return { ok: false, status: 403, error: "Comments are turned off for this photo." } satisfies Fail;
 
   let parent: { id: string; authorId: string; notify: boolean } | null = null;
   if (rawParentId != null) {

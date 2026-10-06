@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { visiblePresence } from "@/lib/active-status";
 import { displayAvatar } from "@/lib/avatar-url";
 import { levelForXp, levelTitle } from "@/lib/levels";
 import { achievementName } from "@/lib/achievements";
@@ -23,8 +24,11 @@ export type PublicProof = {
   /** When it was approved — the date the planting was acquired. */
   approvedAt: string | null;
   likeCount: number;
+  /** 0 when comments are off and the viewer isn't the planter (or an admin). */
   commentCount: number;
   likedByMe: boolean;
+  /** The planter turned comments off for their photos. */
+  commentsOff: boolean;
 };
 
 export type PublicAchievement = { key: string; name: string; icon: string; description: string; category: string; unlockedAt: string };
@@ -49,6 +53,7 @@ export type PublicProfile = {
   friendState: FriendState;
   /** Last active, for friends only (and only if the planter shares it). */
   activeAt: string | null;
+  online: boolean;
   /** Every achievement ever unlocked — achievements are never revoked. */
   achievements: PublicAchievement[];
 };
@@ -82,7 +87,9 @@ export async function getPublicProfile(
       createdAt: true,
       photoVisibility: true,
       lastActiveAt: true,
+      isOnline: true,
       showActiveStatus: true,
+      allowComments: true,
     },
   });
   if (!user || (user.role !== "USER" && user.id !== viewerId)) return null;
@@ -91,6 +98,8 @@ export async function getPublicProfile(
   // Blocked either way: the profile doesn't exist for them (admins can still look).
   if (viewer?.role !== "ADMIN" && (await isBlockedEitherWay(userId, viewerId))) return null;
   const showPhotos = !!viewer && (await canSeePhotos(user, viewer));
+  // Comments turned off: only the planter and admins still see the old ones.
+  const hideComments = !user.allowComments && viewerId !== userId && viewer?.role !== "ADMIN";
   const approved = { status: "APPROVED" as const, quest: { userId } };
   const [proofs, totalProofs, unlocks, friendship] = await Promise.all([
     prisma.verification.findMany({
@@ -145,13 +154,14 @@ export async function getPublicProfile(
       submittedAt: v.createdAt.toISOString(),
       approvedAt: v.reviewedAt?.toISOString() ?? null,
       likeCount: v._count.likes,
-      commentCount: v._count.comments,
+      commentCount: hideComments ? 0 : v._count.comments,
       likedByMe: v.likes.length > 0,
+      commentsOff: !user.allowComments,
     })),
     totalProofs,
     photosHiddenBy: showPhotos || user.photoVisibility === "EVERYONE" ? null : user.photoVisibility,
     friendState: friendship,
-    activeAt: friendship === "FRIENDS" && user.showActiveStatus && user.lastActiveAt ? user.lastActiveAt.toISOString() : null,
+    ...visiblePresence(user, friendship === "FRIENDS"),
     achievements: unlocks.map((u) => ({
       key: u.achievement.key,
       name: achievementName(u.achievement.key, u.detail),

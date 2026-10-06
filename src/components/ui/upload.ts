@@ -48,10 +48,12 @@ export async function sendChatMessage(
   body: string,
   file: File | null,
   onProgress: (pct: number) => void,
+  /** Extra fields sent with the message, e.g. `{ replyTo }`. */
+  extra: Record<string, string> = {},
 ): Promise<Result["data"]> {
   const fail = (r: Result, fallback: string) => ({ error: r.status === 413 ? TOO_BIG : (r.data.error ?? fallback) });
   if (!file) {
-    const res = await postJson(sendUrl, { body });
+    const res = await postJson(sendUrl, { body, ...extra });
     return succeeded(res) ? res.data : fail(res, "Couldn't send your message. Please try again.");
   }
 
@@ -61,12 +63,13 @@ export async function sendChatMessage(
   if (upload) {
     const put = await sendWithProgress("PUT", upload.url, file, onProgress, { "Content-Type": file.type });
     if (!succeeded(put)) return put.status === 413 ? { error: TOO_BIG } : { error: "Upload to storage failed. Please try again." };
-    const res = await postJson(sendUrl, { body, key: upload.key, token: upload.token });
+    const res = await postJson(sendUrl, { body, ...extra, key: upload.key, token: upload.token });
     return succeeded(res) ? res.data : fail(res, "Couldn't send your message. Please try again.");
   }
 
   const form = new FormData();
   form.set("body", body);
+  for (const [k, v] of Object.entries(extra)) form.set(k, v);
   form.set("file", file);
   const res = await sendWithProgress("POST", sendUrl, form, onProgress);
   return succeeded(res) ? res.data : fail(res, "Couldn't send your message. Please try again.");

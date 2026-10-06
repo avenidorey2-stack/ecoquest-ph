@@ -40,6 +40,7 @@ describe("privacy and notification settings", () => {
       notifyLikes: false,
       notifyComments: true,
       showActiveStatus: true,
+      allowComments: true,
     });
     expect((await patchSettings(jsonRequest({ photoVisibility: "PUBLIC" }, "PATCH"))).status).toBe(400);
     expect((await patchSettings(jsonRequest({ notifyComments: "no" }, "PATCH"))).status).toBe(400);

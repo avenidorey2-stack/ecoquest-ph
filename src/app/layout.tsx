@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EcoQuest PH",
   description: "Gamified climate action for the Philippines",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  // Opened from the iPhone Home Screen, it runs full screen like an app.
+  appleWebApp: { capable: true, title: "EcoQuest", statusBarStyle: "black" },
 };
 
 // Dark-only design: dark form controls/scrollbars, and tint the mobile browser bar to the canvas.
