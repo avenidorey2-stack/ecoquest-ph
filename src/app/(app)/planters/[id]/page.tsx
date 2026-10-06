@@ -63,26 +63,31 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
               Edit Profile
             </Link>
           ) : (
-            <div className="flex basis-full items-start justify-end gap-1 sm:basis-auto">
-              <ReportButton userId={profile.id} name={profile.name} />
-              <BlockButton userId={profile.id} name={profile.name} />
-              {profile.friendState === "FRIENDS" && (
-                <Link
-                  href={`/messages/${profile.id}`}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/10 px-3 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/20"
-                >
-                  <MessagesIcon className="h-4 w-4" /> Message
-                </Link>
-              )}
-              <FriendButton userId={profile.id} initial={profile.friendState} />
+            // Phones: Add Friend / Message share a full-width row; Report and Block sit quietly below.
+            <div className="flex basis-full flex-col gap-1.5 sm:basis-auto sm:items-end">
+              <div className="flex w-full gap-2 sm:w-auto">
+                <FriendButton userId={profile.id} initial={profile.friendState} size="lg" stretch />
+                {profile.friendState === "FRIENDS" && (
+                  <Link
+                    href={`/messages/${profile.id}`}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-white/10 px-4 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/20 sm:flex-none"
+                  >
+                    <MessagesIcon className="h-4 w-4" /> Message
+                  </Link>
+                )}
+              </div>
+              <div className="flex justify-end gap-1">
+                <ReportButton userId={profile.id} name={profile.name} />
+                <BlockButton userId={profile.id} name={profile.name} />
+              </div>
             </div>
           )}
         </div>
         <dl className="mt-5 grid grid-cols-3 gap-3">
           {stats.map(({ label, short, value, Icon }) => (
             <div key={label} className="min-w-0 rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
-              {/* Phones get the short label: "ACHIEVEMENTS" doesn't fit a third of a phone screen. */}
-              <dt className="flex min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-[0.08em] text-emerald-200 sm:text-[11px] sm:tracking-[0.14em]">
+              {/* Phones: the icon sits above a short label ("ACHIEVEMENTS" doesn't fit a third of a phone). */}
+              <dt className="flex min-w-0 flex-col items-start gap-1 text-[10px] uppercase tracking-[0.06em] text-emerald-200 sm:flex-row sm:items-center sm:gap-1.5 sm:text-[11px] sm:tracking-[0.14em]">
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate sm:hidden">{short}</span>
                 <span className="hidden truncate sm:inline">{label}</span>

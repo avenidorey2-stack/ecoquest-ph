@@ -10,8 +10,20 @@ const DEBOUNCE_MS = 200;
  * Search box over the admin slot map: type a city or municipality, pick it, and the map zooms
  * to its outline. Arrow keys move through the suggestions; Enter picks; Escape closes.
  */
-export default function PlaceSearch({ onPick, busy }: { onPick: (hit: CityHit) => void; busy?: boolean }) {
-  const [query, setQuery] = useState("");
+export default function PlaceSearch({
+  onPick,
+  onClear,
+  busy,
+  initialQuery = "",
+}: {
+  onPick: (hit: CityHit) => void;
+  /** The × button: stop focusing a place. */
+  onClear?: () => void;
+  busy?: boolean;
+  /** Shown in the box, e.g. the place opened from the slot list (remount with a new `key` to change it). */
+  initialQuery?: string;
+}) {
+  const [query, setQuery] = useState(initialQuery);
   const [hits, setHits] = useState<{ q: string; results: CityHit[] } | null>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -98,6 +110,7 @@ export default function PlaceSearch({ onPick, busy }: { onPick: (hit: CityHit) =
             onClick={() => {
               setQuery("");
               setOpen(false);
+              onClear?.();
             }}
             aria-label="Clear search"
             className="-mr-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-card-3 hover:text-ink"
