@@ -20,10 +20,13 @@ const bar = "inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm f
 export default function PhotoSocial({
   photoId,
   initial,
+  commentsOff = false,
   onChange,
 }: {
   photoId: string;
   initial: Reactions;
+  /** The owner turned comments off: no Comments button unless there are old ones to see (owner). */
+  commentsOff?: boolean;
   onChange?: (r: Reactions) => void;
 }) {
   const [r, setR] = useState(initial);
@@ -64,11 +67,16 @@ export default function PhotoSocial({
           <HeartIcon filled={r.likedByMe} className={`h-5 w-5 ${r.likedByMe ? "text-rose-400" : ""}`} />
           {r.likeCount.toLocaleString("en-PH")}
         </button>
-        <button type="button" onClick={() => setPanel(true)} aria-label="Comments" className={`${bar} bg-white/10 text-white hover:bg-white/20`}>
-          <ChatIcon className="h-5 w-5" />
-          {r.commentCount.toLocaleString("en-PH")}
-        </button>
+        {!(commentsOff && r.commentCount === 0) && (
+          <button type="button" onClick={() => setPanel(true)} aria-label="Comments" className={`${bar} bg-white/10 text-white hover:bg-white/20`}>
+            <ChatIcon className="h-5 w-5" />
+            {r.commentCount.toLocaleString("en-PH")}
+          </button>
+        )}
       </div>
+      {commentsOff && (
+        <p className="mt-1 text-center text-xs text-white/60">Comments are turned off for this photo.</p>
+      )}
       {panel && (
         <CommentsPanel
           photoId={photoId}
@@ -228,6 +236,11 @@ function CommentsPanel({ photoId, onClose, onCount }: { photoId: string; onClose
           )}
         </div>
 
+        {thread?.commentsOff ? (
+          <p className="border-t border-line px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-center text-xs text-ink-3">
+            Comments are turned off. Turn them back on in Settings → Privacy.
+          </p>
+        ) : (
         <form onSubmit={send} className="border-t border-line px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
           {replyTo && (
             <p className="mb-2 flex items-center justify-between rounded-lg bg-card-3/70 px-3 py-1.5 text-xs text-ink-2">
@@ -269,6 +282,7 @@ function CommentsPanel({ photoId, onClose, onCount }: { photoId: string; onClose
             </p>
           )}
         </form>
+        )}
       </section>
     </div>
   );

@@ -16,9 +16,9 @@ export async function GET(req: Request, { params }: RouteContext<"/api/messages/
 }
 
 // POST /api/messages/:userId — send a message to a friend.
-//  • JSON `{ body, key?, token? }` — `key` is a photo/video uploaded straight to storage via
+//  • JSON `{ body, key?, token?, replyTo? }` — `key` is a photo/video uploaded straight to storage via
 //    POST /api/messages/:userId/upload (production, Supabase).
-//  • multipart form: `body` + optional `file` — local-disk storage (dev, tests).
+//  • multipart form: `body`, `replyTo` + optional `file` — local-disk storage (dev, tests).
 export async function POST(req: Request, { params }: RouteContext<"/api/messages/[userId]">) {
   const { user, response } = await requireVerifiedUser();
   if (response) return response;
@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/messages
 
   const sent = await readChatSend(req, dmScope(user.id, otherId));
   if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: sent.status });
-  const result = await saveWithMedia(sent.media, () => sendDirectMessage(user.id, otherId, sent.body, sent.media));
+  const result = await saveWithMedia(sent.media, () => sendDirectMessage(user.id, otherId, sent.body, sent.media, sent.replyTo));
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ message: result.message }, { status: 201 });
 }

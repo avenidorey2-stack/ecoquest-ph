@@ -43,11 +43,15 @@ export default function ChatList({
   friends = [],
   onOpen,
   failed,
+  activeId,
 }: {
   rows: ConversationRow[] | null;
   friends?: PlanterCard[];
-  onOpen?: () => void;
+  /** A chat was picked (`e.preventDefault()` keeps the link from navigating, e.g. for a pop-up window). */
+  onOpen?: (e: React.MouseEvent, userId: string) => void;
   failed?: boolean;
+  /** The planter whose chat is open beside the list (highlighted). */
+  activeId?: string;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -93,7 +97,7 @@ export default function ChatList({
         <ul aria-label="Friends" className="flex gap-1 overflow-x-auto px-2 pb-2">
           {friends.map((f) => (
             <li key={f.id} className="shrink-0">
-              <Link href={`/messages/${f.id}`} onClick={onOpen} className="flex w-[4.25rem] flex-col items-center gap-1 rounded-xl px-1 py-1.5 hover:bg-card-2">
+              <Link href={`/messages/${f.id}`} onClick={(e) => onOpen?.(e, f.id)} className="flex w-[4.25rem] flex-col items-center gap-1 rounded-xl px-1 py-1.5 hover:bg-card-2">
                 <PresenceAvatar person={f} size="h-14 w-14" />
                 <span className="w-full truncate text-center text-xs text-ink-2">{f.name.split(/\s+/)[0]}</span>
               </Link>
@@ -123,7 +127,12 @@ export default function ChatList({
         <ul className="px-1.5 pb-1.5">
           {shown.map((c) => (
             <li key={c.partner.id}>
-              <Link href={`/messages/${c.partner.id}`} onClick={onOpen} className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-2 hover:bg-card-2">
+              <Link
+                href={`/messages/${c.partner.id}`}
+                onClick={(e) => onOpen?.(e, c.partner.id)}
+                aria-current={activeId === c.partner.id ? "page" : undefined}
+                className={`flex min-h-16 items-center gap-3 rounded-xl px-2 py-2 ${activeId === c.partner.id ? "bg-emerald-400/10 ring-1 ring-emerald-400/25" : "hover:bg-card-2"}`}
+              >
                 <PresenceAvatar person={c.partner} size="h-14 w-14" />
                 <span className="min-w-0 flex-1">
                   <span className={`block truncate text-[15px] ${c.unread ? "font-bold text-ink" : "font-semibold text-ink"}`}>{c.partner.name}</span>
@@ -148,7 +157,7 @@ export default function ChatList({
             <ul className="px-1.5 pb-1.5">
               {newFriends.map((f) => (
                 <li key={f.id}>
-                  <Link href={`/messages/${f.id}`} onClick={onOpen} className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-2 hover:bg-card-2">
+                  <Link href={`/messages/${f.id}`} onClick={(e) => onOpen?.(e, f.id)} className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-2 hover:bg-card-2">
                     <PresenceAvatar person={f} size="h-14 w-14" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-semibold text-ink">{f.name}</span>

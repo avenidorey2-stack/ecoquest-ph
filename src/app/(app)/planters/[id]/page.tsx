@@ -8,6 +8,7 @@ import ProofGallery from "@/components/profile/ProofGallery";
 import FriendButton from "@/components/social/FriendButton";
 import BlockButton from "@/components/social/BlockButton";
 import { ActiveLabel } from "@/components/chat/Presence";
+import AutoRefresh from "@/components/layout/AutoRefresh";
 import { CoinIcon, LockIcon, MedalIcon, MessagesIcon, TreeIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Planter profile · EcoQuest PH" };
@@ -53,7 +54,8 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
             <p className="mt-1 text-xs text-emerald-200/80">
               {profile.city && `${profile.city}, ${profile.province} · `}Planting since {formatDate(profile.memberSince)}
             </p>
-            <ActiveLabel activeAt={profile.activeAt} className="mt-1 block text-xs font-semibold" />
+            <AutoRefresh seconds={30} />
+            <ActiveLabel presence={profile} className="mt-1 block text-xs font-semibold" />
           </div>
           {isMe ? (
             <Link href="/profile" className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-white/20 hover:bg-white/20">

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversationRow } from "@/lib/messages";
 import type { PlanterCard } from "@/lib/friends";
 import ChatList from "@/components/chat/ChatList";
+import { useChatDock } from "@/components/chat/ChatDock";
 import { ComposeIcon, ExpandIcon, MessagesIcon } from "@/components/ui/icons";
 import { MESSAGES_READ_EVENT, useLiveEvent, useVisiblePoll } from "./live";
 
@@ -39,6 +40,7 @@ export default function MessagesButton({ initialUnread, since }: { initialUnread
     openRef.current = open;
   }, [pathname, open]);
   const sinceMs = new Date(since).getTime();
+  const dock = useChatDock();
 
   const loadChats = useCallback(async () => {
     const res = await fetch("/api/messages", { cache: "no-store" }).catch(() => null);
@@ -60,8 +62,11 @@ export default function MessagesButton({ initialUnread, since }: { initialUnread
     shown.current.add(m.id);
     // Already looking at the chats: no pop-up.
     if (openRef.current || path.current === "/messages" || path.current === `/messages/${m.fromId}`) return;
+    // Computers, while looking at the page: the chat window pops up, like Facebook. Otherwise a
+    // small notice (phones, or the tab is in the background and opening would mark it Seen).
+    if (document.visibilityState === "visible" && dock?.open(m.fromId)) return;
     setToast(m);
-  }, [sinceMs, loadChats]);
+  }, [sinceMs, loadChats, dock]);
 
   useLiveEvent("message", load);
   useVisiblePoll(load, POLL_MS);
@@ -106,6 +111,11 @@ export default function MessagesButton({ initialUnread, since }: { initialUnread
   }
 
   const close = () => setOpen(false);
+  // Computers: open the chat in a pop-up window instead of leaving the page.
+  const pick = (e: React.MouseEvent, userId: string) => {
+    close();
+    if (dock?.open(userId)) e.preventDefault();
+  };
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -144,7 +154,7 @@ export default function MessagesButton({ initialUnread, since }: { initialUnread
             </div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <ChatList rows={rows} friends={friends} failed={failed} onOpen={close} />
+            <ChatList rows={rows} friends={friends} failed={failed} onOpen={pick} />
           </div>
         </div>
       )}
@@ -157,7 +167,12 @@ export default function MessagesButton({ initialUnread, since }: { initialUnread
           <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-emerald-300" aria-hidden>
             <MessagesIcon className="h-4 w-4" />
           </span>
-          <Link href={`/messages/${toast.fromId}`} onClick={() => setToast(null)} className="min-w-0 flex-1 text-sm hover:text-emerald-200">
+          <Link
+            href={`/messages/${toast.fromId}`}
+            onClick={(e) => {
+              setToast(null);
+              if (dock?.open(toast.fromId)) e.preventDefault();
+            }} className="min-w-0 flex-1 text-sm hover:text-emerald-200">
             <span className="block font-semibold text-ink">{toast.fromName}</span>
             <span className="block truncate text-ink-2">{toast.preview}</span>
           </Link>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/social/UserSearch";
+import { PushSettingRow } from "@/components/layout/PushControls";
 
 type Visibility = "EVERYONE" | "FRIENDS" | "ONLY_ME";
 type Toggles = { notifyFriendRequests: boolean; notifyLikes: boolean; notifyComments: boolean };
@@ -53,19 +54,41 @@ const VISIBILITY: { value: Visibility; label: string; hint: string }[] = [
   { value: "ONLY_ME", label: "Only Me", hint: "Your photos stay private. Our team still reviews them." },
 ];
 
-export function PrivacyPanel({ initial, initialActive }: { initial: Visibility; initialActive: boolean }) {
+/** An on/off switch row with a title and a hint. */
+function SwitchRow({ label, hint, on, onFlip }: { label: string; hint: string; on: boolean; onFlip: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span>
+        <span className="block text-sm font-semibold text-ink">{label}</span>
+        <span className="block text-xs text-ink-3">{hint}</span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
+        onClick={onFlip}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? "bg-emerald-400" : "bg-card-3 ring-1 ring-line-strong"}`}
+      >
+        <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${on ? "translate-x-5" : ""}`} />
+      </button>
+    </div>
+  );
+}
+
+export function PrivacyPanel({ initial, initialActive, initialComments }: { initial: Visibility; initialActive: boolean; initialComments: boolean }) {
   const [value, setValue] = useState(initial);
-  const [active, setActive] = useState(initialActive);
+  const [switches, setSwitches] = useState({ showActiveStatus: initialActive, allowComments: initialComments });
   const [status, setStatus] = useState<Status>(null);
-  async function flipActive() {
-    const next = !active;
-    setActive(next);
+  async function flip(key: keyof typeof switches) {
+    const next = !switches[key];
+    setSwitches((s) => ({ ...s, [key]: next }));
     setStatus(null);
     try {
-      await patch({ showActiveStatus: next });
+      await patch({ [key]: next });
       setStatus({ kind: "ok", text: "Saved." });
     } catch (e) {
-      setActive(!next);
+      setSwitches((s) => ({ ...s, [key]: !next }));
       setStatus({ kind: "error", text: errorText(e) });
     }
   }
@@ -100,21 +123,23 @@ export function PrivacyPanel({ initial, initialActive }: { initial: Visibility; 
           </label>
         ))}
       </fieldset>
-      <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
-        <span>
-          <span className="block text-sm font-semibold text-ink">Show When You&apos;re Active</span>
-          <span className="block text-xs text-ink-3">Friends see &ldquo;Active Now&rdquo; or when you were last on, like &ldquo;Active 2h ago&rdquo;.</span>
-        </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={active}
-          aria-label="Show When You're Active"
-          onClick={flipActive}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-400" : "bg-card-3 ring-1 ring-line-strong"}`}
-        >
-          <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${active ? "translate-x-5" : ""}`} />
-        </button>
+      <div className="mt-4 space-y-4 border-t border-line pt-4">
+        <SwitchRow
+          label="Allow Comments on My Photos"
+          hint={
+            switches.allowComments
+              ? "Planters who can see your photos can comment on them."
+              : "Comments are off: nobody can comment, and only you can see earlier comments."
+          }
+          on={switches.allowComments}
+          onFlip={() => flip("allowComments")}
+        />
+        <SwitchRow
+          label="Show When You're Active"
+          hint="Friends see “Active Now” while you're on, and “Active 1m ago” counting up once you leave."
+          on={switches.showActiveStatus}
+          onFlip={() => flip("showActiveStatus")}
+        />
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <StatusText status={status} />
@@ -148,7 +173,8 @@ export function NotificationsPanel({ initial }: { initial: Toggles }) {
   }
   return (
     <Card heading="Notifications">
-      <ul className="divide-y divide-line">
+      <PushSettingRow />
+      <ul className="divide-y divide-line pt-3">
         {TOGGLES.map((t) => (
           <li key={t.key} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
             <span>

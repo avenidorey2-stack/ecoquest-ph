@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { fileWithType, formatSize, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
 import WebcamCapture from "@/components/quests/WebcamCapture";
-import { CameraIcon, CloseIcon, ImageIcon, SendIcon } from "@/components/ui/icons";
+import { CameraIcon, CloseIcon, ImageIcon, ReplyIcon, SendIcon } from "@/components/ui/icons";
 
 /** The text box grows up to this many pixels, then scrolls. */
 const MAX_INPUT_PX = 128;
@@ -42,6 +42,8 @@ export default function ChatComposer({
   placeholder,
   maxLength,
   note,
+  replyingTo,
+  onCancelReply,
 }: {
   /** Sends; resolves to an error message, or null when sent. */
   onSend: (text: string, file: File | null, onProgress: (pct: number) => void) => Promise<string | null>;
@@ -49,6 +51,9 @@ export default function ChatComposer({
   maxLength: number;
   /** A line above the box (e.g. "This report is resolved…"). */
   note?: React.ReactNode;
+  /** The message being replied to ("Replying to Ana" + a preview), with a way to cancel. */
+  replyingTo?: { key: string; label: string; preview: string } | null;
+  onCancelReply?: () => void;
 }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -57,8 +62,16 @@ export default function ChatComposer({
   const [error, setError] = useState<string | null>(null);
   const [webcam, setWebcam] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
+  // Unique per box: two pop-up chat windows can be open at once.
+  const inputId = useId();
   const cameraInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Choosing Reply puts the cursor in the box (and opens the phone keyboard), like Messenger.
+  const replyKey = replyingTo?.key;
+  useEffect(() => {
+    if (replyKey) input.current?.focus();
+  }, [replyKey]);
 
   // Grow the text box with its content.
   useEffect(() => {
@@ -106,6 +119,18 @@ export default function ChatComposer({
       className="shrink-0 border-t border-line bg-card px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] group-data-[keyboard]/chat:pb-2 sm:px-3"
     >
       {note && <div className="mb-2 px-1 text-xs text-ink-3">{note}</div>}
+      {replyingTo && (
+        <div className="mb-2 flex items-center gap-2 rounded-xl border-l-4 border-emerald-400 bg-card-2 py-1.5 pl-3 pr-1">
+          <ReplyIcon className="h-4 w-4 shrink-0 text-emerald-300" />
+          <div className="min-w-0 flex-1 text-xs">
+            <p className="font-semibold text-ink-2">{replyingTo.label}</p>
+            <p className="truncate text-ink-3">{replyingTo.preview}</p>
+          </div>
+          <button type="button" onClick={onCancelReply} disabled={busy} aria-label="Cancel reply" className={iconBtn}>
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
       {webcam && (
         <div className="mb-2">
           <WebcamCapture onCapture={pick} onCancel={() => setWebcam(false)} />
@@ -153,15 +178,21 @@ export default function ChatComposer({
         <button type="button" onClick={() => fileInput.current?.click()} disabled={busy} aria-label="Send a photo or video" className={iconBtn}>
           <ImageIcon className="h-6 w-6" />
         </button>
-        <label htmlFor="chat-message" className="sr-only">
+        <label htmlFor={inputId} className="sr-only">
           Message
         </label>
         <textarea
           ref={input}
-          id="chat-message"
+          id={inputId}
+          data-chat-input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
+            if (e.key === "Escape" && replyingTo) {
+              e.preventDefault();
+              onCancelReply?.();
+              return;
+            }
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches) {
               e.preventDefault();
               send();
