@@ -2,10 +2,11 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import type { Geometry } from "geojson";
 import { useEffect } from "react";
-import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, GeoJSON, MapContainer, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { PH_BOUNDS, PH_CENTER } from "@/lib/geo";
-import { MAP_SELECTED, SLOT_STATUS_COLORS } from "@/lib/palette";
+import { MAP_BOUNDARY, MAP_SELECTED, SLOT_STATUS_COLORS } from "@/lib/palette";
 import type { AdminSlot } from "./SlotManager";
 
 
@@ -28,14 +29,38 @@ function FlyToSelected({ target }: { target: { lat: number; lng: number } | null
   return null;
 }
 
+/** A city/municipality found with the map's search box: its outline, or its center point. */
+export type MapArea = { key: string; geometry: Geometry | null; point: [number, number] | null };
+
+const AREA_STYLE = { color: MAP_BOUNDARY, weight: 2, dashArray: "6 6", fillOpacity: 0.06 };
+const AREA_POINT_ZOOM = 13;
+
+/** Zooms to the searched area once per search (`key`), not on every re-render. */
+function FitToArea({ area }: { area: MapArea }) {
+  const map = useMap();
+  useEffect(() => {
+    if (area.geometry) {
+      const bounds = L.geoJSON(area.geometry).getBounds();
+      if (bounds.isValid()) map.flyToBounds(bounds, { padding: [32, 32], duration: 0.9 });
+    } else if (area.point) {
+      map.flyTo(area.point, AREA_POINT_ZOOM, { duration: 0.9 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-fit per search, keyed by `area.key`
+  }, [area.key, map]);
+  return null;
+}
+
 export default function AdminSlotMap({
   slots,
   draft,
   selectedId,
   onMapClick,
   onSelectSlot,
+  area,
 }: {
   slots: AdminSlot[];
+  /** The searched city/municipality to zoom to and outline. */
+  area?: MapArea | null;
   draft: { lat: number; lng: number } | null;
   selectedId: string | null;
   onMapClick: (lat: number, lng: number) => void;
@@ -57,6 +82,9 @@ export default function AdminSlotMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ClickToPin onPick={onMapClick} />
+      {area && <FitToArea area={area} />}
+      {/* Not interactive, so a click inside the outline still drops a pin. */}
+      {area?.geometry && <GeoJSON key={area.key} data={area.geometry} style={AREA_STYLE} interactive={false} />}
       <FlyToSelected target={selected ? { lat: selected.latitude, lng: selected.longitude } : null} />
 
       {slots.map((slot) => (

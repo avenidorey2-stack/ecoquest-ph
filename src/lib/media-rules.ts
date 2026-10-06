@@ -11,12 +11,12 @@ export const MEDIA_RULES: Record<string, { ext: string; maxBytes: number }> = {
   "video/quicktime": { ext: "mov", maxBytes: 50 * MB },
 };
 
-/** The `accept` attribute for proof file inputs. */
-export const MEDIA_ACCEPT = Object.keys(MEDIA_RULES).join(",");
-
 /** User-facing reason the file can't be used, or null if it's fine. */
 export function mediaRuleError(file: { type: string; size: number }): string | null {
   const rule = MEDIA_RULES[file.type];
+  if (!rule && /hei[cf]/.test(file.type)) {
+    return "This phone saved the photo as HEIC, which this browser can't open. Set the camera to JPEG (\"Most Compatible\") or choose the photo from your gallery.";
+  }
   if (!rule) return "Upload a JPG, PNG, WebP, MP4 or MOV file.";
   if (file.size > rule.maxBytes) return `File is too large (max ${rule.maxBytes / MB} MB).`;
   return null;

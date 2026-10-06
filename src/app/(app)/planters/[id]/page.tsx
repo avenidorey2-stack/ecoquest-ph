@@ -7,6 +7,7 @@ import AchievementShowcase from "@/components/profile/AchievementShowcase";
 import ProofGallery from "@/components/profile/ProofGallery";
 import FriendButton from "@/components/social/FriendButton";
 import BlockButton from "@/components/social/BlockButton";
+import ReportButton from "@/components/social/ReportButton";
 import { ActiveLabel } from "@/components/chat/Presence";
 import AutoRefresh from "@/components/layout/AutoRefresh";
 import { CoinIcon, LockIcon, MedalIcon, MessagesIcon, TreeIcon } from "@/components/ui/icons";
@@ -23,9 +24,9 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
   const isMe = profile.id === viewerId;
 
   const stats = [
-    { label: "Trees Planted", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
-    { label: "Current Points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
-    { label: "Achievements", value: profile.achievements.length.toLocaleString("en-PH"), Icon: MedalIcon },
+    { label: "Trees Planted", short: "Trees", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
+    { label: "Current Points", short: "Points", value: profile.points.toLocaleString("en-PH"), Icon: CoinIcon },
+    { label: "Achievements", short: "Badges", value: profile.achievements.length.toLocaleString("en-PH"), Icon: MedalIcon },
   ];
 
   return (
@@ -63,6 +64,7 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
             </Link>
           ) : (
             <div className="flex basis-full items-start justify-end gap-1 sm:basis-auto">
+              <ReportButton userId={profile.id} name={profile.name} />
               <BlockButton userId={profile.id} name={profile.name} />
               {profile.friendState === "FRIENDS" && (
                 <Link
@@ -77,10 +79,13 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
           )}
         </div>
         <dl className="mt-5 grid grid-cols-3 gap-3">
-          {stats.map(({ label, value, Icon }) => (
-            <div key={label} className="rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
-              <dt className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.06em] text-emerald-200 sm:text-[11px] sm:tracking-[0.14em]">
-                <Icon className="h-3.5 w-3.5 shrink-0" /> {label}
+          {stats.map(({ label, short, value, Icon }) => (
+            <div key={label} className="min-w-0 rounded-xl bg-white/10 px-3 py-2.5 ring-1 ring-white/10">
+              {/* Phones get the short label: "ACHIEVEMENTS" doesn't fit a third of a phone screen. */}
+              <dt className="flex min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-[0.08em] text-emerald-200 sm:text-[11px] sm:tracking-[0.14em]">
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate sm:hidden">{short}</span>
+                <span className="hidden truncate sm:inline">{label}</span>
               </dt>
               <dd className="text-xl font-bold sm:text-2xl">{value}</dd>
             </div>

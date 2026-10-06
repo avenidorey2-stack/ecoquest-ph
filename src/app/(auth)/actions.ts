@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { AuthError, CredentialsSignin } from "next-auth";
 import { signIn } from "@/auth";
 import { isGoogleEnabled } from "@/lib/auth-providers";
+import { restrictionMessage } from "@/lib/moderation";
+import { findUserByEmail } from "@/lib/registration";
 import { safeCallbackUrl } from "@/lib/url";
 
 const LOGIN_MESSAGES: Record<string, string> = {
@@ -25,6 +27,10 @@ export async function loginWithPassword(_prev: LoginState, formData: FormData): 
   } catch (err) {
     if (err instanceof CredentialsSignin) {
       if (err.code === "not_found") return { notFound: String(formData.get("email")).trim().toLowerCase() };
+      if (err.code === "restricted") {
+        const user = await findUserByEmail(String(formData.get("email")).trim().toLowerCase());
+        if (user) return { error: restrictionMessage(user) };
+      }
       return { error: LOGIN_MESSAGES[err.code] ?? LOGIN_MESSAGES.invalid };
     }
     if (err instanceof AuthError) return { error: "Sign-in failed. Please try again." };

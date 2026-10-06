@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { isWithinUserCity } from "@/lib/geo";
 import { holdsSpot, isClaimExpired } from "@/lib/quests";
@@ -11,8 +11,8 @@ const ACTIVE_QUEST_STATUSES = ["ACTIVE", "PENDING_VERIFICATION"] as const;
 // scope=city limits results to the user's home city (none if no city is set).
 // scope=all (admins only) returns every slot nationwide, closed ones included.
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const me = await getCurrentUser();
+  if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const scope = new URL(req.url).searchParams.get("scope");
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   const cityOnly = scope === "city";
 
   // Role from the DB (not the JWT) so demotions apply immediately.
-  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { cityCode: true, role: true } });
+  const user = await prisma.user.findUnique({ where: { id: me.id }, select: { cityCode: true, role: true } });
   if (scope === "all" && user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (cityOnly && !user?.cityCode) return NextResponse.json({ slots: [] });
 
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
         select: { quests: { where: holdsSpot(now) } },
       },
       quests: {
-        where: { userId: session.user.id, status: { in: [...ACTIVE_QUEST_STATUSES] } },
+        where: { userId: me.id, status: { in: [...ACTIVE_QUEST_STATUSES] } },
         select: { id: true, expiresAt: true },
       },
     },

@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { resolveCity } from "@/lib/psgc";
 import { MAX_NAME_LENGTH, nextLocationChange } from "@/lib/profile";
 
 // PATCH /api/profile — body: { name?: string, cityCode?: string }
 export async function PATCH(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const me = await getCurrentUser();
+  if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = me.id;
   const body = await req.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
 

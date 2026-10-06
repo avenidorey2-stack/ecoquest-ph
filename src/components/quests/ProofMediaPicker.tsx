@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fileWithType, formatSize, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
+import { formatSize, mediaRuleError } from "@/lib/media-rules";
+import { prepareMedia } from "@/lib/media-prepare";
 import WebcamCapture from "@/components/quests/WebcamCapture";
 import { CameraIcon, ImageIcon, UploadIcon, VideoIcon } from "@/components/ui/icons";
 
@@ -64,9 +65,10 @@ export default function ProofMediaPicker({
     };
   }, []);
 
-  function pick(raw: File | null | undefined) {
+  async function pick(raw: File | null | undefined) {
     if (!raw) return;
-    const next = fileWithType(raw);
+    // Phone cameras may mislabel files or save HEIC: fix the type (and convert) before checking.
+    const next = await prepareMedia(raw);
     const problem = mediaRuleError(next);
     setError(problem);
     setWebcam(false);
@@ -104,7 +106,7 @@ export default function ProofMediaPicker({
       {/* Hidden inputs, opened by the buttons below. `capture` goes straight to the camera. */}
       <input ref={photoInput} type="file" accept="image/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
       <input ref={videoInput} type="file" accept="video/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
-      <input ref={fileInput} type="file" accept={MEDIA_ACCEPT} onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
+      <input ref={fileInput} type="file" accept="image/*,video/*" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
 
       {webcam ? (
         <WebcamCapture onCapture={pick} onCancel={() => setWebcam(false)} />

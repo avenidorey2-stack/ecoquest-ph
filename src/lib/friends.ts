@@ -198,7 +198,8 @@ export async function searchPlanters(viewerId: string, query: string): Promise<P
   if (q.length < SEARCH_MIN) return [];
   const hidden = await blockedIds(viewerId);
   const pool = await prisma.user.findMany({
-    where: { role: "USER", id: { notIn: [viewerId, ...hidden] }, name: { contains: q, mode: "insensitive" } },
+    // Banned planters drop out of search.
+    where: { role: "USER", bannedAt: null, id: { notIn: [viewerId, ...hidden] }, name: { contains: q, mode: "insensitive" } },
     orderBy: [{ totalPlants: "desc" }, { name: "asc" }],
     take: SEARCH_POOL,
     select: cardSelect,
