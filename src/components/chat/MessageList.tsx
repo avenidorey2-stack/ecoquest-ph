@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { MoreIcon, ReplyIcon, SmileIcon } from "@/components/ui/icons";
+import { MoreIcon, PlusIcon, ReplyIcon, SmileIcon } from "@/components/ui/icons";
+import { MORE_REACTIONS, QUICK_REACTIONS } from "@/lib/reactions";
 import { BREAK_MS, dayKey, sentLabel } from "@/lib/chat-time";
+import Floating, { rectOf, type AnchorRect } from "./Floating";
 import MediaViewer from "./MediaViewer";
 import SwipeBubble from "./SwipeBubble";
 
@@ -25,18 +26,12 @@ export type ChatItem = {
   reactions?: { emoji: string; mine: boolean }[];
 };
 
-/** Reactions offered, like Messenger's (the server accepts only these). */
-export const REACTION_CHOICES = ["❤️", "😆", "😮", "😢", "😠", "👍"];
 
 /** "At the bottom" within this many pixels: new messages then keep the view at the bottom. */
 const NEAR_BOTTOM_PX = 120;
 const FLASH_MS = 1400;
-/** The reaction bar opens above the message unless it's this close to the top of the chat. */
-const PICKER_ROOM_PX = 64;
 /** Hover this long before the "when sent" tooltip shows. */
 const TIP_DELAY_MS = 400;
-/** Room the tooltip needs beside a message (else it goes on the other side). */
-const TIP_ROOM_PX = 190;
 
 function MediaBubble({ media, mine, onOpen, onLoad }: { media: Media; mine: boolean; onOpen: () => void; onLoad: () => void }) {
   const corner = mine ? "rounded-br-md" : "rounded-bl-md";
@@ -81,7 +76,7 @@ function ReactionPill({
       disabled={!onClick}
       aria-label={`Reactions: ${label}`}
       title={label}
-      className={`absolute -bottom-3 z-[1] flex h-6 items-center gap-0.5 rounded-full bg-card-2 px-1.5 text-[13px] leading-none shadow ring-2 ring-card ${mine ? "left-2" : "right-2"}`}
+      className={`absolute -bottom-4 z-[1] flex h-6 items-center gap-0.5 rounded-full bg-card-2 px-1.5 text-[13px] leading-none shadow ring-2 ring-card ${mine ? "left-2" : "right-2"}`}
     >
       {kinds.map((k) => (
         <span key={k}>{k}</span>
@@ -91,10 +86,60 @@ function ReactionPill({
   );
 }
 
+/**
+ * Messenger's reaction bar: a pill of big emojis that pop in one after another, grow and lift
+ * under the pointer, and a "+" that opens more. `current` is your reaction (tap it again to remove).
+ */
+function ReactionPicker({ current, onPick }: { current?: string; onPick: (emoji: string) => void }) {
+  const [more, setMore] = useState(false);
+  const pick = (emoji: string, size: "big" | "small", i: number) => (
+    <button
+      key={emoji}
+      type="button"
+      onClick={() => onPick(emoji)}
+      aria-label={current === emoji ? `Remove ${emoji}` : `React ${emoji}`}
+      aria-pressed={current === emoji}
+      style={{ animationDelay: `${i * 30}ms` }}
+      className={`eq-tool-in grid shrink-0 origin-bottom place-items-center rounded-full leading-none transition-[translate,scale,background-color] duration-150 ease-[var(--ease-spring)] focus-visible:outline-none motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 ${
+        size === "big"
+          ? "h-11 w-11 text-[30px] hover:-translate-y-1.5 hover:scale-[1.35] focus-visible:-translate-y-1.5 focus-visible:scale-[1.35] max-[380px]:h-10 max-[380px]:w-10 max-[380px]:text-[26px]"
+          : // In the scrolling grid: grow less, so an emoji at the edge isn't cut off.
+            "h-10 w-10 text-[24px] hover:scale-125 hover:bg-card-3 focus-visible:scale-125 focus-visible:bg-card-3"
+      } ${current === emoji ? "bg-emerald-400/20 ring-2 ring-emerald-400/60" : ""}`}
+    >
+      {emoji}
+    </button>
+  );
+  return (
+    <div
+      className={`eq-tool-in border border-line-strong bg-card-2 p-1.5 shadow-[0_16px_40px_-10px_rgba(0,0,0,.75)] ${more ? "w-[19.5rem] rounded-3xl" : "rounded-full"}`}
+    >
+      <div role="group" aria-label="Reactions" className="flex items-center gap-0.5">
+        {QUICK_REACTIONS.map((e, i) => pick(e, "big", i))}
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          aria-label={more ? "Fewer reactions" : "More reactions"}
+          aria-expanded={more}
+          style={{ animationDelay: `${QUICK_REACTIONS.length * 30}ms` }}
+          className={`eq-tool-in ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-3 text-ink-2 transition-[rotate,background-color] duration-200 hover:bg-line-strong hover:text-ink ${more ? "rotate-45" : ""}`}
+        >
+          <PlusIcon className="h-5 w-5" />
+        </button>
+      </div>
+      {more && (
+        <div role="group" aria-label="More reactions" className="mt-1.5 grid max-h-52 grid-cols-7 gap-0.5 overflow-y-auto border-t border-line p-1.5">
+          {MORE_REACTIONS.map((e, i) => pick(e, "small", Math.min(i, 10)))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const toolBtn = "grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-card-3 hover:text-ink";
 
-/** `below`: no room above the message (it's at the top of the chat), so the reaction bar opens under it. */
-type Panel = { id: string; mode: "react" | "sheet" | "unsend"; below?: boolean };
+/** `anchor`: what the reaction bar pops up from (the React button, the reactions, or the bubble). */
+type Panel = { id: string; mode: "react" | "sheet" | "unsend"; anchor?: AnchorRect };
 
 /**
  * A chat's messages, oldest at the top, with a time line (Messenger-style) at each new day or
@@ -139,20 +184,13 @@ export default function MessageList({
   /** Phones: the message whose time is shown (tap a message to see when it was sent). */
   const [timeFor, setTimeFor] = useState<string | null>(null);
   /** Computers: the "when sent" tooltip, fixed beside the hovered message (outside the chat, like Messenger). */
-  const [tip, setTip] = useState<{ id: string; label: string; style: React.CSSProperties } | null>(null);
+  const [tip, setTip] = useState<{ id: string; label: string; anchor: AnchorRect } | null>(null);
   const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function showTip(m: ChatItem, row: HTMLElement) {
     if (tipTimer.current) clearTimeout(tipTimer.current);
     if (!window.matchMedia("(hover: hover)").matches) return; // a tap on a phone isn't a hover
-    tipTimer.current = setTimeout(() => {
-      const r = row.getBoundingClientRect();
-      const top = r.top + r.height / 2;
-      // Left of the message (and its buttons) when there's room, else to its right.
-      const style: React.CSSProperties =
-        r.left >= TIP_ROOM_PX ? { top, right: window.innerWidth - r.left + 6 } : { top, left: r.right + 6 };
-      setTip({ id: m.id, label: sentLabel(m.createdAt, "long"), style });
-    }, TIP_DELAY_MS);
+    tipTimer.current = setTimeout(() => setTip({ id: m.id, label: sentLabel(m.createdAt, "long"), anchor: rectOf(row) }), TIP_DELAY_MS);
   }
 
   function hideTip() {
@@ -215,14 +253,13 @@ export default function MessageList({
     return () => clearTimeout(t);
   }, [flash]);
 
-  function toggle(id: string, mode: Panel["mode"]) {
+  /** Opens (or closes) a message's reaction bar or menu; the bar pops up from `from` (default: the bubble). */
+  function toggle(id: string, mode: Panel["mode"], from?: Element) {
     setError(null);
     hideTip();
-    // Like Messenger, reactions float above the message, or below it when it's at the top.
-    const row = document.getElementById(`bubble-${id}`)?.getBoundingClientRect();
-    const top = scroller.current?.getBoundingClientRect().top ?? 0;
-    const below = !!row && row.top - top < PICKER_ROOM_PX;
-    setPanel((p) => (p?.id === id && p.mode === mode ? null : { id, mode, below }));
+    const el = from ?? document.getElementById(`bubble-${id}`);
+    const anchor = el ? rectOf(el) : undefined;
+    setPanel((p) => (p?.id === id && p.mode === mode ? null : { id, mode, anchor }));
   }
 
   function jumpTo(id: string) {
@@ -256,6 +293,8 @@ export default function MessageList({
       ref={scroller}
       onScroll={(e) => {
         if (tip) hideTip();
+        // The reaction bar floats at a fixed spot: scrolling the chat closes it, like Messenger.
+        if (panel && panel.mode !== "unsend") setPanel(null);
         const el = e.currentTarget;
         atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
       }}
@@ -313,7 +352,7 @@ export default function MessageList({
                   id={`bubble-${m.id}`}
                   onMouseEnter={(e) => !open && showTip(m, e.currentTarget)}
                   onMouseLeave={hideTip}
-                  className={`relative flex max-w-[85%] items-center gap-1 sm:max-w-[75%] ${m.mine ? "flex-row-reverse" : ""} ${reactions.length ? "mb-3" : ""}`}
+                  className={`relative flex max-w-[85%] items-center gap-1 sm:max-w-[75%] ${m.mine ? "flex-row-reverse" : ""} ${reactions.length ? "mb-4" : ""}`}
                 >
                   <SwipeBubble
                     mine={m.mine}
@@ -348,7 +387,9 @@ export default function MessageList({
                         </>
                       )}
                     </div>
-                    {reactions.length > 0 && <ReactionPill reactions={reactions} mine={m.mine} otherName={otherName} onClick={canReact ? () => toggle(m.id, "react") : undefined} />}
+                    {reactions.length > 0 && (
+                      <ReactionPill reactions={reactions} mine={m.mine} otherName={otherName} onClick={canReact ? () => toggle(m.id, "react") : undefined} />
+                    )}
                   </SwipeBubble>
 
                   {/* Computers: React · Reply · More beside the bubble on hover (or keyboard focus). */}
@@ -359,7 +400,7 @@ export default function MessageList({
                       } ${open ? "opacity-100" : ""}`}
                     >
                       {canReact && (
-                        <button type="button" onClick={() => toggle(m.id, "react")} aria-label="React" title="React" aria-expanded={open === "react"} className={toolBtn}>
+                        <button type="button" onClick={(e) => toggle(m.id, "react", e.currentTarget)} aria-label="React" title="React" aria-expanded={open === "react"} className={toolBtn}>
                           <SmileIcon className="h-[18px] w-[18px]" />
                         </button>
                       )}
@@ -375,37 +416,18 @@ export default function MessageList({
                       )}
                     </div>
                   )}
-                  {/* Reaction bar: floats above the message (below it at the top of the chat), over the
-                      other messages instead of pushing them, like Messenger. */}
-                  {canReact && (open === "react" || open === "sheet") && (
-                    <div
-                      role="group"
-                      aria-label="Reactions"
-                      className={`eq-tool-in absolute z-20 flex items-center gap-0.5 rounded-full border border-line-strong bg-card-2 p-1 shadow-[0_12px_32px_-8px_rgba(0,0,0,.7)] ${
-                        panel?.below ? "top-full mt-1.5" : "bottom-full mb-1.5"
-                      } ${m.mine ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"}`}
-                    >
-                      {REACTION_CHOICES.map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => react(m, emoji)}
-                          aria-label={mineNow === emoji ? `Remove ${emoji}` : `React ${emoji}`}
-                          aria-pressed={mineNow === emoji}
-                          className={`grid h-10 w-10 place-items-center rounded-full text-[22px] leading-none transition-transform hover:scale-125 hover:bg-card-3 motion-reduce:hover:scale-100 ${
-                            mineNow === emoji ? "bg-emerald-400/20 ring-1 ring-emerald-400/50" : ""
-                          }`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
+                  {/* Reaction bar: pops up over the chat from what was tapped (above it, or below when
+                      there's no room), always fully on screen, like Messenger. */}
+                  {canReact && (open === "react" || open === "sheet") && panel?.anchor && (
+                    <Floating anchor={panel.anchor} sides={["above", "below"]} data-panel-for={m.id}>
+                      <ReactionPicker current={mineNow} onPick={(emoji) => react(m, emoji)} />
+                    </Floating>
                   )}
                 </div>
 
                 {/* Phones (long press): Reply and Unsend under the message; the reactions float over it. */}
                 {open === "sheet" && (
-                  <div className={`eq-fade flex max-w-full flex-col gap-1.5 ${panel?.below ? "mt-14" : "mt-1"}`} style={{ alignItems: m.mine ? "flex-end" : "flex-start" }}>
+                  <div className="eq-fade mt-1 flex max-w-full flex-col gap-1.5" style={{ alignItems: m.mine ? "flex-end" : "flex-start" }}>
                     {(canReply || canUnsend) && (
                       <div className="flex gap-1.5">
                         {canReply && (
@@ -471,18 +493,12 @@ export default function MessageList({
         </ol>
       )}
       {photo && <MediaViewer url={photo} onClose={() => setPhoto(null)} />}
-      {tip &&
-        !panel &&
-        createPortal(
-          <span
-            role="tooltip"
-            className="eq-fade pointer-events-none fixed z-[2100] -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-canvas shadow-lg"
-            style={tip.style}
-          >
-            {tip.label}
-          </span>,
-          document.body,
-        )}
+      {/* When a message was sent: beside it (left, else right, else above), always fully on screen. */}
+      {tip && !panel && (
+        <Floating anchor={tip.anchor} sides={["left", "right", "above"]} role="tooltip" className="pointer-events-none">
+          <span className="eq-fade block whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs font-semibold text-canvas shadow-lg">{tip.label}</span>
+        </Floating>
+      )}
     </div>
   );
 }

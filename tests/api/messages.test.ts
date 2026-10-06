@@ -211,6 +211,9 @@ describe("replies and reactions", () => {
     expect((await (await reactTo(a.id, photoMsg.id, "❤️")).json()).reactions).toEqual([{ emoji: "❤️", mine: true }]);
     expect((await (await reactTo(a.id, photoMsg.id, "😆")).json()).reactions).toEqual([{ emoji: "😆", mine: true }]);
     expect((await reactTo(a.id, photoMsg.id, "🍕")).status).toBe(400);
+    // The "+" list (lib/reactions) works too.
+    expect((await (await reactTo(a.id, photoMsg.id, "🌱")).json()).reactions).toEqual([{ emoji: "🌱", mine: true }]);
+    await reactTo(a.id, photoMsg.id, "😆");
 
     signInAs(a);
     await reactTo(b.id, photoMsg.id, "👍");
