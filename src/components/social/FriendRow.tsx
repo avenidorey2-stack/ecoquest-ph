@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { PlanterCard } from "@/lib/friends";
 import FriendButton from "@/components/social/FriendButton";
 import { ActiveLabel, PresenceAvatar } from "@/components/chat/Presence";
-import { MessengerIcon } from "@/components/ui/icons";
+import { MessagesIcon } from "@/components/ui/icons";
 
 /** A planter in a friends list; answering a request refreshes the lists (accepted → Friends). */
 export default function FriendRow({ card }: { card: PlanterCard }) {
@@ -29,7 +29,7 @@ export default function FriendRow({ card }: { card: PlanterCard }) {
           aria-label={`Message ${card.name}`}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-emerald-400/40 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20"
         >
-          <MessengerIcon className="h-5 w-5" />
+          <MessagesIcon className="h-5 w-5" />
         </Link>
       )}
       <FriendButton userId={card.id} initial={card.state} onChange={() => router.refresh()} />

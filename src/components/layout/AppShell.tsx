@@ -16,7 +16,7 @@ import {
   LogoMark,
   LogoutIcon,
   MenuIcon,
-  MessengerIcon,
+  MessagesIcon,
   PinIcon,
   SettingsIcon,
   ShieldIcon,
@@ -55,7 +55,7 @@ const NAV = [
   { href: "/profile", label: "Profile", hint: "Location Settings", Icon: PinIcon },
   { href: "/leaderboard", label: "Leaderboard", hint: "Local / National", Icon: TrophyIcon },
   { href: "/friends", label: "Friends", hint: "Requests & Friends", Icon: UserCheckIcon },
-  { href: "/messages", label: "Messages", hint: "Chat With Friends", Icon: MessengerIcon },
+  { href: "/messages", label: "Messages", hint: "Chat With Friends", Icon: MessagesIcon },
   { href: "/shop", label: "Shop", hint: "Order Seedlings", Icon: SproutIcon },
   { href: "/rewards", label: "Rewards", hint: "GCash, Maya & Vouchers", Icon: GiftIcon },
   { href: "/transactions", label: "Transactions", hint: "Orders & Redemptions", Icon: WalletIcon },
@@ -331,7 +331,7 @@ export default function AppShell({
               <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
             {/* Messages and notifications sit side by side, like Facebook's header. */}
-            <div className="flex shrink-0 items-center">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <MessagesButton initialUnread={unreadMessages} since={serverNowIso} />
               <NotificationBell initialUnread={unreadNotifications} since={serverNowIso} />
             </div>

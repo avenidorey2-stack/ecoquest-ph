@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/authz";
-import { listConversations } from "@/lib/messages";
+import { chatFriends, listConversations } from "@/lib/messages";
 
-// GET /api/messages — the signed-in user's chats, latest first.
+// GET /api/messages — the signed-in user's chats (latest first) and friends to start one with.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json({ conversations: await listConversations(user.id) });
+  const [conversations, friends] = await Promise.all([listConversations(user.id), chatFriends(user.id)]);
+  return NextResponse.json({ conversations, friends });
 }

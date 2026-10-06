@@ -116,11 +116,13 @@ export default function NotificationBell({
         aria-label={unread ? `Notifications (${unread} unread)` : "Notifications"}
         aria-expanded={open}
         aria-haspopup="true"
-        className="eq-hit relative grid h-10 w-10 place-items-center rounded-full text-ink-2 transition-colors hover:bg-white/5 hover:text-emerald-300 hover:shadow-sm"
+        className={`eq-hit relative grid h-10 w-10 place-items-center rounded-full transition-colors ${
+          open ? "bg-emerald-400/20 text-emerald-300" : "bg-card-2 text-ink-2 hover:bg-card-3 hover:text-emerald-300"
+        }`}
       >
         <BellIcon className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-card">
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-canvas">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
