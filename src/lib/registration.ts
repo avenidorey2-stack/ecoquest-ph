@@ -18,7 +18,10 @@ export const MAX_EXISTING_NOTICES_PER_DAY = 3;
 export const SIGNUP_IP_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
 export const COMPLETE_IP_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 export const LOGIN_LIMIT = { limit: 10, windowMs: 15 * 60 * 1000 };
-/** Per-IP cap on "no account with that email" answers, so the login form can't be used to scan for members. */
+/**
+ * Per-IP cap on "no account with that email" (login) and "that email already has an account"
+ * (sign-up) answers, so neither form can be used to scan for members.
+ */
 export const UNKNOWN_EMAIL_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 
 export const MIN_PASSWORD_LENGTH = 8;
@@ -29,7 +32,8 @@ const BCRYPT_COST = 12;
 // timing doesn't reveal which emails are registered.
 const DUMMY_HASH = "$2b$12$t/emMwHtODM79RGGo/sGTOe9ycX7kGf9nMUaX2U62k.nFZfrHAWCO";
 
-type Failure = { ok: false; status: number; error: string };
+/** `exists`: the (normalized) email already has an account — the sign-up form offers to sign in. */
+type Failure = { ok: false; status: number; error: string; exists?: string };
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -68,9 +72,10 @@ export function findUserByEmail(email: string) {
 // ─── Step 1: start ─────────────────────────────────────────────────────────
 
 /**
- * Emails a sign-up link. The response is the same whether or not the address is
- * already registered, on cooldown, or over its daily cap — so it can't be used to
- * discover accounts, and it can't be used to flood someone's inbox.
+ * Emails a sign-up link. An address that already has an account gets a 409 saying so (like the
+ * login page's "no account" answer, capped per IP); past that cap the reply goes back to the same
+ * `ok` as a fresh sign-up and the owner is emailed instead. Cooldowns and daily caps also answer
+ * `ok`, so the form can't be used to flood someone's inbox.
  */
 export async function startRegistration(input: {
   name: unknown;
@@ -98,8 +103,11 @@ export async function startRegistration(input: {
 
   const existing = await findUserByEmail(email);
   if (existing) {
-    // Same reply to the requester (no account discovery), but tell the real owner — otherwise
-    // someone who forgot they registered is stuck. Capped so it can't flood their inbox.
+    if (await hitRateLimit(`signup:exists:ip:${input.ip}`, UNKNOWN_EMAIL_LIMIT.limit, UNKNOWN_EMAIL_LIMIT.windowMs, now)) {
+      return { ok: false, status: 409, error: "An account with this email already exists.", exists: email };
+    }
+    // Over the cap: same reply as a fresh sign-up (no account scanning), but tell the real owner —
+    // otherwise someone who forgot they registered is stuck. Capped so it can't flood their inbox.
     if (await hitRateLimit(`signup-existing:email:${email}`, MAX_EXISTING_NOTICES_PER_DAY, TOKEN_TTL_MS, now)) {
       await sendExistingAccountNotice(existing.email ?? email, existing.name, input.origin);
     }

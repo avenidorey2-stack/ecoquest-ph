@@ -100,9 +100,22 @@ describe("POST /api/register", () => {
     expect(await prisma.pendingRegistration.count()).toBe(0);
   });
 
-  it("gives the same answer for registered emails, and tells the owner instead of sending a sign-up link", async () => {
+  it("says when the email already has an account, without emailing anyone", async () => {
     await createUser({ email: "taken@example.ph", name: "Owner" });
     const res = await register({ name: "X", email: "TAKEN@example.ph" });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: "An account with this email already exists.", exists: "taken@example.ph" });
+    expect(sent).not.toHaveBeenCalled();
+    expect(await prisma.pendingRegistration.count()).toBe(0);
+  });
+
+  it(`past ${UNKNOWN_EMAIL_LIMIT.limit} "already has an account" answers per IP, answers like a fresh sign-up and tells the owner instead`, async () => {
+    await createUser({ email: "taken@example.ph", name: "Owner" });
+    const ip = freshIp();
+    for (let i = 0; i < UNKNOWN_EMAIL_LIMIT.limit; i++) {
+      await hitRateLimit(`signup:exists:ip:${ip}`, UNKNOWN_EMAIL_LIMIT.limit, UNKNOWN_EMAIL_LIMIT.windowMs);
+    }
+    const res = await register({ name: "X", email: "taken@example.ph" }, ip);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
 
@@ -117,8 +130,12 @@ describe("POST /api/register", () => {
 
   it(`caps "already registered" notices at ${MAX_EXISTING_NOTICES_PER_DAY} per day`, async () => {
     await createUser({ email: "taken@example.ph" });
+    const ip = freshIp();
+    for (let i = 0; i < UNKNOWN_EMAIL_LIMIT.limit; i++) {
+      await hitRateLimit(`signup:exists:ip:${ip}`, UNKNOWN_EMAIL_LIMIT.limit, UNKNOWN_EMAIL_LIMIT.windowMs);
+    }
     for (let i = 0; i < MAX_EXISTING_NOTICES_PER_DAY + 2; i++) {
-      expect((await register({ name: "X", email: "taken@example.ph" })).status).toBe(200);
+      expect((await register({ name: "X", email: "taken@example.ph" }, ip)).status).toBe(200);
     }
     expect(sent).toHaveBeenCalledTimes(MAX_EXISTING_NOTICES_PER_DAY);
   });

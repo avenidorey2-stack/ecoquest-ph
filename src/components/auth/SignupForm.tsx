@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const RESEND_SECONDS = 60;
@@ -7,13 +8,24 @@ const RESEND_SECONDS = 60;
 /**
  * `devMailbox`: emails go to the local /dev/mailbox page instead of a real inbox (development only).
  * `initialEmail`: prefilled from the login page's "Create an Account" offer.
+ * `callbackUrl`: kept on the "Sign In" link shown when the email already has an account.
  */
-export default function SignupForm({ devMailbox = false, initialEmail = "" }: { devMailbox?: boolean; initialEmail?: string }) {
+export default function SignupForm({
+  devMailbox = false,
+  initialEmail = "",
+  callbackUrl = "/dashboard",
+}: {
+  devMailbox?: boolean;
+  initialEmail?: string;
+  callbackUrl?: string;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState(initialEmail);
   const [website, setWebsite] = useState(""); // honeypot
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The email that already has an account (from a 409), so the form offers to sign in. */
+  const [exists, setExists] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -26,6 +38,7 @@ export default function SignupForm({ devMailbox = false, initialEmail = "" }: { 
   async function send() {
     setBusy(true);
     setError(null);
+    setExists(null);
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -34,7 +47,13 @@ export default function SignupForm({ devMailbox = false, initialEmail = "" }: { 
     setBusy(false);
 
     if (!res?.ok) {
-      setError((await res?.json().catch(() => ({})))?.error ?? "Something went wrong. Please try again.");
+      const body = await res?.json().catch(() => ({}));
+      if (typeof body?.exists === "string") {
+        setExists(body.exists);
+        setSentTo(null); // a resend from the "Check Your Inbox" screen goes back to the form
+        return;
+      }
+      setError(body?.error ?? "Something went wrong. Please try again.");
       return;
     }
     setSentTo(email.trim());
@@ -77,6 +96,8 @@ export default function SignupForm({ devMailbox = false, initialEmail = "" }: { 
   }
 
   const input = "mt-1.5 block w-full rounded-xl border border-line-strong bg-card px-3.5 py-2.5 text-base text-ink shadow-sm outline-none transition placeholder:text-ink-4 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-400/20 sm:text-sm";
+  // Hide the "already has an account" panel as soon as the email is changed.
+  const shownExists = exists && exists === email.trim().toLowerCase() ? exists : null;
   return (
     <form
       onSubmit={(e) => {
@@ -104,6 +125,28 @@ export default function SignupForm({ devMailbox = false, initialEmail = "" }: { 
         <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
+      )}
+      {shownExists && (
+        <div className="space-y-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3.5" role="alert">
+          <p className="text-sm text-ink-2">
+            <strong className="break-all text-ink">{shownExists}</strong> already has an EcoQuest PH account. Sign in
+            instead, or reset your password if you forgot it.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={`/login?email=${encodeURIComponent(shownExists)}&callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-emerald-400 px-3 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-300 motion-safe:active:scale-[0.98]"
+            >
+              Sign In
+            </Link>
+            <Link
+              href={`/forgot-password?email=${encodeURIComponent(shownExists)}`}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-line-strong px-3 text-sm font-semibold text-ink transition hover:bg-card-2 motion-safe:active:scale-[0.98]"
+            >
+              Reset Password
+            </Link>
+          </div>
+        </div>
       )}
       <button
         disabled={busy}
