@@ -1,29 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MB, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
+import { fileWithType, formatSize, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
 import WebcamCapture from "@/components/quests/WebcamCapture";
 import { CameraIcon, ImageIcon, UploadIcon, VideoIcon } from "@/components/ui/icons";
-
-// Some Android file managers hand over files without a MIME type: infer it from the extension.
-const EXT_TYPES: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-};
-
-function withType(file: File) {
-  if (file.type) return file;
-  const type = EXT_TYPES[file.name.split(".").pop()?.toLowerCase() ?? ""];
-  return type ? new File([file], file.name, { type, lastModified: file.lastModified }) : file;
-}
-
-function formatSize(bytes: number) {
-  return bytes >= MB ? `${(bytes / MB).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
 
 /** Thumbnail of the chosen file. Object URLs are made and revoked in an effect so none leak. */
 function FilePreview({ file }: { file: File }) {
@@ -86,7 +66,7 @@ export default function ProofMediaPicker({
 
   function pick(raw: File | null | undefined) {
     if (!raw) return;
-    const next = withType(raw);
+    const next = fileWithType(raw);
     const problem = mediaRuleError(next);
     setError(problem);
     setWebcam(false);

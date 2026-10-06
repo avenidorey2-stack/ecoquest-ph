@@ -152,6 +152,20 @@ html {
   text-size-adjust: 100%;
 }
 
+/* A chat is open (ChatFrame): the page behind it stays put, so only the messages scroll and the
+   keyboard can't drag the page around. On phones the chat covers the whole screen, so the
+   animated backdrop behind it is switched off to spare budget phones the work. */
+html.eq-chat-open,
+html.eq-chat-open body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+@media (max-width: 1023px) {
+  html.eq-chat-open .eq-eco-bg {
+    display: none;
+  }
+}
+
 /* Only <html> paints the canvas colour: a body background would cover the fixed
    EcoBackground layer (z-index -10). */
 body {

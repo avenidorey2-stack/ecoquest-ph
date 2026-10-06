@@ -7,7 +7,8 @@ import AchievementShowcase from "@/components/profile/AchievementShowcase";
 import ProofGallery from "@/components/profile/ProofGallery";
 import FriendButton from "@/components/social/FriendButton";
 import BlockButton from "@/components/social/BlockButton";
-import { CoinIcon, LockIcon, MedalIcon, TreeIcon } from "@/components/ui/icons";
+import { ActiveLabel } from "@/components/chat/Presence";
+import { CoinIcon, LockIcon, MedalIcon, MessengerIcon, TreeIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Planter profile · EcoQuest PH" };
 
@@ -52,6 +53,7 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
             <p className="mt-1 text-xs text-emerald-200/80">
               {profile.city && `${profile.city}, ${profile.province} · `}Planting since {formatDate(profile.memberSince)}
             </p>
+            <ActiveLabel activeAt={profile.activeAt} className="mt-1 block text-xs font-semibold" />
           </div>
           {isMe ? (
             <Link href="/profile" className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-white/20 hover:bg-white/20">
@@ -60,6 +62,14 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
           ) : (
             <div className="flex basis-full items-start justify-end gap-1 sm:basis-auto">
               <BlockButton userId={profile.id} name={profile.name} />
+              {profile.friendState === "FRIENDS" && (
+                <Link
+                  href={`/messages/${profile.id}`}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/10 px-3 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/20"
+                >
+                  <MessengerIcon className="h-4 w-4" /> Message
+                </Link>
+              )}
               <FriendButton userId={profile.id} initial={profile.friendState} />
             </div>
           )}

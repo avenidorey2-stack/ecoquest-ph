@@ -16,6 +16,7 @@ import {
   LogoMark,
   LogoutIcon,
   MenuIcon,
+  MessengerIcon,
   PinIcon,
   SettingsIcon,
   ShieldIcon,
@@ -28,6 +29,8 @@ import {
   WalletIcon,
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
+import MessagesButton from "./MessagesButton";
+import { LiveChannel } from "./live";
 import EcoBackground from "./EcoBackground";
 import ScrollReveal, { TOUR_MENU_EVENT } from "./ScrollReveal";
 import ActivePill from "@/components/ui/ActivePill";
@@ -52,6 +55,7 @@ const NAV = [
   { href: "/profile", label: "Profile", hint: "Location Settings", Icon: PinIcon },
   { href: "/leaderboard", label: "Leaderboard", hint: "Local / National", Icon: TrophyIcon },
   { href: "/friends", label: "Friends", hint: "Requests & Friends", Icon: UserCheckIcon },
+  { href: "/messages", label: "Messages", hint: "Chat With Friends", Icon: MessengerIcon },
   { href: "/shop", label: "Shop", hint: "Order Seedlings", Icon: SproutIcon },
   { href: "/rewards", label: "Rewards", hint: "GCash, Maya & Vouchers", Icon: GiftIcon },
   { href: "/transactions", label: "Transactions", hint: "Orders & Redemptions", Icon: WalletIcon },
@@ -66,6 +70,7 @@ const PAGE_TITLES: [prefix: string, title: string, subtitle: string][] = [
   ["/profile", "Profile & Location", "Your account details and verified home city."],
   ["/leaderboard", "Leaderboard", "This week's top planters, locally and nationally."],
   ["/friends", "Friends", "Friend requests and your planting friends."],
+  ["/messages", "Messages", "Chat with your planting friends."],
   ["/shop", "Seedling Shop", "Order native tree seedlings with your planting points."],
   ["/rewards", "Rewards", "Turn your planting points into GCash, Maya and vouchers."],
   ["/transactions", "Transactions", "Your seedling orders and reward redemptions, with live status."],
@@ -225,6 +230,7 @@ export default function AppShell({
   status,
   serverNowIso,
   unreadNotifications,
+  unreadMessages,
   notifyChannel,
   children,
 }: {
@@ -232,6 +238,8 @@ export default function AppShell({
   status: ShellStatus;
   serverNowIso: string;
   unreadNotifications: number;
+  /** Chats with unread messages. */
+  unreadMessages: number;
   /** The user's secret live-notification channel ("notify:<token>"). */
   notifyChannel: string;
   children: React.ReactNode;
@@ -259,6 +267,7 @@ export default function AppShell({
   const subtitle = page ? page[2] : "Your environmental impact and active quests overview.";
 
   return (
+    <LiveChannel value={notifyChannel}>
     <div className="min-h-dvh text-ink">
       <EcoBackground />
       <ScrollReveal />
@@ -289,7 +298,7 @@ export default function AppShell({
 
       <div className="flex min-h-dvh flex-col lg:pl-64">
         <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas lg:bg-canvas/75 lg:backdrop-blur-md">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
             <button
               onClick={() => setOpen(true)}
               data-tour="menu"
@@ -300,21 +309,13 @@ export default function AppShell({
               <MenuIcon />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[13px] font-bold uppercase tracking-wide text-ink sm:text-base sm:tracking-[0.12em]">
+              <h1 className="line-clamp-2 text-[12px] font-bold uppercase leading-tight tracking-wide text-ink sm:truncate sm:text-base sm:tracking-[0.12em]">
                 {title}
               </h1>
               <p className="hidden truncate text-xs text-ink-3 sm:block">{subtitle}</p>
             </div>
             <Link href="/achievements" title="Your level" data-tour="level" className="hidden rounded-xl px-2 py-1 hover:bg-white/5 sm:block">
               <LevelBar xp={user.xp} compact />
-            </Link>
-            <Link
-              href="/achievements"
-              title="Your level"
-              data-tour="level"
-              className="eq-hit relative grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-extrabold text-amber-950 ring-2 ring-amber-400/30 sm:hidden"
-            >
-              {levelForXp(user.xp)}
             </Link>
             <div className="hidden border-l border-line pl-3 xl:block">
               <LiveClock initialIso={serverNowIso} />
@@ -329,9 +330,22 @@ export default function AppShell({
               {user.points.toLocaleString("en-PH")}
               <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
-            <NotificationBell initialUnread={unreadNotifications} channel={notifyChannel} since={serverNowIso} />
+            {/* Messages and notifications sit side by side, like Facebook's header. */}
+            <div className="flex shrink-0 items-center">
+              <MessagesButton initialUnread={unreadMessages} since={serverNowIso} />
+              <NotificationBell initialUnread={unreadNotifications} since={serverNowIso} />
+            </div>
             <Link href="/profile" title="Profile" className="eq-hit relative shrink-0 rounded-full">
               <Avatar user={user} />
+              {/* Phones: the level rides on the profile photo, leaving room for the page title. */}
+              <span
+                data-tour="level"
+                title="Your level"
+                className="absolute -bottom-1 -left-1 grid h-5 min-w-5 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-1 text-[10px] font-extrabold text-amber-950 ring-2 ring-canvas sm:hidden"
+              >
+                <span className="sr-only">Level </span>
+                {levelForXp(user.xp)}
+              </span>
             </Link>
           </div>
         </header>
@@ -340,5 +354,6 @@ export default function AppShell({
         <main className="flex flex-1 flex-col">{children}</main>
       </div>
     </div>
+    </LiveChannel>
   );
 }

@@ -52,7 +52,7 @@ describe("planter search", () => {
     expect(results.map((r: { name: string }) => r.name).sort()).toEqual(["Ana Reyes", "Anabel Cruz"]);
     expect(results.find((r: { id: string }) => r.id === anabel.id).state).toBe("REQUESTED");
     expect(results.find((r: { id: string }) => r.id === ana.id).state).toBe("NONE");
-    expect(Object.keys(results[0]).sort()).toEqual(["city", "id", "image", "level", "name", "province", "state"]);
+    expect(Object.keys(results[0]).sort()).toEqual(["activeAt", "city", "id", "image", "level", "name", "province", "state"]);
   });
 
   it("needs two characters and a session", async () => {

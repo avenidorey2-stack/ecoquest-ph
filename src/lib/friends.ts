@@ -103,10 +103,32 @@ export type PlanterCard = {
   province: string | null;
   level: number;
   state: FriendState;
+  /** Last active (friends only, if they share it): "Active Now" / "Active 2h ago". */
+  activeAt: string | null;
 };
 
-const cardSelect = { id: true, name: true, image: true, avatarUrl: true, city: true, province: true, xp: true } as const;
-type CardUser = { id: string; name: string | null; image: string | null; avatarUrl: string | null; city: string | null; province: string | null; xp: number };
+const cardSelect = {
+  id: true,
+  name: true,
+  image: true,
+  avatarUrl: true,
+  city: true,
+  province: true,
+  xp: true,
+  lastActiveAt: true,
+  showActiveStatus: true,
+} as const;
+type CardUser = {
+  id: string;
+  name: string | null;
+  image: string | null;
+  avatarUrl: string | null;
+  city: string | null;
+  province: string | null;
+  xp: number;
+  lastActiveAt: Date | null;
+  showActiveStatus: boolean;
+};
 
 function toCard(u: CardUser, state: FriendState): PlanterCard {
   return {
@@ -117,6 +139,7 @@ function toCard(u: CardUser, state: FriendState): PlanterCard {
     province: u.province,
     level: levelForXp(u.xp),
     state,
+    activeAt: state === "FRIENDS" && u.showActiveStatus && u.lastActiveAt ? u.lastActiveAt.toISOString() : null,
   };
 }
 

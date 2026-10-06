@@ -1,5 +1,5 @@
-import { ListSkeleton } from "@/components/ui/Skeleton";
+import ChatSkeleton from "@/components/chat/ChatSkeleton";
 
 export default function Loading() {
-  return <ListSkeleton stats={false} />;
+  return <ChatSkeleton />;
 }

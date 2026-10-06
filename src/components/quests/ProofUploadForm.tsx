@@ -3,46 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProofMediaPicker from "@/components/quests/ProofMediaPicker";
+import { postJson, sendWithProgress, succeeded, TOO_BIG } from "@/components/ui/upload";
 
 const MAX_PLANTS = 500; // = MAX_PLANTS_PER_SUBMISSION (server-validated)
-
-type DirectUpload = { url: string; key: string; token: string };
-type Result = { status: number; data: { error?: string; upload?: DirectUpload | null } };
-
-const succeeded = (r: Result) => r.status >= 200 && r.status < 300;
-const TOO_BIG = "This file is too big to upload. Try a shorter video or a smaller photo.";
-
-/** Sends with XHR (fetch can't report upload progress). Rejects only on network failure. */
-function sendWithProgress(
-  method: "POST" | "PUT",
-  url: string,
-  body: XMLHttpRequestBodyInit,
-  onProgress: (pct: number) => void,
-  headers: Record<string, string> = {},
-) {
-  return new Promise<Result>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
-    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
-    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
-    xhr.onload = () => {
-      let data = {};
-      try {
-        data = JSON.parse(xhr.responseText);
-      } catch {
-        // Non-JSON error page (e.g. the host rejecting an oversized request).
-      }
-      resolve({ status: xhr.status, data });
-    };
-    xhr.onerror = () => reject(new Error("Network Error"));
-    xhr.send(body);
-  });
-}
-
-async function postJson(url: string, body: unknown): Promise<Result> {
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return { status: res.status, data: await res.json().catch(() => ({})) };
-}
 
 /**
  * Uploads the proof and records the submission; returns an error message, or null on success.
