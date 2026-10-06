@@ -3,26 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { signOutAction } from "@/app/actions/auth";
-import { disablePush } from "@/lib/push-client";
 import LiveClock from "./LiveClock";
 import LevelBar from "@/components/gamification/LevelBar";
-import { levelForXp } from "@/lib/levels";
 import {
   CloseIcon,
   CoinIcon,
   DashboardIcon,
-  FlagIcon,
   GiftIcon,
   LogoMark,
-  LogoutIcon,
   MenuIcon,
   MessagesIcon,
-  PinIcon,
-  SettingsIcon,
   ShieldIcon,
   TrophyIcon,
-  UsersIcon,
   MedalIcon,
   SproutIcon,
   TreeIcon,
@@ -30,6 +22,7 @@ import {
   WalletIcon,
 } from "@/components/ui/icons";
 import NotificationBell from "./NotificationBell";
+import ProfileMenu from "./ProfileMenu";
 import MessagesButton from "./MessagesButton";
 import { LiveChannel } from "./live";
 import PresenceReporter from "./PresenceReporter";
@@ -55,17 +48,14 @@ export type ShellStatus = {
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", hint: null, Icon: DashboardIcon },
-  { href: "/profile", label: "Profile", hint: "Location Settings", Icon: PinIcon },
   { href: "/leaderboard", label: "Leaderboard", hint: "Local / National", Icon: TrophyIcon },
   { href: "/friends", label: "Friends", hint: "Requests & Friends", Icon: UserCheckIcon },
   { href: "/messages", label: "Messages", hint: "Chat With Friends", Icon: MessagesIcon },
   { href: "/shop", label: "Shop", hint: "Order Seedlings", Icon: SproutIcon },
   { href: "/rewards", label: "Rewards", hint: "GCash, Maya & Vouchers", Icon: GiftIcon },
   { href: "/transactions", label: "Transactions", hint: "Orders & Redemptions", Icon: WalletIcon },
-  { href: "/referrals", label: "Referral Hub", hint: null, Icon: UsersIcon },
   { href: "/achievements", label: "Achievements", hint: "Badges & Levels", Icon: MedalIcon },
   { href: "/trees", label: "Tree Directory", hint: "Native PH Trees", Icon: TreeIcon },
-  { href: "/settings", label: "Settings", hint: "Privacy, Password & Help", Icon: SettingsIcon },
 ];
 const ADMIN = { href: "/admin", label: "Admin Portal", hint: null, Icon: ShieldIcon };
 
@@ -196,23 +186,6 @@ function SidebarContent({
           </dl>
         </section>
 
-        <Link
-          href="/dashboard?tour=1"
-          onClick={onNavigate}
-          data-tour="tour-replay"
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2.5 text-sm font-semibold text-emerald-200 transition-colors hover:border-emerald-300/60 hover:bg-emerald-400/20 hover:text-white"
-        >
-          <FlagIcon className="h-4 w-4" /> Take the Tour
-        </Link>
-        {/* Signing out also stops this device's notifications (someone else may sign in next). */}
-        <form action={signOutAction} onSubmit={() => void disablePush()}>
-          <button
-            type="submit"
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-400/35 bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:border-rose-300/60 hover:bg-rose-500/20 hover:text-white"
-          >
-            <LogoutIcon className="h-4 w-4" /> Log Out
-          </button>
-        </form>
       </div>
     </div>
   );
@@ -318,7 +291,9 @@ export default function AppShell({
               <MenuIcon />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="line-clamp-2 text-[12px] font-bold uppercase leading-tight tracking-wide text-ink sm:truncate sm:text-base sm:tracking-[0.12em]">
+              {/* Under 400px wide the header buttons leave the title too little room (it was cut mid-word),
+                  so it's kept for screen readers only. */}
+              <h1 className="line-clamp-2 text-[12px] font-bold uppercase leading-tight tracking-wide text-ink max-[399px]:sr-only sm:truncate sm:text-base sm:tracking-[0.12em]">
                 {title}
               </h1>
               <p className="hidden truncate text-xs text-ink-3 sm:block">{subtitle}</p>
@@ -344,18 +319,8 @@ export default function AppShell({
               <MessagesButton initialUnread={unreadMessages} since={serverNowIso} />
               <NotificationBell initialUnread={unreadNotifications} since={serverNowIso} />
             </div>
-            <Link href="/profile" title="Profile" className="eq-hit relative shrink-0 rounded-full">
-              <Avatar user={user} />
-              {/* Phones: the level rides on the profile photo, leaving room for the page title. */}
-              <span
-                data-tour="level"
-                title="Your level"
-                className="absolute -bottom-1 -left-1 grid h-5 min-w-5 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-1 text-[10px] font-extrabold text-amber-950 ring-2 ring-canvas sm:hidden"
-              >
-                <span className="sr-only">Level </span>
-                {levelForXp(user.xp)}
-              </span>
-            </Link>
+            {/* Profile, Settings, Referral Hub, the tour and Log Out live behind the profile photo. */}
+            <ProfileMenu name={user.name ?? "Planter"} xp={user.xp} avatar={(size) => <Avatar user={user} size={size} />} />
           </div>
         </header>
         <UserSearch />

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MoreIcon, ReplyIcon, SmileIcon } from "@/components/ui/icons";
+import { BREAK_MS, dayKey, sentLabel } from "@/lib/chat-time";
 import MediaViewer from "./MediaViewer";
 import SwipeBubble from "./SwipeBubble";
 
@@ -26,25 +28,15 @@ export type ChatItem = {
 /** Reactions offered, like Messenger's (the server accepts only these). */
 export const REACTION_CHOICES = ["❤️", "😆", "😮", "😢", "😠", "👍"];
 
-const TZ = "Asia/Manila";
-const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-/** Messages closer than this to the next one from the same side share one time stamp. */
-const GROUP_MS = 5 * 60_000;
 /** "At the bottom" within this many pixels: new messages then keep the view at the bottom. */
 const NEAR_BOTTOM_PX = 120;
 const FLASH_MS = 1400;
-
-function dayLabel(iso: string) {
-  const d = new Date(iso);
-  const key = dayKey.format(d);
-  const now = Date.now();
-  if (key === dayKey.format(now)) return "Today";
-  if (key === dayKey.format(now - 86_400_000)) return "Yesterday";
-  const sameYear = key.slice(0, 4) === dayKey.format(now).slice(0, 4);
-  return d.toLocaleDateString("en-PH", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", year: sameYear ? undefined : "numeric" });
-}
-
-const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("en-PH", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+/** The reaction bar opens above the message unless it's this close to the top of the chat. */
+const PICKER_ROOM_PX = 64;
+/** Hover this long before the "when sent" tooltip shows. */
+const TIP_DELAY_MS = 400;
+/** Room the tooltip needs beside a message (else it goes on the other side). */
+const TIP_ROOM_PX = 190;
 
 function MediaBubble({ media, mine, onOpen, onLoad }: { media: Media; mine: boolean; onOpen: () => void; onLoad: () => void }) {
   const corner = mine ? "rounded-br-md" : "rounded-bl-md";
@@ -101,11 +93,12 @@ function ReactionPill({
 
 const toolBtn = "grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-card-3 hover:text-ink";
 
-type Panel = { id: string; mode: "react" | "sheet" | "unsend" };
+/** `below`: no room above the message (it's at the top of the chat), so the reaction bar opens under it. */
+type Panel = { id: string; mode: "react" | "sheet" | "unsend"; below?: boolean };
 
 /**
- * A chat's messages, oldest at the top, with a date line for each day and a time under each run
- * of messages. Keeps the newest message in view as messages arrive or the keyboard opens (unless
+ * A chat's messages, oldest at the top, with a time line (Messenger-style) at each new day or
+ * after an hour's pause; hover a message (tap it on phones) for its exact date and time. Keeps the newest message in view as messages arrive or the keyboard opens (unless
  * the reader scrolled up), and keeps the reader's place when older messages load above.
  *
  * With `onReact` / `onReply`: hover a message (computers) for React · Reply · More buttons; on
@@ -143,6 +136,31 @@ export default function MessageList({
   const [error, setError] = useState<{ id: string; text: string } | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  /** Phones: the message whose time is shown (tap a message to see when it was sent). */
+  const [timeFor, setTimeFor] = useState<string | null>(null);
+  /** Computers: the "when sent" tooltip, fixed beside the hovered message (outside the chat, like Messenger). */
+  const [tip, setTip] = useState<{ id: string; label: string; style: React.CSSProperties } | null>(null);
+  const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showTip(m: ChatItem, row: HTMLElement) {
+    if (tipTimer.current) clearTimeout(tipTimer.current);
+    if (!window.matchMedia("(hover: hover)").matches) return; // a tap on a phone isn't a hover
+    tipTimer.current = setTimeout(() => {
+      const r = row.getBoundingClientRect();
+      const top = r.top + r.height / 2;
+      // Left of the message (and its buttons) when there's room, else to its right.
+      const style: React.CSSProperties =
+        r.left >= TIP_ROOM_PX ? { top, right: window.innerWidth - r.left + 6 } : { top, left: r.right + 6 };
+      setTip({ id: m.id, label: sentLabel(m.createdAt, "long"), style });
+    }, TIP_DELAY_MS);
+  }
+
+  function hideTip() {
+    if (tipTimer.current) clearTimeout(tipTimer.current);
+    tipTimer.current = null;
+    setTip(null);
+  }
+  useEffect(() => () => void (tipTimer.current && clearTimeout(tipTimer.current)), []);
 
   const toBottom = () => {
     const el = scroller.current;
@@ -199,7 +217,12 @@ export default function MessageList({
 
   function toggle(id: string, mode: Panel["mode"]) {
     setError(null);
-    setPanel((p) => (p?.id === id && p.mode === mode ? null : { id, mode }));
+    hideTip();
+    // Like Messenger, reactions float above the message, or below it when it's at the top.
+    const row = document.getElementById(`bubble-${id}`)?.getBoundingClientRect();
+    const top = scroller.current?.getBoundingClientRect().top ?? 0;
+    const below = !!row && row.top - top < PICKER_ROOM_PX;
+    setPanel((p) => (p?.id === id && p.mode === mode ? null : { id, mode, below }));
   }
 
   function jumpTo(id: string) {
@@ -232,6 +255,7 @@ export default function MessageList({
     <div
       ref={scroller}
       onScroll={(e) => {
+        if (tip) hideTip();
         const el = e.currentTarget;
         atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
       }}
@@ -244,10 +268,9 @@ export default function MessageList({
         <ol aria-label="Messages" className="space-y-0.5">
           {items.map((m, i) => {
             const prev = items[i - 1];
-            const next = items[i + 1];
             const newDay = !prev || dayKey.format(new Date(prev.createdAt)) !== dayKey.format(new Date(m.createdAt));
-            const runEnds = !next || next.mine !== m.mine || next.author !== m.author || +new Date(next.createdAt) - +new Date(m.createdAt) > GROUP_MS;
-            const runStarts = newDay || !prev || prev.mine !== m.mine || prev.author !== m.author || !!m.replyTo;
+            const timeBreak = newDay || +new Date(m.createdAt) - +new Date(prev!.createdAt) >= BREAK_MS;
+            const runStarts = timeBreak || !prev || prev.mine !== m.mine || prev.author !== m.author || !!m.replyTo;
             const side = m.mine ? "items-end" : "items-start";
             const canUnsend = m.canUnsend && !m.deleted;
             const canReact = !!onReact && !m.deleted;
@@ -259,9 +282,11 @@ export default function MessageList({
             const seen = m.id === seenId && m.id === lastMineId;
             return (
               <li key={m.id} id={`msg-${m.id}`} data-panel-for={m.id} className={`group/msg flex flex-col ${side} ${runStarts ? "pt-2" : ""}`}>
-                {newDay && (
-                  <p className="my-2 w-full text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-3" suppressHydrationWarning>
-                    {dayLabel(m.createdAt)}
+                {timeBreak && (
+                  <p className="my-3 w-full text-center text-xs font-semibold text-ink-3">
+                    <time dateTime={m.createdAt} suppressHydrationWarning>
+                      {sentLabel(m.createdAt, "short")}
+                    </time>
                   </p>
                 )}
                 {runStarts && m.author && <p className="mb-0.5 px-1 text-xs font-semibold text-ink-3">{m.author}</p>}
@@ -284,7 +309,12 @@ export default function MessageList({
                     </span>
                   </button>
                 )}
-                <div className={`flex max-w-[85%] items-center gap-1 sm:max-w-[75%] ${m.mine ? "flex-row-reverse" : ""} ${reactions.length ? "mb-3" : ""}`}>
+                <div
+                  id={`bubble-${m.id}`}
+                  onMouseEnter={(e) => !open && showTip(m, e.currentTarget)}
+                  onMouseLeave={hideTip}
+                  className={`relative flex max-w-[85%] items-center gap-1 sm:max-w-[75%] ${m.mine ? "flex-row-reverse" : ""} ${reactions.length ? "mb-3" : ""}`}
+                >
                   <SwipeBubble
                     mine={m.mine}
                     onReply={canReply ? () => onReply!(m) : undefined}
@@ -306,6 +336,8 @@ export default function MessageList({
                           )}
                           {m.body && (
                             <p
+                              // Phones: tap a message to see when it was sent (computers hover it).
+                              onClick={() => window.matchMedia("(pointer: coarse)").matches && setTimeFor((t) => (t === m.id ? null : m.id))}
                               className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[15px] leading-snug ${
                                 m.mine ? "rounded-br-md bg-emerald-400 text-emerald-950" : "rounded-bl-md bg-card-3 text-ink"
                               }`}
@@ -343,30 +375,38 @@ export default function MessageList({
                       )}
                     </div>
                   )}
+                  {/* Reaction bar: floats above the message (below it at the top of the chat), over the
+                      other messages instead of pushing them, like Messenger. */}
+                  {canReact && (open === "react" || open === "sheet") && (
+                    <div
+                      role="group"
+                      aria-label="Reactions"
+                      className={`eq-tool-in absolute z-20 flex items-center gap-0.5 rounded-full border border-line-strong bg-card-2 p-1 shadow-[0_12px_32px_-8px_rgba(0,0,0,.7)] ${
+                        panel?.below ? "top-full mt-1.5" : "bottom-full mb-1.5"
+                      } ${m.mine ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"}`}
+                    >
+                      {REACTION_CHOICES.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => react(m, emoji)}
+                          aria-label={mineNow === emoji ? `Remove ${emoji}` : `React ${emoji}`}
+                          aria-pressed={mineNow === emoji}
+                          className={`grid h-10 w-10 place-items-center rounded-full text-[22px] leading-none transition-transform hover:scale-125 hover:bg-card-3 motion-reduce:hover:scale-100 ${
+                            mineNow === emoji ? "bg-emerald-400/20 ring-1 ring-emerald-400/50" : ""
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Reaction bar: from the React button, the reactions under a bubble, or a long press. */}
-                {(open === "react" || open === "sheet") && (
-                  <div className="eq-fade mt-1 flex max-w-full flex-col gap-1.5" style={{ alignItems: m.mine ? "flex-end" : "flex-start" }}>
-                    {canReact && (
-                      <div role="group" aria-label="Reactions" className="flex items-center gap-0.5 rounded-full border border-line-strong bg-card-2 p-1 shadow-lg">
-                        {REACTION_CHOICES.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() => react(m, emoji)}
-                            aria-label={mineNow === emoji ? `Remove ${emoji}` : `React ${emoji}`}
-                            aria-pressed={mineNow === emoji}
-                            className={`grid h-10 w-10 place-items-center rounded-full text-[22px] leading-none transition-transform hover:scale-110 hover:bg-card-3 ${
-                              mineNow === emoji ? "bg-emerald-400/20 ring-1 ring-emerald-400/50" : ""
-                            }`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {open === "sheet" && (canReply || canUnsend) && (
+                {/* Phones (long press): Reply and Unsend under the message; the reactions float over it. */}
+                {open === "sheet" && (
+                  <div className={`eq-fade flex max-w-full flex-col gap-1.5 ${panel?.below ? "mt-14" : "mt-1"}`} style={{ alignItems: m.mine ? "flex-end" : "flex-start" }}>
+                    {(canReply || canUnsend) && (
                       <div className="flex gap-1.5">
                         {canReply && (
                           <button
@@ -415,14 +455,14 @@ export default function MessageList({
                     )}
                   </div>
                 )}
-                {(runEnds || seen) && (
+                {(timeFor === m.id || seen) && (
                   <p className="mb-1 mt-0.5 px-1 text-[11px] text-ink-3">
-                    {runEnds && (
+                    {timeFor === m.id && (
                       <time dateTime={m.createdAt} suppressHydrationWarning>
-                        {timeOf(m.createdAt)}
+                        {sentLabel(m.createdAt, "long")}
                       </time>
                     )}
-                    {seen && <span className="font-semibold text-emerald-300">{runEnds ? " · " : ""}Seen</span>}
+                    {seen && <span className="font-semibold text-emerald-300">{timeFor === m.id ? " · " : ""}Seen</span>}
                   </p>
                 )}
               </li>
@@ -431,6 +471,18 @@ export default function MessageList({
         </ol>
       )}
       {photo && <MediaViewer url={photo} onClose={() => setPhoto(null)} />}
+      {tip &&
+        !panel &&
+        createPortal(
+          <span
+            role="tooltip"
+            className="eq-fade pointer-events-none fixed z-[2100] -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-canvas shadow-lg"
+            style={tip.style}
+          >
+            {tip.label}
+          </span>,
+          document.body,
+        )}
     </div>
   );
 }

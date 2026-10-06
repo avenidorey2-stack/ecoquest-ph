@@ -62,11 +62,11 @@ function tourSteps(hasCity: boolean): Step[] {
       body: "Every part of EcoQuest PH is one tap away. You can always come back to the Dashboard — your home base.",
     },
     {
-      target: "nav-profile",
-      ...SIDEBAR,
+      target: "profile-menu",
+      prefer: ["bottom", "left"],
       Icon: PinIcon,
       title: "Set Your Home City First",
-      body: "In Profile, choose your city or municipality. It decides which planting slots you can claim and which local leaderboard you're on.",
+      body: "Tap your profile photo, then See Your Profile, to choose your city or municipality. It decides which planting slots you can claim and which local leaderboard you're on.",
       bullets: ["Verify your email too, so your location shows as Active"],
     },
     {
@@ -154,13 +154,13 @@ function tourSteps(hasCity: boolean): Step[] {
       body: "Learn about native Philippine trees — what each one is good for and where it's being planted near you.",
     },
     {
-      target: "tour-replay",
-      ...SIDEBAR,
+      target: "profile-menu",
+      prefer: ["bottom", "left"],
       Icon: FlagIcon,
       title: "You're ready to plant!",
       body: hasCity
-        ? "Find an open slot on the map and claim your first quest. You can replay this tour anytime from here."
-        : "Start by setting your home city so you can see slots near you. You can replay this tour anytime from here.",
+        ? "Find an open slot on the map and claim your first quest. Your profile photo opens Settings, Referral Hub and Log Out — and Take the Tour, to replay this anytime."
+        : "Start by setting your home city so you can see slots near you. Your profile photo opens Settings, Referral Hub and Log Out — and Take the Tour, to replay this anytime.",
     },
   ];
 }
