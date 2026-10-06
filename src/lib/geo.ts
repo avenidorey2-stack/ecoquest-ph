@@ -105,7 +105,18 @@ export async function fetchCityBoundary(
   return null;
 }
 
+/** Center of a city/municipality ("City, Province, Philippines"), for when OSM has no outline. */
+export async function fetchCityPoint(city: string, province: string | null): Promise<[number, number] | null> {
+  const hits = await searchSettlements([city, province, "Philippines"].filter(Boolean).join(", "));
+  const hit = Array.isArray(hits) ? (hits as NominatimHit[])[0] : undefined;
+  const lat = Number(hit?.lat);
+  const lng = Number(hit?.lon);
+  return hit && Number.isFinite(lat) && Number.isFinite(lng) && isInsidePhilippines(lat, lng) ? [lat, lng] : null;
+}
+
 type NominatimHit = {
+  lat?: string;
+  lon?: string;
   category?: string;
   type?: string;
   place_rank?: number;

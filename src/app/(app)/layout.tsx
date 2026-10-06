@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getCurrentUser, redirectToLogin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { resolveCity } from "@/lib/psgc";
 import { displayAvatar } from "@/lib/avatar-url";
@@ -13,19 +13,19 @@ function serverNowIso() {
 }
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const me = await getCurrentUser();
+  if (!me) return redirectToLogin();
 
   // Any due "less than a day left" claim reminder lands before the bell's unread count is read.
-  await remindExpiringClaims(session.user.id);
+  await remindExpiringClaims(me.id);
   // Read from the DB (not the session) so role, points and location are always current.
   const [user, unreadNotifications, messages] = await Promise.all([
     prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: me.id },
       select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true, notifyToken: true },
     }),
-    prisma.notification.count({ where: { userId: session.user.id, isRead: false } }),
-    unreadSummary(session.user.id),
+    prisma.notification.count({ where: { userId: me.id, isRead: false } }),
+    unreadSummary(me.id),
   ]);
   if (!user) redirect("/login");
 

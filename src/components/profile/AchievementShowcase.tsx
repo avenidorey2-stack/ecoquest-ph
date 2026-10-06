@@ -24,19 +24,24 @@ export default function AchievementShowcase({
       {achievements.length === 0 ? (
         <p className="px-5 py-6 text-center text-sm text-ink-3">{emptyText}</p>
       ) : (
-        <ul className="eq-stagger eq-spring grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
+        <ul className="eq-stagger eq-spring grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
           {achievements.map((a) => (
-            <li key={a.key} className="flex items-start gap-3 rounded-xl bg-card-2 p-3 ring-1 ring-line">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-card text-2xl shadow-sm ring-1 ring-amber-400/30" aria-hidden>
+            <li
+              key={a.key}
+              className="group flex h-full flex-col items-center rounded-2xl border border-amber-400/15 bg-gradient-to-b from-amber-400/[0.06] to-card-2 px-3 pb-3 pt-4 text-center transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-amber-400/35 hover:shadow-[0_14px_30px_-18px_rgb(251_191_36/0.45)] motion-reduce:hover:translate-y-0"
+            >
+              <span
+                className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-amber-300/20 to-emerald-400/10 text-3xl ring-2 ring-amber-400/40 transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100"
+                aria-hidden
+              >
                 {a.icon}
               </span>
-              <div className="min-w-0">
-                <p className="font-semibold text-ink">{a.name}</p>
-                <p className="text-xs text-ink-3">{a.description}</p>
-                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-400/10 px-2 py-0.5 text-[11px] font-medium text-amber-300 ring-1 ring-amber-400/30">
-                  Acquired on <time dateTime={a.unlockedAt}>{formatDate(a.unlockedAt)}</time>
-                </p>
-              </div>
+              <p className="mt-2.5 text-sm font-semibold leading-tight text-ink">{a.name}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-ink-3">{a.description}</p>
+              <p className="mt-auto pt-2.5 text-[11px] font-medium text-amber-300">
+                <span className="sr-only">Acquired on </span>
+                <time dateTime={a.unlockedAt}>{formatDate(a.unlockedAt)}</time>
+              </p>
             </li>
           ))}
         </ul>

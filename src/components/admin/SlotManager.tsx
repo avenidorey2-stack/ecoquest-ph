@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { PsgcRegion } from "@/lib/psgc";
+import type { CityHit, PsgcRegion } from "@/lib/psgc";
+import type { MapArea } from "./AdminSlotMap";
+import PlaceSearch from "./PlaceSearch";
 import SlotForm, { closedNotice, type SpeciesOption } from "./SlotForm";
 import SlotClaims from "./SlotClaims";
 
@@ -68,6 +70,23 @@ export default function SlotManager({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // The city/municipality found with the map's search box, and its lookup state.
+  const [area, setArea] = useState<MapArea | null>(null);
+  const [areaBusy, setAreaBusy] = useState(false);
+  const [areaError, setAreaError] = useState<string | null>(null);
+
+  async function findArea(hit: CityHit) {
+    setAreaBusy(true);
+    setAreaError(null);
+    const res = await fetch(`/api/admin/geo/boundary?cityCode=${encodeURIComponent(hit.code)}`).catch(() => null);
+    const data = res?.ok ? await res.json().catch(() => null) : null;
+    setAreaBusy(false);
+    if (!data?.geometry && !data?.point) {
+      setAreaError(`Couldn't find ${hit.name} on the map. Zoom in by hand.`);
+      return;
+    }
+    setArea({ key: `${hit.code}:${Date.now()}`, geometry: data.geometry, point: data.point });
+  }
 
   const draft = selection?.kind === "new" ? { lat: selection.lat, lng: selection.lng } : null;
   const selectedSlot = selection?.kind === "edit" ? (slots.find((s) => s.id === selection.id) ?? null) : null;
@@ -117,11 +136,26 @@ export default function SlotManager({
       <div className="relative h-[55vh] min-h-[320px] lg:h-auto lg:min-h-0 lg:flex-1">
         <AdminSlotMap
           slots={slots}
+          area={area}
           draft={draft}
           selectedId={selectedSlot?.id ?? null}
           onMapClick={(lat, lng) => setSelection({ kind: "new", lat, lng })}
           onSelectSlot={(id) => setSelection({ kind: "edit", id })}
         />
+        {/* Above Leaflet's panes (z-400) and zoom buttons (z-1000); offset right of the zoom buttons. */}
+        <div className="absolute inset-x-3 top-3 z-[1001] flex flex-col items-start gap-1.5 pl-11">
+          <PlaceSearch onPick={findArea} busy={areaBusy} />
+          {areaError && (
+            <p role="alert" className="rounded-lg bg-card-2/95 px-3 py-1.5 text-xs text-rose-300 shadow">
+              {areaError}
+            </p>
+          )}
+          {area && !areaError && !selection && (
+            <p className="rounded-lg bg-card-2/95 px-3 py-1.5 text-xs text-ink-2 shadow">
+              {area.geometry ? "Tap the map inside the outline to place the slot." : "Tap the map to place the slot."}
+            </p>
+          )}
+        </div>
       </div>
 
       <aside className="bg-card lg:w-[26rem] lg:overflow-y-auto lg:border-l lg:border-line">

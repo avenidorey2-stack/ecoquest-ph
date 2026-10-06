@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { REFERRAL_COOKIE } from "@/lib/referrals";
 
@@ -9,8 +9,8 @@ export async function GET(req: Request, { params }: RouteContext<"/r/[code]">) {
   const exists = await prisma.user.findUnique({ where: { referralCode: code }, select: { id: true } });
 
   const hub = `/referrals${exists ? `?code=${encodeURIComponent(code)}` : ""}`;
-  const session = await auth();
-  const target = session?.user ? hub : `/signup?callbackUrl=${encodeURIComponent(hub)}`;
+  const me = await getCurrentUser();
+  const target = me ? hub : `/signup?callbackUrl=${encodeURIComponent(hub)}`;
 
   const res = NextResponse.redirect(new URL(target, req.url));
   if (exists) {

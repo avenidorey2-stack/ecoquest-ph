@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { fileWithType, formatSize, MEDIA_ACCEPT, mediaRuleError } from "@/lib/media-rules";
+import { formatSize, mediaRuleError } from "@/lib/media-rules";
+import { prepareMedia } from "@/lib/media-prepare";
 import WebcamCapture from "@/components/quests/WebcamCapture";
-import { ChatCameraIcon, CloseIcon, GalleryIcon, PlusIcon, ReplyIcon, SendIcon } from "@/components/ui/icons";
+import { CameraIcon, ChatCameraIcon, CloseIcon, GalleryIcon, PlusIcon, ReplyIcon, SendIcon, VideoIcon } from "@/components/ui/icons";
 
 /** The text box grows up to this many pixels, then scrolls. */
 const MAX_INPUT_PX = 128;
@@ -30,6 +31,9 @@ function Thumb({ file }: { file: File }) {
 
 const iconBtn =
   "grid h-11 w-11 shrink-0 place-items-center rounded-full text-emerald-300 transition-colors hover:bg-emerald-400/10 active:bg-emerald-400/20 disabled:opacity-40";
+
+const menuItem =
+  "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-ink hover:bg-card-3 active:bg-card-3";
 
 /** Camera / gallery / "+" buttons: a soft tinted circle that dips when pressed. */
 const toolBtn =
@@ -71,7 +75,11 @@ export default function ChatComposer({
   const input = useRef<HTMLTextAreaElement>(null);
   // Unique per box: two pop-up chat windows can be open at once.
   const inputId = useId();
-  const cameraInput = useRef<HTMLInputElement>(null);
+  const photoCamera = useRef<HTMLInputElement>(null);
+  const videoCamera = useRef<HTMLInputElement>(null);
+  /** Phones: the camera button's "Take Photo / Record Video" menu. */
+  const [cameraMenu, setCameraMenu] = useState(false);
+  const cameraMenuRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Choosing Reply puts the cursor in the box (and opens the phone keyboard), like Messenger.
@@ -88,10 +96,27 @@ export default function ChatComposer({
     el.style.height = `${Math.min(el.scrollHeight, MAX_INPUT_PX)}px`;
   }, [text]);
 
-  function pick(raw: File | null | undefined) {
+  // Close the camera menu on a tap outside it or Escape.
+  useEffect(() => {
+    if (!cameraMenu) return;
+    const onDown = (e: PointerEvent) => {
+      if (!cameraMenuRef.current?.contains(e.target as Node)) setCameraMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setCameraMenu(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [cameraMenu]);
+
+  async function pick(raw: File | null | undefined) {
     setWebcam(false);
+    setCameraMenu(false);
     if (!raw) return;
-    const next = fileWithType(raw);
+    // Phone cameras may mislabel files or save HEIC: fix the type (and convert) before checking.
+    const next = await prepareMedia(raw);
     const problem = mediaRuleError(next);
     setError(problem);
     if (!problem) setFile(next);
@@ -163,8 +188,11 @@ export default function ChatComposer({
       )}
 
       {/* Hidden inputs, opened by the buttons. `capture` goes straight to the phone's camera. */}
-      <input ref={cameraInput} type="file" accept="image/*,video/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
-      <input ref={fileInput} type="file" accept={MEDIA_ACCEPT} onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
+      {/* One kind per camera input: many Android browsers won't open the camera for "image/*,video/*".
+          The gallery takes any photo or video; prepareMedia fixes types the phone got wrong. */}
+      <input ref={photoCamera} type="file" accept="image/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
+      <input ref={videoCamera} type="file" accept="video/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
+      <input ref={fileInput} type="file" accept="image/*,video/*" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
 
       <div className="flex items-end gap-1.5">
         <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
@@ -181,15 +209,36 @@ export default function ChatComposer({
             </button>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={() => cameraInput.current?.click()}
-                disabled={busy}
-                aria-label="Take a photo or video"
-                className={`${toolBtn} hidden pointer-coarse:grid`}
-              >
-                <ChatCameraIcon className="h-[22px] w-[22px]" />
-              </button>
+              <div ref={cameraMenuRef} className="relative hidden pointer-coarse:block">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setCameraMenu((v) => !v);
+                  }}
+                  disabled={busy}
+                  aria-label="Camera"
+                  aria-haspopup="menu"
+                  aria-expanded={cameraMenu}
+                  className={toolBtn}
+                >
+                  <ChatCameraIcon className="h-[22px] w-[22px]" />
+                </button>
+                {cameraMenu && (
+                  <div
+                    role="menu"
+                    aria-label="Camera"
+                    className="eq-tool-in absolute bottom-full left-0 z-20 mb-2 w-48 origin-bottom-left overflow-hidden rounded-2xl border border-line-strong bg-card-2 p-1 shadow-2xl"
+                  >
+                    <button type="button" role="menuitem" onClick={() => photoCamera.current?.click()} className={menuItem}>
+                      <CameraIcon className="h-5 w-5 text-emerald-300" /> Take Photo
+                    </button>
+                    <button type="button" role="menuitem" onClick={() => videoCamera.current?.click()} className={menuItem}>
+                      <VideoIcon className="h-5 w-5 text-emerald-300" /> Record Video
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => {

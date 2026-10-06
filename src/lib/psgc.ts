@@ -71,6 +71,36 @@ function fullKey(name: string) {
     .trim();
 }
 
+export type CityHit = { code: string; name: string; province: string };
+
+/** Lowercase, no accents, no "City of" or "(Pob.)": "City of Lapu-Lapu" → "lapu-lapu", "San José (Pob.)" → "san jose". */
+function searchKey(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s*\(.*\)$/, "")
+    .replace(/^city of /, "")
+    .trim();
+}
+
+/**
+ * Cities/municipalities whose name contains `query`, ignoring case and accents ("lapu" finds
+ * City of Lapu-Lapu, "dasma" Dasmariñas). Names starting with it come first, then a later word.
+ */
+export function searchCities(query: string, limit = 8): CityHit[] {
+  const q = searchKey(query);
+  if (q.length < 2) return [];
+  const rank = (key: string) => (key.startsWith(q) ? 0 : key.split(/[\s\-.]+/).some((w) => w.startsWith(q)) ? 1 : 2);
+  return psgc.cities
+    .map((c) => ({ c, key: searchKey(c.name) }))
+    .filter(({ key }) => key.includes(q))
+    .map(({ c, key }) => ({ c, key, r: rank(key) }))
+    .sort((a, b) => a.r - b.r || a.key.localeCompare(b.key))
+    .slice(0, limit)
+    .map(({ c }) => ({ code: c.code, name: c.name, province: provincesByCode.get(c.provinceCode)!.name }));
+}
+
 /** Drops the "city" suffix: "makati city" → "makati". */
 function baseKey(name: string) {
   return fullKey(name).replace(/ city$/, "");

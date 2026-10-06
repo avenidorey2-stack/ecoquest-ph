@@ -145,6 +145,11 @@ model User {
   showActiveStatus       Boolean         @default(true)
   // Privacy: whether others can comment on this planter's planting photos.
   allowComments          Boolean         @default(true)
+  // Moderation (set from a report): no sign-in until suspendedUntil passes, or ever while bannedAt
+  // is set (until an admin lifts it). moderationReason is the admin's note, shown at sign-in.
+  suspendedUntil         DateTime?
+  bannedAt               DateTime?
+  moderationReason       String?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
@@ -173,6 +178,9 @@ model User {
   conversations          ConversationMember[]
   directMessages         DirectMessage[]
   messageReactions       MessageReaction[]
+  reportsFiled           UserReport[]         @relation("ReportsFiled")
+  reportsReceived        UserReport[]         @relation("ReportsReceived")
+  reportsResolved        UserReport[]         @relation("ReportsResolved")
   pushSubscriptions      PushSubscription[]
 
   // Leaderboards: national, and local (per city).
@@ -826,4 +834,53 @@ model PushSubscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Profile reports ───────────────────────────────────────────────────────
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  FAKE_ACCOUNT
+  CHEATING
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+/** What an admin decided for a reported planter (applies to all their open reports at once). */
+enum ModerationAction {
+  DISMISSED
+  WARNED
+  SUSPENDED
+  BANNED
+}
+
+// A planter reporting another planter's profile. The reported planter never sees who reported them.
+model UserReport {
+  id           String            @id @default(cuid())
+  // Null once the reporter deletes their account (the report stays for the record).
+  reporterId   String?
+  reportedId   String
+  reason       ReportReason
+  details      String            @default("")
+  status       ReportStatus      @default(OPEN)
+  action       ModerationAction?
+  // The admin's note: sent to the planter with a warning, shown at sign-in when suspended/banned.
+  adminNote    String?
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime          @default(now())
+
+  reporter   User? @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: SetNull)
+  reported   User  @relation("ReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
+  resolvedBy User? @relation("ReportsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reportedId, status])
+  @@index([reporterId, reportedId, status])
 }

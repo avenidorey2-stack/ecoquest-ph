@@ -7,7 +7,8 @@ import { isGoogleEnabled } from "@/lib/auth-providers";
 import { prisma } from "@/lib/prisma";
 import { clientIp } from "@/lib/rate-limit";
 import { attachReferral, REFERRAL_COOKIE } from "@/lib/referrals";
-import { verifyCredentials } from "@/lib/registration";
+import { isRestricted } from "@/lib/moderation";
+import { findUserByEmail, verifyCredentials } from "@/lib/registration";
 import type { Role } from "@/generated/prisma/client";
 
 /** Login failure surfaced to the login page as ?code=… (invalid | not_found | unverified | rate_limited). */
@@ -75,8 +76,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     async signIn({ account, profile }) {
-      // Refuse Google accounts whose email Google hasn't verified.
-      if (account?.provider === "google") return profile?.email_verified === true;
+      if (account?.provider === "google") {
+        // Refuse Google accounts whose email Google hasn't verified.
+        if (profile?.email_verified !== true) return false;
+        // Suspended or banned planters can't get back in through Google either.
+        const existing = profile.email ? await findUserByEmail(profile.email) : null;
+        if (existing && isRestricted(existing)) return "/login?error=Restricted";
+      }
       return true;
     },
     async jwt({ token, user }) {

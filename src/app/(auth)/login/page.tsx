@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isGoogleEnabled } from "@/lib/auth-providers";
-import { getCurrentUser } from "@/lib/authz";
+import { getCurrentUser, getSessionRestriction } from "@/lib/authz";
+import { restrictionMessage } from "@/lib/moderation";
 import { safeCallbackUrl } from "@/lib/url";
 import { loginWithGoogle } from "../actions";
 import PasswordLoginForm from "@/components/auth/PasswordLoginForm";
@@ -14,6 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Wrong email or password.",
   Configuration: "Sign-in is temporarily unavailable. Please try again later.",
   GoogleUnavailable: "Google sign-in isn't available right now. Use your email and password instead.",
+  Restricted: "This account is suspended or banned for breaking the EcoQuest PH community rules.",
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -22,7 +24,13 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // Check the DB too: a stale session for a deleted user must not bounce between here and the app.
   if (await getCurrentUser()) redirect(callbackUrl);
 
-  const error = typeof params.error === "string" ? (ERROR_MESSAGES[params.error] ?? "Sign-in failed. Please try again.") : null;
+  // A suspended/banned planter sent here from the app sees the end date and the team's reason.
+  const restriction = params.error === "Restricted" ? await getSessionRestriction() : null;
+  const error = restriction
+    ? restrictionMessage(restriction)
+    : typeof params.error === "string"
+      ? (ERROR_MESSAGES[params.error] ?? "Sign-in failed. Please try again.")
+      : null;
   const email = typeof params.email === "string" ? params.email : undefined;
   const notice =
     params.registered === "1"

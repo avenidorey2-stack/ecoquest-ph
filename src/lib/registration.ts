@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { escapeHtml, sendEmail } from "@/lib/email";
+import { isRestricted } from "@/lib/moderation";
 import { hitRateLimit, pruneRateLimits } from "@/lib/rate-limit";
 
 // Email sign-up flow:
@@ -235,7 +236,7 @@ export async function completeRegistration(input: {
 
 export type CredentialsCheck =
   | { ok: true; user: { id: string; name: string | null; email: string | null; role: string } }
-  | { ok: false; code: "invalid" | "not_found" | "unverified" | "rate_limited" };
+  | { ok: false; code: "invalid" | "not_found" | "unverified" | "rate_limited" | "restricted" };
 
 /** Checks an email/password login. Rate-limited per email to stop password guessing. */
 /**
@@ -263,6 +264,8 @@ export async function verifyCredentials(
   }
   if (!user?.passwordHash || !valid) return { ok: false, code: "invalid" };
   if (!user.emailVerified) return { ok: false, code: "unverified" };
+  // Only after the right password, so a suspension isn't revealed to anyone guessing.
+  if (isRestricted(user, now)) return { ok: false, code: "restricted" };
 
   return { ok: true, user: { id: user.id, name: user.name, email: user.email, role: user.role } };
 }
