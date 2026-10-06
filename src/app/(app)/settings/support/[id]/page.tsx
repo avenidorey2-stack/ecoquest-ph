@@ -1,10 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePageUserId } from "@/lib/authz";
 import { getTicket } from "@/lib/support";
 import SupportThread from "@/components/support/SupportThread";
-import AutoRefresh from "@/components/layout/AutoRefresh";
-import { ChevronLeftIcon } from "@/components/ui/icons";
 
 export const metadata = { title: "Report · EcoQuest PH" };
 
@@ -14,13 +11,6 @@ export default async function SupportTicketPage({ params }: PageProps<"/settings
   const ticket = await getTicket((await params).id, { id: userId, role: "USER" });
   if (!ticket) notFound();
 
-  return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-6 text-ink sm:px-6 lg:py-8">
-      <AutoRefresh seconds={10} />
-      <Link href="/settings/support" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-emerald-300 hover:text-emerald-200">
-        <ChevronLeftIcon className="h-4 w-4" /> All Reports
-      </Link>
-      <SupportThread ticket={ticket} />
-    </div>
-  );
+  // Full-screen chat (see ChatFrame); it keeps itself up to date.
+  return <SupportThread ticket={ticket} />;
 }

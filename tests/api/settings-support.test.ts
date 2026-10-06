@@ -34,7 +34,13 @@ describe("privacy and notification settings", () => {
     const me = await createUser();
     signInAs(me);
     const res = await patchSettings(jsonRequest({ photoVisibility: "FRIENDS", notifyLikes: false }, "PATCH"));
-    expect((await res.json()).settings).toEqual({ photoVisibility: "FRIENDS", notifyFriendRequests: true, notifyLikes: false, notifyComments: true });
+    expect((await res.json()).settings).toEqual({
+      photoVisibility: "FRIENDS",
+      notifyFriendRequests: true,
+      notifyLikes: false,
+      notifyComments: true,
+      showActiveStatus: true,
+    });
     expect((await patchSettings(jsonRequest({ photoVisibility: "PUBLIC" }, "PATCH"))).status).toBe(400);
     expect((await patchSettings(jsonRequest({ notifyComments: "no" }, "PATCH"))).status).toBe(400);
     expect((await patchSettings(jsonRequest({}, "PATCH"))).status).toBe(400);

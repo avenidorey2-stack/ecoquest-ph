@@ -5,6 +5,7 @@ import { resolveCity } from "@/lib/psgc";
 import { displayAvatar } from "@/lib/avatar-url";
 import AppShell from "@/components/layout/AppShell";
 import { remindExpiringClaims } from "@/lib/quests";
+import { unreadSummary } from "@/lib/messages";
 
 /** Seeds the header clock so the first paint already shows the right time. */
 function serverNowIso() {
@@ -18,12 +19,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   // Any due "less than a day left" claim reminder lands before the bell's unread count is read.
   await remindExpiringClaims(session.user.id);
   // Read from the DB (not the session) so role, points and location are always current.
-  const [user, unreadNotifications] = await Promise.all([
+  const [user, unreadNotifications, messages] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { name: true, image: true, avatarUrl: true, role: true, points: true, xp: true, emailVerified: true, cityCode: true, notifyToken: true },
     }),
     prisma.notification.count({ where: { userId: session.user.id, isRead: false } }),
+    unreadSummary(session.user.id),
   ]);
   if (!user) redirect("/login");
 
@@ -44,6 +46,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       }}
       serverNowIso={serverNowIso()}
       unreadNotifications={unreadNotifications}
+      unreadMessages={messages.unread}
       notifyChannel={`notify:${user.notifyToken}`}
     >
       {user.emailVerified ? (

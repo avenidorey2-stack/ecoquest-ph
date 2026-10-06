@@ -4,54 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BellIcon } from "@/components/ui/icons";
+import { useLiveEvent, useVisiblePoll } from "./live";
 
 type Item = { id: string; message: string; link: string | null; isRead: boolean; createdAt: string };
 
-// Live pings (Supabase Realtime) bring notifications in at once; this poll is the fallback for
-// when the live connection is unavailable (and in local development, which has no Supabase).
+// Live pings (see live.ts) bring notifications in at once; this poll is the fallback for when
+// the live connection is unavailable (and in local development, which has no Supabase).
 const POLL_MS = 30_000;
 const TOAST_MS = 7_000;
-const REALTIME_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const REALTIME_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-/**
- * Listens on the user's secret Realtime channel and calls `onPing` whenever a notification is
- * saved for them (the database sends the ping after commit; it carries no data).
- */
-function useLivePings(channel: string | undefined, onPing: () => void) {
-  const ping = useRef(onPing);
-  useEffect(() => {
-    ping.current = onPing;
-  }, [onPing]);
-
-  useEffect(() => {
-    if (!channel || !REALTIME_URL || !REALTIME_KEY) return;
-    let stopped = false;
-    let cleanup = () => {};
-    // Loaded on demand so pages don't pay for the client until it's needed.
-    import("@supabase/realtime-js")
-      .then(({ RealtimeClient }) => {
-        if (stopped) return;
-        const client = new RealtimeClient(`${REALTIME_URL.replace(/^http/i, "ws")}/realtime/v1`, {
-          params: { apikey: REALTIME_KEY },
-        });
-        const sub = client
-          .channel(channel)
-          .on("broadcast", { event: "notify" }, () => ping.current())
-          // (Re)connected: catch up on anything sent while the connection was down.
-          .subscribe((status) => status === "SUBSCRIBED" && ping.current());
-        cleanup = () => {
-          client.removeChannel(sub).catch(() => {});
-          client.disconnect().catch(() => {});
-        };
-      })
-      .catch(() => {}); // no live updates; the poll still runs
-    return () => {
-      stopped = true;
-      cleanup();
-    };
-  }, [channel]);
-}
 
 function timeAgo(iso: string) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
@@ -66,11 +26,9 @@ function timeAgo(iso: string) {
  *  the moment a new one arrives. */
 export default function NotificationBell({
   initialUnread,
-  channel,
   since,
 }: {
   initialUnread: number;
-  channel?: string;
   /** Server time the page loaded (ISO); only notifications newer than this pop up. */
   since?: string;
 }) {
@@ -112,7 +70,8 @@ export default function NotificationBell({
     return data;
   }, [router, sinceMs]);
 
-  useLivePings(channel, load);
+  useLiveEvent("notify", load);
+  useVisiblePoll(load, POLL_MS);
 
   // Hide the pop-up after a while.
   useEffect(() => {
@@ -120,17 +79,6 @@ export default function NotificationBell({
     const timer = setTimeout(() => setToast(null), TOAST_MS);
     return () => clearTimeout(timer);
   }, [toast]);
-
-  // Poll while the tab is visible.
-  useEffect(() => {
-    const tick = () => document.visibilityState === "visible" && load();
-    const id = setInterval(tick, POLL_MS);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [load]);
 
   // Close on outside click or Escape.
   useEffect(() => {

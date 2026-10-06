@@ -211,6 +211,20 @@ export const ChatIcon = (p: IconProps) => (
     <path d="M5 18.5 3.5 21l.6-4.2A8 8 0 1 1 7.8 19.3 8 8 0 0 1 5 18.5Z" />
   </Svg>
 );
+/** Messages (header icon): a chat bubble with the lightning zigzag. */
+export const MessengerIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3.5c-4.8 0-8.5 3.5-8.5 8 0 2.4 1 4.5 2.8 6v3l2.7-1.5c.9.3 1.9.4 3 .4 4.8 0 8.5-3.5 8.5-8s-3.7-7.9-8.5-7.9Z" />
+    <path d="m7.5 13.6 3-3.3 2.2 1.9 3.8-2.8-3 3.3-2.2-1.9-3.8 2.8Z" />
+  </Svg>
+);
+export const MoreIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="5.5" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="18.5" cy="12" r="1.2" />
+  </Svg>
+);
 export const UserPlusIcon = (p: IconProps) => (
   <Svg {...p}>
     <circle cx="9.5" cy="8" r="3.5" />

@@ -137,6 +137,9 @@ model User {
   notifyFriendRequests   Boolean         @default(true)
   notifyLikes            Boolean         @default(true)
   notifyComments         Boolean         @default(true)
+  // "Active now / Active 2h ago", shown to friends unless the user turns it off.
+  lastActiveAt           DateTime?
+  showActiveStatus       Boolean         @default(true)
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
@@ -162,6 +165,8 @@ model User {
   blocksReceived         Block[]              @relation("Blocked")
   supportTickets         SupportTicket[]
   supportMessages        SupportMessage[]
+  conversations          ConversationMember[]
+  directMessages         DirectMessage[]
 
   // Leaderboards: national, and local (per city).
   @@index([weeklyPointsWeekStart, weeklyPoints])
@@ -719,11 +724,63 @@ model SupportMessage {
   // Null if a team member's account is deleted (a user's tickets go with their account).
   authorId  String?
   fromTeam  Boolean  @default(false)
+  // Empty when the message is only a photo or video.
   body      String
+  // Attached photo/video in chat media storage (served by /api/chat-media/<key>).
+  mediaKey  String?  @unique
+  mediaType String?
+  // Set when the author unsends it: the text and file are wiped, a "removed" stub stays.
+  deletedAt DateTime?
   createdAt DateTime @default(now())
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   author User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([ticketId, createdAt])
+}
+
+// ─── Direct messages between friends ────────────────────────────────────────
+// One conversation per pair of planters (pairKey, like Friendship). Members hold each side's
+// unread count, so the header badge is a cheap count of rows with unread > 0.
+
+model Conversation {
+  id            String   @id @default(cuid())
+  pairKey       String   @unique
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+
+  members  ConversationMember[]
+  messages DirectMessage[]
+}
+
+model ConversationMember {
+  conversationId String
+  userId         String
+  unreadCount    Int       @default(0)
+  lastReadAt     DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId, unreadCount])
+}
+
+model DirectMessage {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  // Empty when the message is only a photo or video.
+  body           String    @default("")
+  // Attached photo/video in chat media storage (served by /api/chat-media/<key>).
+  mediaKey       String?   @unique
+  mediaType      String?
+  // Set when the sender unsends it: the text and file are wiped, a "removed" stub stays.
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

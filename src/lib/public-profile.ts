@@ -47,6 +47,8 @@ export type PublicProfile = {
   photosHiddenBy: Exclude<PhotoVisibility, "EVERYONE"> | null;
   /** The viewer's friendship with this planter. */
   friendState: FriendState;
+  /** Last active, for friends only (and only if the planter shares it). */
+  activeAt: string | null;
   /** Every achievement ever unlocked — achievements are never revoked. */
   achievements: PublicAchievement[];
 };
@@ -79,6 +81,8 @@ export async function getPublicProfile(
       province: true,
       createdAt: true,
       photoVisibility: true,
+      lastActiveAt: true,
+      showActiveStatus: true,
     },
   });
   if (!user || (user.role !== "USER" && user.id !== viewerId)) return null;
@@ -147,6 +151,7 @@ export async function getPublicProfile(
     totalProofs,
     photosHiddenBy: showPhotos || user.photoVisibility === "EVERYONE" ? null : user.photoVisibility,
     friendState: friendship,
+    activeAt: friendship === "FRIENDS" && user.showActiveStatus && user.lastActiveAt ? user.lastActiveAt.toISOString() : null,
     achievements: unlocks.map((u) => ({
       key: u.achievement.key,
       name: achievementName(u.achievement.key, u.detail),

@@ -2,10 +2,13 @@ import type { SupportStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify, notifyAdmins } from "@/lib/notifications";
 import { displayAvatar } from "@/lib/avatar-url";
+import { messageText } from "@/lib/chat-attachments";
+import { chatMedia, type StoredMedia } from "@/lib/storage";
 
 // "Report a problem": a user opens a ticket; it becomes a chat with the team (admins) in the
 // Admin Portal. Each side is notified of the other's messages; unread flags drive the badges.
-// Planter-facing text says "our team", never "admin".
+// Planter-facing text says "our team", never "admin". Either side can attach a photo or video
+// (e.g. a screenshot of the problem) and unsend their own messages.
 
 export const SUBJECT_MAX = 120;
 export const MESSAGE_MAX = 2000;
@@ -16,6 +19,14 @@ const fail = (status: number, error: string): Fail => ({ ok: false, status, erro
 
 export const userTicketPath = (id: string) => `/settings/support/${id}`;
 export const adminTicketPath = (id: string) => `/admin/support/${id}`;
+/** Upload scope: a file uploaded by `userId` for this report can't be sent anywhere else. */
+export const supportScope = (ticketId: string, userId: string) => `support:${ticketId}:${userId}`;
+
+/** Whether the viewer can see and write in the report: its owner, or the team (admins). */
+export async function canUseTicket(ticketId: string, viewer: Viewer) {
+  const ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId }, select: { userId: true } });
+  return !!ticket && (viewer.role === "ADMIN" || ticket.userId === viewer.id);
+}
 
 function cleanText(input: unknown, max: number, what: string): string | Fail {
   const text = typeof input === "string" ? input.trim() : "";
@@ -62,6 +73,10 @@ export async function getTicket(ticketId: string, viewer: Viewer) {
     messages: ticket.messages.map((m) => ({
       id: m.id,
       body: m.body,
+      media: m.mediaKey && m.mediaType ? { url: chatMedia.urlFor(m.mediaKey), type: m.mediaType } : null,
+      deleted: !!m.deletedAt,
+      /** Written by the viewer (only they can unsend it). */
+      own: m.authorId === viewer.id,
       fromTeam: m.fromTeam,
       // Planters see "EcoQuest Team"; admins see which teammate answered.
       authorName: m.fromTeam ? (isTeam ? (m.author?.name ?? "Team") : "EcoQuest Team") : (ticket.user.name ?? "Planter"),
@@ -73,18 +88,18 @@ export async function getTicket(ticketId: string, viewer: Viewer) {
 export type Ticket = NonNullable<Awaited<ReturnType<typeof getTicket>>>;
 
 /**
- * Adds a message. From the team (admin): notifies the user. From the user: notifies admins and
- * reopens a closed ticket.
+ * Adds a message (text and/or an already stored photo/video). From the team (admin): notifies
+ * the user. From the user: notifies admins and reopens a closed ticket.
  */
-export async function addMessage(ticketId: string, viewer: Viewer, rawBody: unknown) {
-  const body = cleanText(rawBody, MESSAGE_MAX, "message");
+export async function addMessage(ticketId: string, viewer: Viewer, rawBody: unknown, media: StoredMedia | null = null) {
+  const body = messageText(rawBody, !!media, MESSAGE_MAX);
   if (typeof body !== "string") return body;
   const ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId }, select: { userId: true, subject: true, status: true } });
   const fromTeam = viewer.role === "ADMIN";
   if (!ticket || (!fromTeam && ticket.userId !== viewer.id)) return fail(404, "Report not found.");
 
   await prisma.$transaction(async (tx) => {
-    await tx.supportMessage.create({ data: { ticketId, authorId: viewer.id, fromTeam, body } });
+    await tx.supportMessage.create({ data: { ticketId, authorId: viewer.id, fromTeam, body, mediaKey: media?.key, mediaType: media?.type } });
     const now = new Date();
     if (fromTeam) {
       await tx.supportTicket.update({ where: { id: ticketId }, data: { lastMessageAt: now, userUnread: true } });
@@ -95,6 +110,16 @@ export async function addMessage(ticketId: string, viewer: Viewer, rawBody: unkn
       await notifyAdmins(tx, `${user?.name ?? "A planter"} replied to “${ticket.subject}”.`, adminTicketPath(ticketId), viewer.id);
     }
   });
+  return { ok: true as const };
+}
+
+/** The author unsends their own message: its text and file are removed; a stub stays. */
+export async function unsendSupportMessage(ticketId: string, messageId: string, viewer: Viewer) {
+  const msg = await prisma.supportMessage.findUnique({ where: { id: messageId }, select: { ticketId: true, authorId: true, mediaKey: true, deletedAt: true } });
+  if (!msg || msg.ticketId !== ticketId || msg.authorId !== viewer.id) return fail(404, "Message not found.");
+  if (msg.deletedAt) return { ok: true as const };
+  await prisma.supportMessage.update({ where: { id: messageId }, data: { deletedAt: new Date(), body: "", mediaKey: null, mediaType: null } });
+  if (msg.mediaKey) await chatMedia.remove(msg.mediaKey).catch(() => {});
   return { ok: true as const };
 }
 

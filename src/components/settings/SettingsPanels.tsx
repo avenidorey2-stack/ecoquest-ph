@@ -53,9 +53,22 @@ const VISIBILITY: { value: Visibility; label: string; hint: string }[] = [
   { value: "ONLY_ME", label: "Only Me", hint: "Your photos stay private. Our team still reviews them." },
 ];
 
-export function PrivacyPanel({ initial }: { initial: Visibility }) {
+export function PrivacyPanel({ initial, initialActive }: { initial: Visibility; initialActive: boolean }) {
   const [value, setValue] = useState(initial);
+  const [active, setActive] = useState(initialActive);
   const [status, setStatus] = useState<Status>(null);
+  async function flipActive() {
+    const next = !active;
+    setActive(next);
+    setStatus(null);
+    try {
+      await patch({ showActiveStatus: next });
+      setStatus({ kind: "ok", text: "Saved." });
+    } catch (e) {
+      setActive(!next);
+      setStatus({ kind: "error", text: errorText(e) });
+    }
+  }
   async function choose(v: Visibility) {
     const before = value;
     setValue(v);
@@ -87,6 +100,22 @@ export function PrivacyPanel({ initial }: { initial: Visibility }) {
           </label>
         ))}
       </fieldset>
+      <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
+        <span>
+          <span className="block text-sm font-semibold text-ink">Show When You&apos;re Active</span>
+          <span className="block text-xs text-ink-3">Friends see &ldquo;Active Now&rdquo; or when you were last on, like &ldquo;Active 2h ago&rdquo;.</span>
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={active}
+          aria-label="Show When You're Active"
+          onClick={flipActive}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-400" : "bg-card-3 ring-1 ring-line-strong"}`}
+        >
+          <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${active ? "translate-x-5" : ""}`} />
+        </button>
+      </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <StatusText status={status} />
         <Link href="/privacy" className="ml-auto text-sm font-semibold text-emerald-300 underline-offset-2 hover:underline">
