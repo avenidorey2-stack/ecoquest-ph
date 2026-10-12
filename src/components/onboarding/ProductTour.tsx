@@ -17,20 +17,11 @@ import { createPortal } from "react-dom";
 import { TOUR_MENU_EVENT, TOUR_OPEN_EVENT } from "@/components/layout/ScrollReveal";
 import { GAP, MARGIN, placeCard, spotlightBox, type Box, type Side } from "@/lib/tour-placement";
 import {
-  BellIcon,
+  AssistantIcon,
   CloseIcon,
-  CoinIcon,
-  DashboardIcon,
   FlagIcon,
-  GiftIcon,
   MapIcon,
-  MedalIcon,
-  PinIcon,
   SproutIcon,
-  TreeIcon,
-  TrophyIcon,
-  UsersIcon,
-  WalletIcon,
 } from "@/components/ui/icons";
 
 type Step = {
@@ -45,36 +36,19 @@ type Step = {
   bullets?: string[];
 };
 
-const SIDEBAR = { fallback: "menu", prefer: ["right", "bottom", "top"] as Side[] };
-
 function tourSteps(hasCity: boolean): Step[] {
   return [
     {
       Icon: SproutIcon,
       title: "Welcome to EcoQuest PH!",
-      body: "Plant real trees in your city, prove it with a photo, and earn points you can turn into rewards. This quick tour shows you where everything is.",
-    },
-    {
-      target: "nav",
-      ...SIDEBAR,
-      Icon: DashboardIcon,
-      title: "Your Main Menu",
-      body: "Every part of EcoQuest PH is one tap away. You can always come back to the Dashboard — your home base.",
-    },
-    {
-      target: "profile-menu",
-      prefer: ["bottom", "left"],
-      Icon: PinIcon,
-      title: "Set Your Home City First",
-      body: "Tap your profile photo, then See Your Profile, to choose your city or municipality. It decides which planting slots you can claim and which local leaderboard you're on.",
-      bullets: ["Verify your email too, so your location shows as Active"],
-    },
-    {
-      target: "impact",
-      Icon: SproutIcon,
-      title: "Your Eco-Impact Score",
-      body: "A snapshot of everything you've planted so far.",
-      bullets: ["Plants planted, plus your national and city rank", "Points earned this week", "Your level and an account health checklist"],
+      body: "Plant real trees in your city, prove it with a photo, and earn points you can turn into rewards. Four quick steps:",
+      bullets: hasCity
+        ? ["Claim a planting slot near you", "Plant it and upload proof", "Earn points and XP", "Ask EcoBot whenever you're stuck"]
+        : [
+            "First, set your home city: tap your profile photo, then See Your Profile",
+            "Claim a planting slot near you",
+            "Plant it, upload proof, and earn points",
+          ],
     },
     {
       target: "map",
@@ -86,81 +60,20 @@ function tourSteps(hasCity: boolean): Step[] {
     {
       target: "quests",
       Icon: FlagIcon,
-      title: "Plant, Then Upload Proof",
+      title: "Plant, Upload Proof, Earn Points",
       body: "Every slot you claim becomes a quest here.",
       bullets: [
         "Plant the listed tree species at the site",
         "Upload a photo or video and enter how many you planted",
-        "Once our team verifies it, you earn points and XP",
+        "Once verified, spend your points in the Shop or on GCash, Maya and voucher Rewards",
       ],
     },
     {
-      target: "points",
-      Icon: CoinIcon,
-      title: "Your Points Balance",
-      body: "Points come from verified plantings and referral bonuses. Tap this anytime to open Rewards.",
-    },
-    {
-      target: "wallet",
-      Icon: WalletIcon,
-      title: "Turn Points Into Rewards",
-      body: "Your reward wallet keeps track of what you've redeemed.",
-      bullets: ["Cash out to GCash or Maya", "Claim Grab and Shopee vouchers", "See pending cash-outs at a glance"],
-    },
-    {
-      target: "nav-shop",
-      ...SIDEBAR,
-      Icon: SproutIcon,
-      title: "Seedling Shop",
-      body: "Need trees to plant? Order native seedlings using your planting points.",
-    },
-    {
-      target: "nav-transactions",
-      ...SIDEBAR,
-      Icon: GiftIcon,
-      title: "Track Orders and Rewards",
-      body: "Transactions lists every seedling order and reward redemption, with live status updates.",
-    },
-    {
-      target: "leaderboard",
-      Icon: TrophyIcon,
-      title: "Climb the Leaderboard",
-      body: "See this week's top planters in your city.",
-      bullets: ["Weekly points reset every Monday", "Open “Full board” for the national ranking", "Tap a planter to see their profile"],
-    },
-    {
-      target: "level",
-      Icon: MedalIcon,
-      title: "Level Up and Earn Badges",
-      body: "Every verified planting gives you XP that raises your level. See your badges — and the ones still ahead — in Achievements.",
-    },
-    {
-      target: "bell",
-      Icon: BellIcon,
-      title: "Notifications",
-      body: "The bell lights up when your planting is reviewed, a reward is processed, or an order is updated.",
-    },
-    {
-      target: "referral",
-      Icon: UsersIcon,
-      title: "Invite Friends, Earn More",
-      body: "Share your invite link. You get 100 bonus points when each friend's first planting is verified.",
-    },
-    {
-      target: "nav-trees",
-      ...SIDEBAR,
-      Icon: TreeIcon,
-      title: "Tree Directory",
-      body: "Learn about native Philippine trees — what each one is good for and where it's being planted near you.",
-    },
-    {
-      target: "profile-menu",
-      prefer: ["bottom", "left"],
-      Icon: FlagIcon,
-      title: "You're ready to plant!",
-      body: hasCity
-        ? "Find an open slot on the map and claim your first quest. Your profile photo opens Settings, Referral Hub and Log Out — and Take the Tour, to replay this anytime."
-        : "Start by setting your home city so you can see slots near you. Your profile photo opens Settings, Referral Hub and Log Out — and Take the Tour, to replay this anytime.",
+      target: "assistant",
+      Icon: AssistantIcon,
+      title: "Ask EcoBot Anytime",
+      body: "Questions about slots, trees, prices or rewards? Ask EcoBot, or type / for quick commands.",
+      bullets: ["/slots — open slots in your city", "/prices — seedling prices", "Replay this tour from your profile photo → Take the Tour"],
     },
   ];
 }

@@ -316,3 +316,10 @@ export const DownloadIcon = (p: IconProps) => (
     <path d="M5 19.5h14" />
   </Svg>
 );
+/** EcoBot, the in-app assistant: a speech bubble with a spark. */
+export const AssistantIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 12.5A7.5 7.5 0 0 1 9.2 19.2L4 20.5l1.3-4.4A7.5 7.5 0 1 1 20 12.5Z" />
+    <path d="M12 8.5 12.9 11l2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.5Z" />
+  </Svg>
+);
