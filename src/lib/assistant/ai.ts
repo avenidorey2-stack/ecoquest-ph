@@ -1,10 +1,13 @@
 import { SITE_FACTS } from "./knowledge";
 import { findTrees, myMissions, myOrders, myQuests, myStats, openSlotsNearMe, rewardList, seedlingPrices } from "./data";
+import { APP_PAGES, claimMissionAction, claimSlotAction, proofAction, redeemAction, type ActionOutcome, type AssistantAction } from "./actions";
+import type { AssistantLink, AssistantReply } from "./commands";
 
 // Free-form questions go to an LLM on Groq (OpenAI-compatible chat completions API). It only
 // knows EcoQuest PH (SITE_FACTS) and reads live numbers through read-only tools scoped to the
-// asking planter, so it can't see anyone else's data or change anything. Slash commands never
-// come here (src/lib/assistant/commands.ts).
+// asking planter, so it can't see anyone else's data. It can't change anything either: its
+// action tools only put a card in the chat that the planter confirms (src/lib/assistant/actions.ts).
+// Slash commands never come here (src/lib/assistant/commands.ts).
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 /** Any Groq model with tool use; override with GROQ_MODEL. */
@@ -19,8 +22,12 @@ const EMPTY_RETRIES = 2;
 const TIMEOUT_MS = 20_000;
 /** Most time a question may spend waiting out Groq's per-minute limits before giving up. */
 const MAX_WAIT_MS = 15_000;
+/** Action cards per reply, so one message can't fill the chat with them. */
+const MAX_ACTIONS = 3;
 
 export type ChatTurn = { role: "user" | "assistant"; text: string };
+/** A photo or video the planter attached to their latest message, kept in their browser. */
+export type Attachment = "photo" | "video";
 
 export class AssistantUnavailable extends Error {}
 /** Groq's rate limit is used up for now (shared by every planter on the account). */
@@ -39,7 +46,15 @@ Scope: answer only questions about EcoQuest PH — how the app works, planting s
 
 Trees: only name trees that are in the app's Tree Directory — call find_trees (with no name it returns every tree and its description; use that to compare trees, e.g. tallest, smallest, best for coasts). Never invent species. The directory gives no exact sizes, so don't quote heights or other figures it doesn't state; compare using its descriptions and say that's what you're going by.
 
-Accuracy: never guess live numbers. Use the tools for slots, prices, stock, rewards and the planter's own points, quests, missions and orders, and quote what they return. If a tool has no answer, say so. You cannot take actions (claim slots, place orders, redeem rewards, change settings); tell the planter which page does it. For account problems or anything you can't resolve, point them to Settings → Help → Report a Problem.
+Accuracy: never guess live numbers. Use the tools for slots, prices, stock, rewards and the planter's own points, quests, missions and orders, and quote what they return. If a tool has no answer, say so. For account problems or anything you can't resolve, point them to Settings → Help → Report a Problem.
+
+Actions: when the planter asks you to do something in the app, use an action tool. It shows them a card in the chat to confirm — nothing happens until they tap it, so never say it's done; say the card is below and what to tap.
+• Upload proof (photo or video of planted trees) → upload_proof. If they attached a photo or video, it is already in the card.
+• Claim a planting slot → get_open_slots for its id, then claim_slot.
+• Claim a finished daily or side quest's reward → get_my_missions for its id, then claim_mission_reward.
+• Redeem a reward (GCash, Maya, vouchers) → get_rewards for its id, then redeem_reward. If they didn't say which one, ask.
+• Anything else (ordering seedlings, editing the profile or home city, settings, friends, messages, inviting friends) → open_page with the page that does it, and tell them what to do there.
+Only use an action the planter asked for, and only for their own account. If a tool says it can't be done, explain why.
 
 Style: friendly, short, plain text for a phone screen — never use Markdown (no **bold**, no #, no tables). Use "•" for lists. Use ₱ for pesos and "pts" for points. Always answer in the language of the planter's latest message: Filipino/Tagalog gets Filipino, Taglish gets Taglish, English gets English. Mention a relevant slash command when it helps, e.g. /slots, /prices, /rewards.
 
@@ -59,6 +74,30 @@ const TOOLS = [
   tool("get_my_quests", "The planter's claimed slots (quests): status, progress and claim deadline."),
   tool("get_my_missions", "Today's daily quests and the live side quests, with the planter's progress and rewards."),
   tool("get_my_orders", "The planter's latest seedling orders and their delivery status."),
+  tool("upload_proof", "Show the planter a form in the chat to send a photo or video as proof for one of their active quests. Without quest_id it covers every quest waiting for proof.", {
+    type: "object",
+    properties: { quest_id: { type: "string", description: "Quest id from get_my_quests, to pick one quest" } },
+  }),
+  tool("claim_slot", "Show the planter a button to claim an open planting slot in their city.", {
+    type: "object",
+    properties: { slot_id: { type: "string", description: "Slot id from get_open_slots" } },
+    required: ["slot_id"],
+  }),
+  tool("claim_mission_reward", "Show the planter a button to claim the reward of a finished daily or side quest.", {
+    type: "object",
+    properties: { mission_id: { type: "string", description: "Id from get_my_missions" } },
+    required: ["mission_id"],
+  }),
+  tool("redeem_reward", "Show the planter a form to redeem a reward with their points (they confirm, and enter their e-wallet number for cash).", {
+    type: "object",
+    properties: { reward_id: { type: "string", description: "Reward id from get_rewards" } },
+    required: ["reward_id"],
+  }),
+  tool("open_page", "Show the planter a button that opens an app page, for things done there rather than in the chat.", {
+    type: "object",
+    properties: { page: { type: "string", enum: Object.keys(APP_PAGES) } },
+    required: ["page"],
+  }),
   tool("find_trees", "Look up trees in the app's Tree Directory by name (description, benefits, category). With no name, returns every tree in the directory with its description, for comparing trees.", {
     type: "object",
     properties: { name: { type: "string" } },
@@ -75,8 +114,49 @@ function stringArg(args: string, key: string) {
   }
 }
 
-async function runTool(userId: string, name: string, args: string): Promise<unknown> {
+/** Cards and links the tools add to the reply. */
+type ReplyExtras = { actions: AssistantAction[]; links: AssistantLink[] };
+
+/** Same action twice (e.g. the model retrying) shows one card. */
+const actionKey = (a: AssistantAction) =>
+  a.kind === "upload_proof"
+    ? `proof:${a.quests.map((q) => q.questId).join()}`
+    : a.kind === "claim_slot"
+      ? `slot:${a.slotId}`
+      : a.kind === "claim_mission"
+        ? `mission:${a.missionId}`
+        : `reward:${a.rewardId}`;
+
+/** Adds an action tool's card to the reply; tells the model what the planter now sees. */
+function offer(outcome: ActionOutcome, extras: ReplyExtras) {
+  if ("error" in outcome) {
+    for (const link of outcome.links ?? []) if (!extras.links.some((l) => l.href === link.href)) extras.links.push(link);
+    return { shown: false, reason: outcome.error };
+  }
+  const key = actionKey(outcome.action);
+  if (!extras.actions.some((a) => actionKey(a) === key)) {
+    if (extras.actions.length >= MAX_ACTIONS) return { shown: false, reason: "Too many cards in one reply; ask the planter to do one thing at a time." };
+    extras.actions.push(outcome.action);
+  }
+  return { shown: true, card: outcome.action, note: "The card is now shown below your reply. The planter must confirm on it; it is not done yet." };
+}
+
+async function runTool(userId: string, name: string, args: string, extras: ReplyExtras): Promise<unknown> {
   switch (name) {
+    case "upload_proof":
+      return offer(await proofAction(userId, stringArg(args, "quest_id")), extras);
+    case "claim_slot":
+      return offer(await claimSlotAction(userId, stringArg(args, "slot_id") ?? ""), extras);
+    case "claim_mission_reward":
+      return offer(await claimMissionAction(userId, stringArg(args, "mission_id") ?? ""), extras);
+    case "redeem_reward":
+      return offer(await redeemAction(userId, stringArg(args, "reward_id") ?? ""), extras);
+    case "open_page": {
+      const link = APP_PAGES[stringArg(args, "page") ?? ""];
+      if (!link) return { shown: false, reason: `Unknown page. Pages: ${Object.keys(APP_PAGES).join(", ")}` };
+      if (!extras.links.some((l) => l.href === link.href)) extras.links.push(link);
+      return { shown: true, note: `A "${link.label}" button is shown below your reply.` };
+    }
     case "get_open_slots":
       return openSlotsNearMe(userId);
     case "get_seedling_prices":
@@ -139,6 +219,8 @@ async function complete(apiKey: string, model: string, messages: GroqMessage[], 
   }
 }
 
+const CARD_READY = "Here you go — check the details below and confirm.";
+
 /** Models sometimes slip into Markdown (bold, headings, `code`) despite the prompt; the chat shows plain text. */
 export function plainText(text: string) {
   return text
@@ -150,13 +232,23 @@ export function plainText(text: string) {
 }
 
 /** Answers the latest user turn in `history`. Throws AssistantUnavailable when Groq can't be reached. */
-export async function askAssistant(userId: string, history: ChatTurn[]): Promise<string> {
+export async function askAssistant(userId: string, history: ChatTurn[], attachment?: Attachment): Promise<AssistantReply> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new AssistantUnavailable("GROQ_API_KEY is not set.");
   const model = process.env.GROQ_MODEL?.trim() || DEFAULT_MODEL;
 
   const wait = { ms: MAX_WAIT_MS };
   const messages: GroqMessage[] = [{ role: "system", content: SYSTEM }, ...history.map((t) => ({ role: t.role, content: t.text }))];
+  if (attachment) {
+    const latest = messages.at(-1) as { content: string };
+    latest.content += `\n\n(The planter attached a ${attachment} to this message.)`;
+  }
+  const extras: ReplyExtras = { actions: [], links: [] };
+  const reply = (text: string): AssistantReply => ({
+    text,
+    ...(extras.links.length ? { links: extras.links } : {}),
+    ...(extras.actions.length ? { actions: extras.actions } : {}),
+  });
 
   let emptyRetries = EMPTY_RETRIES;
   for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -164,20 +256,22 @@ export async function askAssistant(userId: string, history: ChatTurn[]): Promise
     const calls = message.tool_calls ?? [];
     if (!calls.length) {
       const text = plainText(message.content ?? "");
-      if (text) return text;
-      if (finish_reason === "length") return "Sorry, that answer ran too long. Try asking something more specific.";
+      if (text) return reply(text);
+      // A card was made but the model said nothing about it: the card speaks for itself.
+      if (extras.actions.length) return reply(CARD_READY);
+      if (finish_reason === "length") return reply("Sorry, that answer ran too long. Try asking something more specific.");
       if (emptyRetries-- > 0) {
         round--; // an empty reply doesn't use up a lookup round
         continue;
       }
-      return "Sorry, I couldn't come up with an answer. Try asking another way, or type /help.";
+      return reply("Sorry, I couldn't come up with an answer. Try asking another way, or type /help.");
     }
 
     messages.push({ role: "assistant", content: message.content ?? null, tool_calls: calls });
     const results = await Promise.all(
       calls.map(async (call): Promise<GroqMessage> => {
         try {
-          return { role: "tool", tool_call_id: call.id, content: JSON.stringify(await runTool(userId, call.function.name, call.function.arguments)) };
+          return { role: "tool", tool_call_id: call.id, content: JSON.stringify(await runTool(userId, call.function.name, call.function.arguments, extras)) };
         } catch (err) {
           console.error("assistant tool failed", call.function.name, err);
           return { role: "tool", tool_call_id: call.id, content: "Error: this lookup failed. Tell the planter to try again later." };
@@ -186,5 +280,5 @@ export async function askAssistant(userId: string, history: ChatTurn[]): Promise
     );
     messages.push(...results);
   }
-  return "Sorry, that took too many steps. Try a simpler question, or use a command like /slots or /prices.";
+  return reply(extras.actions.length ? CARD_READY : "Sorry, that took too many steps. Try a simpler question, or use a command like /slots or /prices.");
 }

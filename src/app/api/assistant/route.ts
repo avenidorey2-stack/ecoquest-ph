@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/authz";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { runCommand } from "@/lib/assistant/commands";
 import { MAX_QUESTION_LENGTH } from "@/lib/assistant/command-list";
-import { AssistantBusy, AssistantUnavailable, askAssistant, type ChatTurn } from "@/lib/assistant/ai";
+import { AssistantBusy, AssistantUnavailable, askAssistant, type Attachment, type ChatTurn } from "@/lib/assistant/ai";
 
 // The AI can take a while when it looks things up (a few tool rounds).
 export const maxDuration = 60;
@@ -36,13 +36,19 @@ function parseHistory(body: unknown): ChatTurn[] | null {
   return turns;
 }
 
-// POST /api/assistant — body: { messages: [{ role: "user" | "assistant", text }] }, newest last.
-// A "/command" is answered from live data; anything else goes to the AI.
+// POST /api/assistant — body: { messages: [{ role: "user" | "assistant", text }], attachment?: "photo" | "video" },
+// newest message last. A "/command" is answered from live data; anything else goes to the AI.
+// Replies are { text, links?, actions? }; actions are cards the planter confirms in the chat.
+// `attachment` only says the planter attached a file to the latest message: the file itself stays
+// in their browser until they submit it on a proof card.
 export async function POST(req: Request) {
   const me = await getCurrentUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const history = parseHistory(await req.json().catch(() => null));
+  const body = await req.json().catch(() => null);
+  const history = parseHistory(body);
+  const rawAttachment = (body as { attachment?: unknown } | null)?.attachment;
+  const attachment: Attachment | undefined = rawAttachment === "photo" || rawAttachment === "video" ? rawAttachment : undefined;
   if (!history) return NextResponse.json({ error: "Send a message." }, { status: 400 });
   const question = history.at(-1)!.text;
   if (question.length > MAX_QUESTION_LENGTH) {
@@ -66,8 +72,8 @@ export async function POST(req: Request) {
     }
   }
   try {
-    const text = await askAssistant(me.id, history);
-    return NextResponse.json({ reply: { text } });
+    const reply = await askAssistant(me.id, history, attachment);
+    return NextResponse.json({ reply });
   } catch (err) {
     if (!(err instanceof AssistantUnavailable)) throw err;
     console.error("assistant unavailable:", err.message);

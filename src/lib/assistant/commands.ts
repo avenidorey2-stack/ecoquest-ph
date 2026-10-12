@@ -2,9 +2,11 @@ import { formatDate, formatPesos, formatPoints } from "@/lib/format";
 import { ASSISTANT_COMMANDS, parseCommand } from "./command-list";
 import { GUIDE } from "./knowledge";
 import { findTrees, myMissions, myOrders, myQuests, myStats, openSlotsNearMe, rewardList, seedlingPrices } from "./data";
+import { proofAction, type AssistantAction } from "./actions";
 
 export type AssistantLink = { label: string; href: string };
-export type AssistantReply = { text: string; links?: AssistantLink[] };
+/** `actions` are cards the planter confirms in the chat (src/lib/assistant/actions.ts). */
+export type AssistantReply = { text: string; links?: AssistantLink[]; actions?: AssistantAction[] };
 
 const ORDER_STATUS: Record<string, string> = {
   PENDING: "Pending",
@@ -17,7 +19,15 @@ const plural = (n: number, word: string) => `${n.toLocaleString("en-PH")} ${word
 
 function help(): AssistantReply {
   const lines = ASSISTANT_COMMANDS.map((c) => `/${c.name}${c.args ? ` ${c.args}` : ""} — ${c.description}`);
-  return { text: ["Here's what I can do:", ...lines, "", "Or just ask me anything about EcoQuest PH, its trees, prices and rewards."].join("\n") };
+  return {
+    text: [
+      "Here's what I can do:",
+      ...lines,
+      "",
+      "Or just ask me anything about EcoQuest PH, its trees, prices and rewards.",
+      'I can also help you do things, like "claim the Narra slot", "claim my daily reward" or "redeem GCash ₱50". Nothing happens until you confirm.',
+    ].join("\n"),
+  };
 }
 
 async function slots(userId: string): Promise<AssistantReply> {
@@ -117,6 +127,16 @@ async function orders(userId: string): Promise<AssistantReply> {
   return { text: `Your latest orders:\n${lines.join("\n")}`, links };
 }
 
+async function upload(userId: string): Promise<AssistantReply> {
+  const outcome = await proofAction(userId);
+  if ("error" in outcome) return { text: outcome.error, links: outcome.links };
+  const many = outcome.action.kind === "upload_proof" && outcome.action.quests.length > 1;
+  return {
+    text: `Here's your proof form${many ? " — pick the quest first" : ""}. Add a photo or video of what you planted, then submit it for review.`,
+    actions: [outcome.action],
+  };
+}
+
 async function trees(arg: string): Promise<AssistantReply> {
   const { matches, all } = await findTrees(arg);
   const links = [{ label: "Open Tree Directory", href: "/trees" }];
@@ -182,6 +202,8 @@ export async function runCommand(userId: string, input: string): Promise<Assista
       return orders(userId);
     case "trees":
       return trees(arg);
+    case "upload":
+      return upload(userId);
     case "clear":
       return { text: "Chat cleared." };
     default: {

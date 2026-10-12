@@ -14,11 +14,14 @@ const ACTIVE_QUEST_STATUSES = ["ACTIVE", "PENDING_VERIFICATION"] as const;
 /** Lists stay short enough to read in a chat bubble. */
 const LIST_LIMIT = 10;
 
-/** Slots in the planter's home city: the only ones they can claim (geofence). */
-export async function openSlotsNearMe(userId: string, now = new Date()) {
+/**
+ * Every live slot in the planter's home city (the only ones they can claim — geofence), best
+ * paying first, or null without a home city.
+ */
+export async function homeCitySlots(userId: string, now = new Date()) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { cityCode: true } });
   const place = resolveCity(user?.cityCode ?? null);
-  if (!place) return { city: null, slots: [], available: 0, full: 0 };
+  if (!place) return null;
 
   const rows = await prisma.slot.findMany({
     where: { deletedAt: null, cityCode: place.cityCode, status: { in: ["OPEN", "FULL"] } },
@@ -33,6 +36,7 @@ export async function openSlotsNearMe(userId: string, now = new Date()) {
     const spotsLeft = Math.max(0, s.maxParticipants - s._count.quests);
     const mine = s.quests.find((q) => !isClaimExpired(q, now));
     return {
+      id: s.id,
       plant: s.requiredPlantType,
       barangay: s.barangay,
       pointsPerPlant: s.pointsPerPlant,
@@ -45,8 +49,16 @@ export async function openSlotsNearMe(userId: string, now = new Date()) {
       available: s.status === "OPEN" && spotsLeft > 0,
     };
   });
+  return { city: `${place.city}, ${place.province}`, slots };
+}
+
+/** Slots in the planter's home city they can claim (or already claimed), for listing. */
+export async function openSlotsNearMe(userId: string, now = new Date()) {
+  const found = await homeCitySlots(userId, now);
+  if (!found) return { city: null, slots: [], available: 0, full: 0 };
+  const { city, slots } = found;
   return {
-    city: `${place.city}, ${place.province}`,
+    city,
     slots: slots.filter((s) => (s.available && !s.yourClaimExpired) || s.youClaimedIt).slice(0, LIST_LIMIT),
     // Total open-and-claimable, which can exceed what's listed.
     available: slots.filter((s) => s.available && !s.youClaimedIt && !s.yourClaimExpired).length,
@@ -86,6 +98,7 @@ export async function seedlingPrices(query?: string) {
 export async function rewardList() {
   const rows = await prisma.reward.findMany({ where: { isActive: true }, orderBy: [{ costPoints: "asc" }, { brand: "asc" }] });
   return rows.map((r) => ({
+    id: r.id,
     brand: r.brand,
     type: r.rewardType === "EWALLET_CASH" ? "e-wallet cash" : "voucher",
     valuePesos: r.valuePesos,
@@ -128,6 +141,7 @@ export async function myQuests(userId: string, now = new Date()) {
     orderBy: [{ expiresAt: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
   });
   return quests.slice(0, LIST_LIMIT).map((q) => ({
+    id: q.id,
     plant: q.slot.requiredPlantType,
     place: [q.slot.barangay, q.slot.city].filter(Boolean).join(", "),
     status: q.status === "PENDING_VERIFICATION" ? "proof under review" : isClaimExpired(q, now) ? "claim expired" : "active",
@@ -141,6 +155,7 @@ export async function myQuests(userId: string, now = new Date()) {
 export async function myMissions(userId: string, now = new Date()) {
   const { daily, side, dailyResetsAt } = await getUserMissions(userId, now);
   const view = (m: (typeof daily)[number]) => ({
+    id: m.id,
     title: m.title,
     progress: `${Math.min(m.progress, m.target)}/${m.target}`,
     reward: { points: m.rewardPoints, xp: m.rewardXp },

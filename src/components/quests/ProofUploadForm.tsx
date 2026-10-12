@@ -44,17 +44,20 @@ export type ProofContext = {
 export default function ProofUploadForm({
   questId,
   context,
+  initialFile = null,
   onSubmitted,
 }: {
   questId: string;
   context?: ProofContext;
+  /** A photo or video already picked elsewhere (e.g. attached in the EcoBot chat). */
+  initialFile?: File | null;
   onSubmitted?: () => void;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(initialFile);
   const [quantity, setQuantity] = useState(() => Math.min(Math.max(context?.remaining ?? 1, 1), MAX_PLANTS));
 
   const valid = Number.isInteger(quantity) && quantity >= 1 && quantity <= MAX_PLANTS;

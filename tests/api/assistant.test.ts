@@ -342,3 +342,133 @@ describe("POST /api/assistant — AI questions", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/assistant — actions", () => {
+  const soon = () => new Date(Date.now() + 86_400_000);
+  /** The tool result the model was given before its second call. */
+  const toolResult = () => JSON.parse(create.mock.calls[1][0].messages.at(-1).content);
+
+  it("/upload offers a proof card for each quest waiting for proof", async () => {
+    const user = await createUser();
+    signInAs(user);
+    const narra = await createSlot({ requiredPlantType: "Narra", barangay: "Bagong Silang", pointsPerPlant: 30 });
+    const ipil = await createSlot({ requiredPlantType: "Ipil" });
+    const quest = await prisma.quest.create({ data: { userId: user.id, slotId: narra.id, plantCount: 1, targetPlants: 3, expiresAt: soon() } });
+    await prisma.quest.create({ data: { userId: user.id, slotId: ipil.id, status: "PENDING_VERIFICATION", expiresAt: soon() } });
+    await prisma.quest.create({ data: { userId: user.id, slotId: (await createSlot()).id, expiresAt: new Date(Date.now() - 1000) } });
+
+    const { body } = await ask("/upload");
+    expect(body.reply.actions).toEqual([
+      { kind: "upload_proof", quests: [{ questId: quest.id, plant: "Narra", place: "Bagong Silang, Quezon City", remaining: 2, pointsPerPlant: 30 }] },
+    ]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("/upload explains when nothing is waiting for proof", async () => {
+    const user = await createUser();
+    signInAs(user);
+    expect((await ask("/upload")).body.reply.text).toMatch(/Claim a slot first/);
+    await prisma.quest.create({ data: { userId: user.id, slotId: (await createSlot()).id, status: "PENDING_VERIFICATION" } });
+    const { body } = await ask("/upload");
+    expect(body.reply.text).toMatch(/already being reviewed/);
+    expect(body.reply.actions).toBeUndefined();
+  });
+
+  it("tells the model about an attached photo and returns the proof card", async () => {
+    const user = await createUser();
+    signInAs(user);
+    const quest = await prisma.quest.create({ data: { userId: user.id, slotId: (await createSlot()).id, expiresAt: soon() } });
+    create.mockResolvedValueOnce(toolReply("upload_proof")).mockResolvedValueOnce(textReply("Your photo is in the form below. Tap Submit."));
+    const res = await POST(jsonRequest({ messages: [{ role: "user", text: "upload this please" }], attachment: "photo" }));
+    const body = await res.json();
+    expect(create.mock.calls[0][0].messages.at(-1).content).toBe("upload this please\n\n(The planter attached a photo to this message.)");
+    expect(body.reply.text).toBe("Your photo is in the form below. Tap Submit.");
+    expect(body.reply.actions).toMatchObject([{ kind: "upload_proof", quests: [{ questId: quest.id }] }]);
+  });
+
+  it("ignores attachment values other than photo or video", async () => {
+    signInAs(await createUser());
+    create.mockResolvedValueOnce(textReply("Hi!"));
+    await POST(jsonRequest({ messages: [{ role: "user", text: "hello" }], attachment: "<script>" }));
+    expect(create.mock.calls[0][0].messages.at(-1).content).toBe("hello");
+  });
+
+  it("claim_slot only offers a card: nothing is claimed until the planter confirms", async () => {
+    const user = await createUser();
+    signInAs(user);
+    const slot = await createSlot({ requiredPlantType: "Narra", pointsPerPlant: 30 });
+    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_id: slot.id }))).mockResolvedValueOnce(textReply("Tap Claim Slot below."));
+    const { body } = await ask("Claim the narra slot");
+    expect(body.reply.actions).toEqual([
+      { kind: "claim_slot", slotId: slot.id, plant: "Narra", barangay: null, pointsPerPlant: 30, plantsPerQuest: 1, spotsLeft: 20 },
+    ]);
+    expect(toolResult()).toMatchObject({ shown: true });
+    expect(await prisma.quest.count()).toBe(0);
+  });
+
+  it("claim_slot refuses slots outside the planter's city, with the reason for the model", async () => {
+    signInAs(await createUser());
+    const makati = await createSlot({ city: "City of Makati", cityCode: CODES.makati });
+    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_id: makati.id }))).mockResolvedValueOnce(textReply("That slot isn't in your city."));
+    const { body } = await ask("Claim that slot");
+    expect(toolResult()).toEqual({ shown: false, reason: expect.stringMatching(/couldn't find that slot in your city/) });
+    expect(body.reply.actions).toBeUndefined();
+    expect(body.reply.links).toEqual([{ label: "Open Slot Map", href: "/dashboard" }]);
+  });
+
+  it("claim_mission_reward only offers finished, unclaimed quests", async () => {
+    const user = await createUser();
+    signInAs(user);
+    const mission = await prisma.mission.create({
+      data: { kind: "DAILY", title: "Daily proof", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, startsAt: new Date("2026-01-01T00:00:00Z") },
+    });
+    const call = toolReply("claim_mission_reward", "t1", JSON.stringify({ mission_id: mission.id }));
+    create.mockResolvedValueOnce(call).mockResolvedValueOnce(textReply("Not yet."));
+    await ask("Claim my daily reward");
+    expect(toolResult()).toEqual({ shown: false, reason: '"Daily proof" isn\'t done yet (0/1).' });
+
+    const quest = await prisma.quest.create({ data: { userId: user.id, slotId: (await createSlot()).id } });
+    await prisma.verification.create({ data: { questId: quest.id, mediaUrl: "/api/media/x.jpg", mediaType: "image/jpeg", plantCount: 1, status: "APPROVED", reviewedAt: new Date() } });
+    create.mockReset();
+    // The model says nothing after the card: the card speaks for itself (empty replies are retried twice).
+    create.mockResolvedValueOnce(call).mockResolvedValue(textReply(""));
+    const { body } = await ask("Claim my daily reward");
+    expect(body.reply).toEqual({
+      text: "Here you go — check the details below and confirm.",
+      actions: [{ kind: "claim_mission", missionId: mission.id, title: "Daily proof", points: 20, xp: 10 }],
+    });
+  });
+
+  it("redeem_reward checks the balance and prefills the last e-wallet number", async () => {
+    const user = await createUser({ points: 600 });
+    signInAs(user);
+    const gcash = await prisma.reward.create({ data: { rewardType: "EWALLET_CASH", brand: "GCash", costPoints: 1000, valuePesos: 100 } });
+    const grab = await prisma.reward.create({ data: { rewardType: "VOUCHER", brand: "Grab", costPoints: 500, valuePesos: 50 } });
+    await prisma.redemptionHistory.create({ data: { userId: user.id, rewardId: gcash.id, pointsSpent: 1000, eWalletNumber: "09171234567" } });
+
+    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_id: gcash.id }))).mockResolvedValueOnce(textReply("Not enough."));
+    await ask("Redeem GCash 100");
+    expect(toolResult()).toEqual({ shown: false, reason: "You need 400 more pts for that reward." });
+
+    create.mockReset();
+    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_id: grab.id }))).mockResolvedValueOnce(textReply("Confirm below."));
+    const { body } = await ask("Redeem Grab 50");
+    expect(body.reply.actions).toEqual([
+      { kind: "redeem_reward", rewardId: grab.id, brand: "Grab", valuePesos: 50, costPoints: 500, isCash: false, balance: 600, lastNumber: "09171234567" },
+    ]);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).points).toBe(600);
+  });
+
+  it("open_page adds a link for things done on a page, and rejects unknown pages", async () => {
+    signInAs(await createUser());
+    const page = (id: string, name: string) => ({ id, type: "function", function: { name: "open_page", arguments: JSON.stringify({ page: name }) } });
+    create
+      .mockResolvedValueOnce({ choices: [{ finish_reason: "tool_calls", message: { role: "assistant", content: null, tool_calls: [page("a", "shop"), page("b", "admin")] } }] })
+      .mockResolvedValueOnce(textReply("Order it in the Shop."));
+    const { body } = await ask("Order 5 narra seedlings");
+    expect(body.reply.links).toEqual([{ label: "Open Shop", href: "/shop" }]);
+    const [shop, admin] = create.mock.calls[1][0].messages.slice(-2).map((m: { content: string }) => JSON.parse(m.content));
+    expect(shop).toMatchObject({ shown: true });
+    expect(admin).toMatchObject({ shown: false });
+  });
+});

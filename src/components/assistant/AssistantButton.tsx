@@ -5,9 +5,25 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ASSISTANT_COMMANDS, MAX_QUESTION_LENGTH, suggestCommands, type AssistantCommand } from "@/lib/assistant/command-list";
 import type { AssistantLink } from "@/lib/assistant/commands";
-import { AssistantIcon, CloseIcon, ComposeIcon, SendIcon } from "@/components/ui/icons";
+import type { AssistantAction } from "@/lib/assistant/actions";
+import { mediaRuleError } from "@/lib/media-rules";
+import { prepareMedia } from "@/lib/media-prepare";
+import ActionCard, { type ActionResult } from "@/components/assistant/ActionCard";
+import { AssistantIcon, CloseIcon, ComposeIcon, GalleryIcon, SendIcon } from "@/components/ui/icons";
 
-type Msg = { id: number; role: "user" | "assistant"; text: string; links?: AssistantLink[]; error?: boolean };
+type AttachmentKind = "photo" | "video";
+type Msg = {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  links?: AssistantLink[];
+  /** Cards to confirm (src/lib/assistant/actions.ts), and what came of each, by index. */
+  actions?: AssistantAction[];
+  results?: Record<number, ActionResult>;
+  /** A photo or video the planter attached; the file itself lives in memory only. */
+  attachment?: { name: string; kind: AttachmentKind };
+  error?: boolean;
+};
 
 const STORAGE_KEY = "eq-assistant-chat";
 /** Turns sent along for context (the server keeps the same number). */
@@ -61,10 +77,31 @@ function useFitPhoneViewport(ref: React.RefObject<HTMLElement | null>, active: b
   }, [ref, active]);
 }
 
-function Bubble({ msg, onLink, onRetry }: { msg: Msg; onLink: () => void; onRetry?: () => void }) {
+const kindOf = (file: File): AttachmentKind => (file.type.startsWith("video/") ? "video" : "photo");
+
+function Bubble({
+  msg,
+  file,
+  onLink,
+  onRetry,
+  onResult,
+}: {
+  msg: Msg;
+  /** The file attached to the question this replies to, for its proof card. */
+  file?: File | null;
+  onLink: () => void;
+  onRetry?: () => void;
+  onResult: (index: number, result: ActionResult) => void;
+}) {
   if (msg.role === "user") {
     return (
-      <li className="flex justify-end">
+      <li className="flex flex-col items-end gap-1">
+        {msg.attachment && (
+          <span className="inline-flex max-w-[85%] items-center gap-1.5 rounded-xl bg-emerald-400/15 px-3 py-1.5 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-400/30">
+            <GalleryIcon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{msg.attachment.name}</span>
+          </span>
+        )}
         <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-emerald-400 px-3.5 py-2 text-sm text-emerald-950">{msg.text}</p>
       </li>
     );
@@ -74,7 +111,7 @@ function Bubble({ msg, onLink, onRetry }: { msg: Msg; onLink: () => void; onRetr
       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/25" aria-hidden>
         <AssistantIcon className="h-4 w-4" />
       </span>
-      <div className="min-w-0 max-w-[85%]">
+      <div className={`min-w-0 ${msg.actions?.length ? "flex-1" : "max-w-[85%]"}`}>
         <p
           className={`whitespace-pre-wrap break-words rounded-2xl rounded-bl-md px-3.5 py-2 text-sm ${
             msg.error ? "bg-rose-500/15 text-rose-200 ring-1 ring-rose-500/30" : "bg-card-2 text-ink-2 ring-1 ring-line"
@@ -83,6 +120,11 @@ function Bubble({ msg, onLink, onRetry }: { msg: Msg; onLink: () => void; onRetr
           {/* Answers are plain text; drop any stray Markdown emphasis. */}
           {msg.text.replace(/\*\*/g, "")}
         </p>
+        {msg.actions?.map((action, i) => (
+          <div key={i} className="mt-2">
+            <ActionCard action={action} result={msg.results?.[i]} file={file} onResult={(r) => onResult(i, r)} />
+          </div>
+        ))}
         {(msg.links?.length || onRetry) && (
           <div className="mt-1.5 flex flex-wrap gap-2">
             {msg.links?.map((l) => (
@@ -123,8 +165,13 @@ export default function AssistantButton() {
   const [sending, setSending] = useState(false);
   const [active, setActive] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const [attached, setAttached] = useState<File | null>(null);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  /** Attached files by the id of the message they were sent with (not saved: files can't be). */
+  const [files, setFiles] = useState<Record<number, File>>({});
   const panelRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const loaded = useRef(false);
 
@@ -168,15 +215,31 @@ export default function AssistantButton() {
     setDismissed(false);
   }
 
-  async function send(raw: string, base = messages) {
-    const text = raw.trim();
+  /** Checks a picked photo or video the same way the proof form does, then holds it for the next message. */
+  async function attach(raw: File | undefined) {
+    if (!raw) return;
+    const file = await prepareMedia(raw);
+    const problem = mediaRuleError(file);
+    setAttachError(problem);
+    setAttached(problem ? null : file);
+    inputRef.current?.focus({ preventScroll: true });
+  }
+
+  /** Sends a message; an attached file goes along as a note, and on its own asks for the proof form. */
+  async function send(raw: string, base = messages, file: File | null = attached) {
+    const text = raw.trim() || (file ? "/upload" : "");
     if (!text || sending) return;
     changeInput("");
+    setAttached(null);
+    setAttachError(null);
     if (text.toLowerCase() === "/clear") {
+      setFiles({});
       setMessages([]);
       return;
     }
-    const history = [...base.filter((m) => !m.error), { id: nextId++, role: "user" as const, text }];
+    const question: Msg = { id: nextId++, role: "user", text, ...(file ? { attachment: { name: file.name, kind: kindOf(file) } } : {}) };
+    if (file) setFiles((all) => ({ ...all, [question.id]: file }));
+    const history = [...base.filter((m) => !m.error), question];
     setMessages(history);
     setSending(true);
     let reply: Msg;
@@ -184,11 +247,14 @@ export default function AssistantButton() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.slice(-HISTORY_TURNS).map(({ role, text }) => ({ role, text })) }),
+        body: JSON.stringify({
+          messages: history.slice(-HISTORY_TURNS).map(({ role, text }) => ({ role, text })),
+          ...(file ? { attachment: kindOf(file) } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       reply = res.ok && data.reply?.text
-        ? { id: nextId++, role: "assistant", text: data.reply.text, links: data.reply.links }
+        ? { id: nextId++, role: "assistant", text: data.reply.text, links: data.reply.links, actions: data.reply.actions }
         : { id: nextId++, role: "assistant", text: data.error ?? "Something went wrong. Please try again.", error: true };
     } catch {
       reply = { id: nextId++, role: "assistant", text: "Couldn't reach EcoBot. Check your connection and try again.", error: true };
@@ -200,7 +266,12 @@ export default function AssistantButton() {
   /** Re-sends the last question after an error. */
   function retry() {
     const lastUser = messages.findLastIndex((m) => m.role === "user");
-    if (lastUser !== -1) send(messages[lastUser].text, messages.slice(0, lastUser));
+    if (lastUser !== -1) send(messages[lastUser].text, messages.slice(0, lastUser), files[messages[lastUser].id] ?? null);
+  }
+
+  /** Records what came of a card, so it shows as done (also after a reload). */
+  function settle(msgId: number, index: number, result: ActionResult) {
+    setMessages((all) => all.map((m) => (m.id === msgId ? { ...m, results: { ...m.results, [index]: result } } : m)));
   }
 
   /** Commands that take a word (/prices, /trees) are filled in so the planter can add it; others run. */
@@ -258,7 +329,7 @@ export default function AssistantButton() {
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-bold text-ink">EcoBot</h2>
-          <p className="truncate text-xs text-ink-3">Ask about slots, trees, prices and rewards</p>
+          <p className="truncate text-xs text-ink-3">Ask questions or get things done</p>
         </div>
         {messages.length > 0 && (
           <button
@@ -289,6 +360,10 @@ export default function AssistantButton() {
               Hi! I&apos;m EcoBot. Ask me anything about EcoQuest PH, or type <span className="font-semibold text-emerald-300">/</span> to
               see commands.
             </p>
+            <p className="mt-2 text-sm text-ink-2">
+              I can also help you do things — send proof (tap <GalleryIcon className="inline h-4 w-4 align-text-bottom text-emerald-300" aria-label="attach" />{" "}
+              to add a photo or video), claim a slot, claim a reward. You confirm before anything happens.
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {QUICK_COMMANDS.map((c) => (
                 <button
@@ -305,7 +380,14 @@ export default function AssistantButton() {
           </li>
         )}
         {messages.map((m, i) => (
-          <Bubble key={m.id} msg={m} onLink={onLink} onRetry={m.error && i === messages.length - 1 ? retry : undefined} />
+          <Bubble
+            key={m.id}
+            msg={m}
+            file={m.actions && i > 0 ? files[messages[i - 1].id] : null}
+            onLink={onLink}
+            onRetry={m.error && i === messages.length - 1 ? retry : undefined}
+            onResult={(index, result) => settle(m.id, index, result)}
+          />
         ))}
         {sending && (
           <li className="flex items-center gap-2" aria-label="EcoBot is typing">
@@ -342,6 +424,30 @@ export default function AssistantButton() {
             ))}
           </ul>
         )}
+        {(attached || attachError) && (
+          <div className="mb-2 flex items-center gap-2">
+            {attached ? (
+              <>
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-card-2 px-3 py-1.5 text-xs font-semibold text-ink-2 ring-1 ring-line-strong">
+                  <GalleryIcon className="h-4 w-4 shrink-0 text-emerald-300" />
+                  <span className="truncate">{attached.name}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAttached(null)}
+                  aria-label="Remove attachment"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-ink-3 hover:bg-card-2 hover:text-ink"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <p role="alert" className="text-xs text-rose-300">
+                {attachError}
+              </p>
+            )}
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -350,6 +456,28 @@ export default function AssistantButton() {
           className="flex items-center gap-2"
         >
           <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            onChange={(e) => {
+              attach(e.target.files?.[0]);
+              e.target.value = ""; // so picking the same file again still fires `change`
+            }}
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+            aria-label="Attach a photo or video"
+            title="Attach a photo or video"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-3 hover:bg-card-2 hover:text-emerald-300 disabled:opacity-50"
+          >
+            <GalleryIcon />
+          </button>
+          <input
             ref={inputRef}
             value={input}
             onChange={(e) => changeInput(e.target.value)}
@@ -357,7 +485,7 @@ export default function AssistantButton() {
             maxLength={MAX_QUESTION_LENGTH}
             enterKeyHint="send"
             autoComplete="off"
-            placeholder="Ask EcoBot or type /"
+            placeholder={attached ? "Add a note, or just send" : "Ask EcoBot or type /"}
             aria-label="Message EcoBot"
             role="combobox"
             aria-expanded={suggestions.length > 0}
@@ -367,7 +495,7 @@ export default function AssistantButton() {
           />
           <button
             type="submit"
-            disabled={sending || !input.trim()}
+            disabled={sending || (!input.trim() && !attached)}
             aria-label="Send"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
           >

@@ -17,6 +17,7 @@ export const ASSISTANT_COMMANDS: AssistantCommand[] = [
   { name: "rewards", description: "GCash, Maya & vouchers you can redeem" },
   { name: "points", description: "Your points, level and weekly rank" },
   { name: "quests", description: "Your claimed slots and deadlines" },
+  { name: "upload", description: "Send a photo or video as quest proof" },
   { name: "missions", description: "Today's daily quests and side quests" },
   { name: "orders", description: "Your latest seedling orders" },
   { name: "trees", args: "[name]", description: "Look up a native tree" },
