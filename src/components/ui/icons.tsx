@@ -338,9 +338,17 @@ export const DownloadIcon = (p: IconProps) => (
   </Svg>
 );
 /** EcoBot, the in-app assistant: a speech bubble with a spark. */
+/** EcoBot: a speech-bubble robot face with antennae, headphones and a mic. */
 export const AssistantIcon = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M20 12.5A7.5 7.5 0 0 1 9.2 19.2L4 20.5l1.3-4.4A7.5 7.5 0 1 1 20 12.5Z" />
-    <path d="M12 8.5 12.9 11l2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.5Z" />
+    <path d="M10.4 18H8.2L5.4 20.2V10.2A2.8 2.8 0 0 1 8.2 7.4H15.8A2.8 2.8 0 0 1 18.6 10.2V15.2A2.8 2.8 0 0 1 15.8 18H13.8" />
+    <circle cx="12.1" cy="18" r="1.15" fill="currentColor" />
+    <path d="M9.2 7.4 8.4 5.6M14.8 7.4 15.6 5.6" />
+    <circle cx="8" cy="4.7" r=".9" fill="currentColor" />
+    <circle cx="16" cy="4.7" r=".9" fill="currentColor" />
+    <rect x="3" y="11" width="1.6" height="4.2" rx=".8" fill="currentColor" />
+    <rect x="19.4" y="11" width="1.6" height="4.2" rx=".8" fill="currentColor" />
+    <circle cx="9.5" cy="12.6" r="1.25" strokeWidth={1.5} />
+    <circle cx="14.5" cy="12.6" r="1.25" strokeWidth={1.5} />
   </Svg>
 );
