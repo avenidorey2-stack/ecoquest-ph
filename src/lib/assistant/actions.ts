@@ -3,7 +3,7 @@ import { claimNotExpired } from "@/lib/quests";
 import { getUserMissions } from "@/lib/missions";
 import { MAX_ORDER_QUANTITY } from "@/lib/seedlings";
 import { ORDER_COOLDOWN_SECONDS } from "@/lib/delivery";
-import { homeCitySlots } from "./data";
+import { homeCitySlots, speciesNamed } from "./data";
 import type { AssistantLink } from "./commands";
 
 // Things EcoBot can help the planter do. EcoBot never does them itself: it hands the chat an
@@ -219,7 +219,7 @@ export async function orderAction(userId: string, tree: string, quantity?: numbe
   const links = [{ label: "Open Shop", href: "/shop" }];
   if (!q) return { error: "Which seedling? Type /prices to see the shop.", links };
   const rows = await prisma.seedlingProduct.findMany({
-    where: { isActive: true, species: { OR: [{ name: { contains: q, mode: "insensitive" } }, { scientificName: { contains: q, mode: "insensitive" } }] } },
+    where: { isActive: true, species: speciesNamed(q) },
     include: { species: { select: { name: true } } },
     take: 10,
   });

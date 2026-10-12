@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchSpeciesSlug, TREE_CATEGORY_ORDER, TREE_SPECIES } from "@/data/tree-species";
+import { matchSpeciesSlug, speciesSlugsLike, TREE_CATEGORY_ORDER, TREE_SPECIES } from "@/data/tree-species";
 import { renderTreeSvg } from "@/lib/tree-art";
 
 describe("tree species catalogue", () => {
@@ -66,6 +66,33 @@ describe("matchSpeciesSlug", () => {
 
   it.each(["", "Acacia mangium", "Lauan", "Philippine mahogany", "pine"])("returns null for unknown/ambiguous %j", (text) => {
     expect(matchSpeciesSlug(text)).toBeNull();
+  });
+});
+
+describe("speciesSlugsLike", () => {
+  it.each([
+    ["Red Lauan", ["red-lauan"]],
+    ["Red Lawn", ["red-lauan"]],
+    ["red lawan", ["red-lauan"]],
+    ["I said, Red Lawn.", ["red-lauan"]],
+    ["white lawn", ["white-lauan"]],
+    ["nara", ["narra"]],
+    ["Camagong", ["kamagong"]],
+    ["mulave", ["molave"]],
+    ["tangili", ["tangile"]],
+    ["bakawan", ["bakauan"]],
+    ["Shorea negrosensis", ["red-lauan"]],
+    ["Nara seedlings", ["narra"]],
+    ["Ipil", ["ipil"]],
+    ["Pili", ["pili"]],
+    // A name that fits several trees lists them all, so EcoBot asks which.
+    ["lauan", ["red-lauan", "white-lauan"]],
+  ])("%j → %j", (text, slugs) => {
+    expect(speciesSlugsLike(text)).toEqual(slugs);
+  });
+
+  it.each(["", "acacia", "mahogany", "dau"])("finds nothing for %j", (text) => {
+    expect(speciesSlugsLike(text)).toEqual([]);
   });
 });
 

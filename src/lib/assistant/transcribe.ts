@@ -1,3 +1,4 @@
+import { TREE_SPECIES } from "@/data/tree-species";
 import { AssistantBusy, AssistantUnavailable } from "./ai";
 
 // Voice questions for EcoBot: the recording is turned into text by Whisper on Groq (same
@@ -11,7 +12,7 @@ const TIMEOUT_MS = 30_000;
  * Words Whisper should expect, so app and tree names come out spelled right. Whisper uses this
  * as context only (it isn't an instruction).
  */
-const VOCABULARY = "EcoQuest PH, EcoBot, Narra, Molave, Apitong, Kamagong, Banaba, Ipil, Salingbobog, slots, quests, proof, GCash, Maya, Taglish.";
+const VOCABULARY = `EcoQuest PH, EcoBot, ${TREE_SPECIES.map((s) => s.name).join(", ")}, slots, quests, proof, GCash, Maya, Taglish.`;
 
 /** The words in `audio`, trimmed; "" when nothing was said. */
 export async function transcribe(audio: File): Promise<string> {
