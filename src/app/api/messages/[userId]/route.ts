@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireVerifiedUser } from "@/lib/authz";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { readChatSend, saveWithMedia } from "@/lib/chat-attachments";
-import { canMessage, dmScope, getThread, sendDirectMessage, SENDS_PER_MINUTE } from "@/lib/messages";
+import { canMessage, deleteChat, dmScope, getThread, sendDirectMessage, SENDS_PER_MINUTE } from "@/lib/messages";
 
 // GET /api/messages/:userId[?before=<messageId>] — a page of the chat with that planter, oldest
 // first. The latest page (no `before`) also marks the chat read.
@@ -35,4 +35,13 @@ export async function POST(req: Request, { params }: RouteContext<"/api/messages
   const result = await saveWithMedia(sent.media, () => sendDirectMessage(user.id, otherId, sent.body, sent.media, sent.replyTo));
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ message: result.message }, { status: 201 });
+}
+
+// DELETE /api/messages/:userId — delete the chat with that planter for yourself (they keep theirs).
+export async function DELETE(_req: Request, { params }: RouteContext<"/api/messages/[userId]">) {
+  const { user, response } = await requireVerifiedUser();
+  if (response) return response;
+  const result = await deleteChat(user.id, (await params).userId);
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  return NextResponse.json({ deleted: true });
 }

@@ -48,6 +48,14 @@ export type AssistantAction =
   | ({ kind: "report_user"; reason: string | null; details: string; reasons: { value: string; label: string }[] } & PersonRef)
   | ({ kind: "like_photo"; liked: boolean } & PhotoRef)
   | ({ kind: "comment_photo"; text: string } & PhotoRef)
+  /** Deletes the chat for the planter only; the other person keeps their copy. */
+  | ({ kind: "delete_chat" } & PersonRef)
+  /** Accepts or deletes the person's message request. */
+  | ({ kind: "message_request"; accept: boolean } & PersonRef)
+  /** Unsends one of the planter's own messages to the person (removed for both). */
+  | ({ kind: "unsend_message"; messageId: string; preview: string; sentAt: string } & PersonRef)
+  /** The planter's comment on the person's photo (`mine`), or the person's comment on the planter's photo. */
+  | ({ kind: "delete_comment"; commentId: string; body: string; mine: boolean } & PersonRef)
   // Account (src/lib/assistant/actions-account.ts)
   | { kind: "change_name"; current: string; name: string }
   | { kind: "change_city"; cityCode: string; city: string; province: string; current: string | null }
@@ -56,13 +64,29 @@ export type AssistantAction =
   | { kind: "invite_code"; code: string; referrerName: string }
   | { kind: "report_problem"; subject: string; message: string }
   | { kind: "read_notifications"; unread: number }
+  | { kind: "logout" }
   /** Several actions of the same sort the planter allows at once ("claim all slots", "message all my friends"). */
   | { kind: "batch"; items: BatchItem[] };
 
 /** Actions that can be allowed together in one batch card. */
 export type BatchItem = Extract<
   AssistantAction,
-  { kind: "claim_slot" | "claim_mission" | "redeem_reward" | "send_message" | "add_friend" | "remove_friend" | "block_user" | "like_photo" | "comment_photo" }
+  {
+    kind:
+      | "claim_slot"
+      | "claim_mission"
+      | "redeem_reward"
+      | "send_message"
+      | "add_friend"
+      | "remove_friend"
+      | "block_user"
+      | "like_photo"
+      | "comment_photo"
+      | "delete_chat"
+      | "message_request"
+      | "unsend_message"
+      | "delete_comment";
+  }
 >;
 
 /** Another planter an action is about. */

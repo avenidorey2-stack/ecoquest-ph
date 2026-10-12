@@ -1,21 +1,37 @@
 import { prisma } from "@/lib/prisma";
 import { displayAvatar } from "@/lib/avatar-url";
 import { blockedIds, isBlockedEitherWay, listBlocked } from "@/lib/blocks";
-import { canSeePhotos, friendState, listFriends, nameMatchRank, searchPlanters, type FriendState } from "@/lib/friends";
+import { canSeePhotos, friendState, listFriends, nameMatchRank, pairKey, searchPlanters, type FriendState } from "@/lib/friends";
 import { REPORT_REASONS } from "@/lib/moderation";
-import { chatPartner, MESSAGE_MAX } from "@/lib/messages";
+import { chatPartner, listConversations, MESSAGE_MAX, previewText } from "@/lib/messages";
 import { COMMENT_MAX } from "@/lib/photo-social";
 import { bundle, type ActionOutcome, type AssistantAction, type BatchItem, type PersonRef, type PhotoRef } from "./actions";
 
-// Action cards about other planters: messages, friends, blocks, reports, and likes and comments on
-// their planting photos. The planter names someone ("message Demana"); the name is matched only
+// Action cards about other planters: messages (send, unsend, delete a chat, message requests),
+// friends, blocks, reports, and likes and comments on planting photos. The planter names someone ("message Demana"); the name is matched only
 // among the people they could act on, and when it fits more than one, the choices go back to
 // the AI to ask which one. Nothing is sent until the planter confirms on the card.
 
-export type PersonAction = "message" | "add_friend" | "remove_friend" | "block" | "unblock" | "report" | "like_photo" | "unlike_photo" | "comment_photo";
-export const PERSON_ACTIONS: PersonAction[] = ["message", "add_friend", "remove_friend", "block", "unblock", "report", "like_photo", "unlike_photo", "comment_photo"];
+export const PERSON_ACTIONS = [
+  "message",
+  "unsend_message",
+  "delete_chat",
+  "accept_message_request",
+  "delete_message_request",
+  "add_friend",
+  "remove_friend",
+  "block",
+  "unblock",
+  "report",
+  "like_photo",
+  "unlike_photo",
+  "comment_photo",
+  "delete_comment",
+] as const;
+export type PersonAction = (typeof PERSON_ACTIONS)[number];
 
-export type PersonInput = { action: string; names?: string[]; userIds?: string[]; group?: string; text?: string; reason?: string };
+/** `all`: for unsend_message / delete_comment, every match instead of only the latest. */
+export type PersonInput = { action: string; names?: string[]; userIds?: string[]; group?: string; text?: string; reason?: string; all?: boolean };
 /** One person to find: by id, or by name. */
 type PersonQuery = { name?: string; userId?: string };
 
@@ -71,6 +87,74 @@ async function circle(viewerId: string): Promise<Candidate[]> {
   return [...friends, ...incoming, ...outgoing];
 }
 
+/** People the viewer has a chat with (`requestsOnly`: message requests to them), with their friend state. */
+async function chats(viewerId: string, requestsOnly = false): Promise<Candidate[]> {
+  const [rows, { friends, incoming, outgoing }] = await Promise.all([listConversations(viewerId), listFriends(viewerId)]);
+  const state = (id: string): FriendState =>
+    friends.some((f) => f.id === id) ? "FRIENDS" : incoming.some((f) => f.id === id) ? "INCOMING" : outgoing.some((f) => f.id === id) ? "REQUESTED" : "NONE";
+  return rows.filter((r) => !requestsOnly || r.request).map((r) => ({ id: r.partner.id, name: r.partner.name, image: r.partner.image, city: null, state: state(r.partner.id) }));
+}
+
+/** Whose chats each action looks in, instead of everyone the planter can find. */
+const CHAT_ACTIONS: PersonAction[] = ["unsend_message", "delete_chat"];
+const REQUEST_ACTIONS: PersonAction[] = ["accept_message_request", "delete_message_request"];
+
+/** Most messages or comments one card offers to remove. */
+const REMOVE_MAX = 50;
+const clip = (s: string, n = 80) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+/**
+ * The planter's own messages to `person` (in what they can still see): those containing `text`,
+ * every one (`all`), or else just the latest. Unsending removes them for both people.
+ */
+async function myMessages(viewerId: string, person: Found, text?: string, all?: boolean): Promise<BatchItem[] | string> {
+  const convo = await prisma.conversation.findUnique({
+    where: { pairKey: pairKey(viewerId, person.userId) },
+    select: { id: true, members: { where: { userId: viewerId }, select: { clearedAt: true } } },
+  });
+  if (!convo) return `You have no chat with ${person.name}.`;
+  const cleared = convo.members[0]?.clearedAt;
+  const q = text?.trim();
+  const rows = await prisma.directMessage.findMany({
+    where: {
+      conversationId: convo.id,
+      senderId: viewerId,
+      deletedAt: null,
+      ...(cleared ? { createdAt: { gt: cleared } } : {}),
+      ...(q ? { body: { contains: q, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: q || all ? REMOVE_MAX : 1,
+    select: { id: true, body: true, mediaType: true, deletedAt: true, createdAt: true },
+  });
+  if (!rows.length) return q ? `You haven't sent ${person.name} a message with "${q}".` : `You have no messages to ${person.name} to unsend.`;
+  const ref = strip(person);
+  return rows.map((m) => ({ kind: "unsend_message", messageId: m.id, preview: clip(previewText(m, false)), sentAt: m.createdAt.toISOString(), ...ref }));
+}
+
+/**
+ * Comments between the planter and `person` on planting photos: the planter's on theirs, and
+ * theirs on the planter's (a photo's owner may delete any comment on it). Filtered like myMessages.
+ */
+async function commentsWith(viewerId: string, person: Found, text?: string, all?: boolean): Promise<BatchItem[] | string> {
+  const q = text?.trim();
+  const rows = await prisma.photoComment.findMany({
+    where: {
+      OR: [
+        { authorId: viewerId, verification: { quest: { userId: person.userId } } },
+        { authorId: person.userId, verification: { quest: { userId: viewerId } } },
+      ],
+      ...(q ? { body: { contains: q, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: q || all ? REMOVE_MAX : 1,
+    select: { id: true, body: true, authorId: true },
+  });
+  if (!rows.length) return q ? `There's no comment with "${q}" between you and ${person.name}.` : `There are no comments between you and ${person.name} to delete.`;
+  const ref = strip(person);
+  return rows.map((c) => ({ kind: "delete_comment", commentId: c.id, body: clip(c.body), mine: c.authorId === viewerId, ...ref }));
+}
+
 /** The planter's latest approved planting photo the viewer may see. */
 async function latestPhoto(viewerId: string, person: Found): Promise<{ photo: PhotoRef; liked: boolean; allowComments: boolean } | null> {
   const [owner, viewer] = await Promise.all([
@@ -91,8 +175,8 @@ async function latestPhoto(viewerId: string, person: Found): Promise<{ photo: Ph
   };
 }
 
-/** Group targets: everyone in it, instead of naming people. */
-export const PERSON_GROUPS = ["friends", "requests_to_me", "requests_i_sent"] as const;
+/** Group targets: everyone in it, instead of naming people. requests_* are friend requests. */
+export const PERSON_GROUPS = ["friends", "requests_to_me", "requests_i_sent", "chats", "message_requests"] as const;
 export type PersonGroup = (typeof PERSON_GROUPS)[number];
 
 /** Most people per card: kept under each route's rate limit so a batch can't trip it. */
@@ -105,7 +189,8 @@ const CAPS: Partial<Record<PersonAction, number>> = { message: 30, add_friend: 2
 export async function personAction(viewerId: string, input: PersonInput): Promise<ActionOutcome> {
   const action = input.action as PersonAction;
   if (!PERSON_ACTIONS.includes(action)) return { error: `Unknown action. Use one of: ${PERSON_ACTIONS.join(", ")}.` };
-  const links = [{ label: "Open Friends", href: "/friends" }];
+  const aboutChats = CHAT_ACTIONS.includes(action) || REQUEST_ACTIONS.includes(action);
+  const links = [aboutChats ? { label: "Open Messages", href: "/messages" } : { label: "Open Friends", href: "/friends" }];
 
   // Who it's about: a group, or each name / id given.
   const targets: Found[] = [];
@@ -113,10 +198,21 @@ export async function personAction(viewerId: string, input: PersonInput): Promis
   const choices: unknown[] = [];
   if (input.group) {
     if (!PERSON_GROUPS.includes(input.group as PersonGroup)) return { error: `Unknown group. Use one of: ${PERSON_GROUPS.join(", ")}.` };
-    const { friends, incoming, outgoing } = await listFriends(viewerId);
-    const group = input.group === "friends" ? friends : input.group === "requests_to_me" ? incoming : outgoing;
+    let group: Candidate[];
+    if (input.group === "chats" || input.group === "message_requests") {
+      group = await chats(viewerId, input.group === "message_requests");
+    } else {
+      const { friends, incoming, outgoing } = await listFriends(viewerId);
+      group = input.group === "friends" ? friends : input.group === "requests_to_me" ? incoming : outgoing;
+    }
     if (!group.length) {
-      const what = input.group === "friends" ? "You have no friends on EcoQuest yet." : input.group === "requests_to_me" ? "No one has sent you a friend request." : "You have no friend requests waiting.";
+      const what = {
+        friends: "You have no friends on EcoQuest yet.",
+        requests_to_me: "No one has sent you a friend request.",
+        requests_i_sent: "You have no friend requests waiting.",
+        chats: "You have no chats.",
+        message_requests: "You have no message requests.",
+      }[input.group as PersonGroup];
       return { error: what, links };
     }
     targets.push(...group.map(toRef));
@@ -127,14 +223,24 @@ export async function personAction(viewerId: string, input: PersonInput): Promis
     const blocked =
       action === "unblock" ? (await listBlocked(viewerId)).map((b): Candidate => ({ id: b.id, name: b.name, image: b.image, city: null, state: "NONE" })) : null;
     const mine = action === "remove_friend" ? await circle(viewerId) : null;
+    const talked = CHAT_ACTIONS.includes(action) ? await chats(viewerId) : REQUEST_ACTIONS.includes(action) ? await chats(viewerId, true) : null;
     for (const ref of refs) {
-      // Unblocking: only people they blocked. Unfriending: only friends and requests. Otherwise anyone they can find.
-      const pool = blocked ?? mine ?? (await anyone(viewerId, ref));
+      // Unblocking: only people they blocked. Unfriending: only friends and requests. Chats and
+      // message requests: only people they have one with. Otherwise anyone they can find.
+      const pool = blocked ?? mine ?? talked ?? (await anyone(viewerId, ref));
       const found = pick(pool, ref);
       if ("person" in found) {
         if (!targets.some((t) => t.userId === found.person.userId)) targets.push(found.person);
       } else {
-        skipped.push(found.error + (action === "unblock" ? " (Only people you blocked can be unblocked.)" : ""));
+        const hint =
+          action === "unblock"
+            ? " (Only people you blocked can be unblocked.)"
+            : CHAT_ACTIONS.includes(action)
+              ? " (Looked among your chats.)"
+              : REQUEST_ACTIONS.includes(action)
+                ? " (Looked among your message requests.)"
+                : "";
+        skipped.push(found.error + hint);
         if (found.choices) choices.push(...found.choices);
       }
     }
@@ -145,6 +251,7 @@ export async function personAction(viewerId: string, input: PersonInput): Promis
   for (const person of targets) {
     const made = await cardFor(viewerId, action, person, input);
     if (typeof made === "string") skipped.push(made);
+    else if (Array.isArray(made)) items.push(...made);
     else if (made.kind === "report_user") report = made;
     else items.push(made);
   }
@@ -154,10 +261,19 @@ export async function personAction(viewerId: string, input: PersonInput): Promis
   return bundle(items, skipped, "Nothing to do.", targets.length === 1 && !items.length ? profileLink(targets[0].userId) : links, CAPS[action]);
 }
 
-/** The card for `action` on one planter, or why it can't be done. */
-async function cardFor(viewerId: string, action: PersonAction, person: Found, input: PersonInput): Promise<BatchItem | ReportCard | string> {
+/** The card for `action` on one planter (several for messages or comments), or why it can't be done. */
+async function cardFor(viewerId: string, action: PersonAction, person: Found, input: PersonInput): Promise<BatchItem | BatchItem[] | ReportCard | string> {
   const ref = strip(person);
   switch (action) {
+    case "unsend_message":
+      return myMessages(viewerId, person, input.text, input.all);
+    case "delete_chat":
+      return { kind: "delete_chat", ...ref };
+    case "accept_message_request":
+    case "delete_message_request":
+      return { kind: "message_request", accept: action === "accept_message_request", ...ref };
+    case "delete_comment":
+      return commentsWith(viewerId, person, input.text, input.all);
     case "message": {
       // Friends, an open chat, or a message request (if they take requests) — as in Messages.
       const partner = await chatPartner(viewerId, person.userId);
@@ -206,6 +322,23 @@ async function cardFor(viewerId: string, action: PersonAction, person: Found, in
 
 /** The card only needs who it is, not the friend state. */
 const strip = ({ state: _state, ...ref }: Found): PersonRef => ref; // eslint-disable-line @typescript-eslint/no-unused-vars
+
+/** The planter's chats, latest first, for "who messaged me?" and to find people to act on. */
+export async function myChats(viewerId: string) {
+  const rows = await listConversations(viewerId);
+  return {
+    chats: rows.slice(0, 20).map((r) => ({
+      user_id: r.partner.id,
+      name: r.partner.name,
+      lastMessage: r.preview,
+      at: r.lastMessageAt,
+      unread: r.unread,
+      ...(r.request ? { messageRequest: true } : {}),
+      ...(r.pending ? { yourRequestNotAcceptedYet: true } : {}),
+    })),
+    total: rows.length,
+  };
+}
 
 /** The planter's friends and requests, for the AI to answer "who are my friends?" and to find people. */
 export async function myFriends(viewerId: string) {

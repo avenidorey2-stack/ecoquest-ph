@@ -12,7 +12,7 @@ import ChatComposer from "./ChatComposer";
 import MessageList, { type ChatItem } from "./MessageList";
 import { ActiveLabel, PresenceAvatar } from "./Presence";
 import { useDockWindow } from "./pane";
-import { ChevronLeftIcon, CloseIcon, ExpandIcon, MessagesIcon } from "@/components/ui/icons";
+import { ChevronLeftIcon, CloseIcon, ExpandIcon, MessagesIcon, TrashIcon } from "@/components/ui/icons";
 
 const dockBtn = "grid h-9 w-9 shrink-0 place-items-center rounded-full text-emerald-300 hover:bg-card-3";
 
@@ -85,7 +85,7 @@ function RequestBar({ name, base, userId, onAccepted, onGone }: { name: string; 
 
 /**
  * A chat with another planter: live updates, photos/videos/voice, replies, reactions, unsend,
- * "Seen" and (for friends) their active status. With someone who isn't a friend, the first message
+ * "Seen", deleting the chat (for you only) and (for friends) their active status. With someone who isn't a friend, the first message
  * is a message request: the sender sees "Request sent", the other person can reply or accept.
  */
 export default function DirectChat({ initial }: { initial: Thread }) {
@@ -96,6 +96,7 @@ export default function DirectChat({ initial }: { initial: Thread }) {
   const [gone, setGone] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const dock = useDockWindow();
   const router = useRouter();
   const firstName = partner.name.split(/\s+/)[0];
@@ -146,6 +147,16 @@ export default function DirectChat({ initial }: { initial: Thread }) {
     else router.push("/messages");
   }
 
+  /** Deletes the chat for the viewer only (they keep theirs), then leaves it. */
+  async function deleteChat() {
+    if (!window.confirm(`Delete your chat with ${partner.name}? Its messages are cleared for you only — ${firstName} keeps theirs and isn't told.`)) return;
+    setDeleteError(null);
+    const res = await fetch(base, { method: "DELETE" }).catch(() => null);
+    if (!res?.ok) return setDeleteError("Couldn't delete the chat. Check your connection and try again.");
+    window.dispatchEvent(new Event(MESSAGES_READ_EVENT)); // the chat list drops it
+    leave();
+  }
+
   const setReactions = (id: string, reactions: ReactionView[]) => setMessages((cur) => cur.map((m) => (m.id === id ? { ...m, reactions } : m)));
 
   // Shows the reaction at once; puts it back if saving fails.
@@ -191,6 +202,17 @@ export default function DirectChat({ initial }: { initial: Thread }) {
             <ActiveLabel presence={partner} className="block truncate text-xs" />
           </span>
         </Link>
+        {messages.length > 0 && !gone && (
+          <button
+            type="button"
+            onClick={deleteChat}
+            aria-label="Delete chat"
+            title="Delete chat"
+            className={dock ? dockBtn : "grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-3 hover:bg-card-3 hover:text-rose-300"}
+          >
+            <TrashIcon className={dock ? "h-4 w-4" : "h-5 w-5"} />
+          </button>
+        )}
         {/* Pop-up window (desktop): open full size, minimize to a bubble, or close — like Facebook. */}
         {dock && (
           <>
@@ -207,6 +229,11 @@ export default function DirectChat({ initial }: { initial: Thread }) {
         )}
       </ChatHeader>
 
+      {deleteError && (
+        <p role="alert" className="shrink-0 border-b border-line bg-card-2 px-4 py-2 text-center text-xs text-rose-300">
+          {deleteError}
+        </p>
+      )}
       {gone ? (
         <div className="grid flex-1 place-items-center p-6 text-center text-sm text-ink-3">This chat is no longer available.</div>
       ) : (

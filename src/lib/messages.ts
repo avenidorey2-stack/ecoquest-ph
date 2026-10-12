@@ -14,8 +14,9 @@ import { mediaKind } from "@/lib/media-rules";
 // message. Friends chat freely. Anyone else can write too (unless the person turned message
 // requests off): the first message makes a message request, which the other person sees under
 // Requests — with photos, videos and voice hidden — until they reply or accept, like Messenger.
-// Deleting a request hides it for them until a newer message. Chats disappear for both while
-// either has blocked the other. Senders can unsend (the text and file are wiped for both).
+// Deleting a request hides it for them until a newer message. Deleting a chat does the same and
+// also clears its earlier messages for them only (the other person keeps theirs). Chats disappear
+// for both while either has blocked the other. Senders can unsend (the text and file are wiped for both).
 // A message can reply to an earlier one, and friends can react to any message with an emoji.
 // New messages and reactions ping both members' live channel from the database (migrations
 // 20261007090000_direct_messages, 20261008090000_chat_reactions_push); apps without the live
@@ -165,13 +166,16 @@ export async function getThread(viewerId: string, otherId: string, { before }: {
   if (!partner) return null;
   const convo = await prisma.conversation.findUnique({
     where: { pairKey: pairKey(viewerId, otherId) },
-    select: { id: true, members: { where: { userId: otherId }, select: { lastReadAt: true } } },
+    select: { id: true, members: { select: { userId: true, lastReadAt: true, clearedAt: true } } },
   });
   if (!convo) return { partner, messages: [] as ChatMessage[], hasMore: false, seenAt: null };
   const incoming = partner.request === "incoming";
+  const them = convo.members.find((m) => m.userId === otherId);
+  // A chat the viewer deleted starts again from then.
+  const clearedAt = convo.members.find((m) => m.userId === viewerId)?.clearedAt;
 
   const rows = await prisma.directMessage.findMany({
-    where: { conversationId: convo.id },
+    where: { conversationId: convo.id, ...(clearedAt ? { createdAt: { gt: clearedAt } } : {}) },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: messageInclude,
     take: THREAD_PAGE + 1,
@@ -188,7 +192,7 @@ export async function getThread(viewerId: string, otherId: string, { before }: {
     messages: rows.slice(0, THREAD_PAGE).reverse().map(toChat(viewerId, incoming ? otherId : null)),
     hasMore: rows.length > THREAD_PAGE,
     // A request isn't marked "Seen" for the sender until it's accepted.
-    seenAt: partner.request === "outgoing" ? null : (convo.members[0]?.lastReadAt?.toISOString() ?? null),
+    seenAt: partner.request === "outgoing" ? null : (them?.lastReadAt?.toISOString() ?? null),
   };
 }
 
@@ -388,6 +392,22 @@ export async function deleteRequest(viewerId: string, otherId: string) {
   return { ok: true as const };
 }
 
+/**
+ * The viewer deletes their chat with `otherId`, like Messenger: it leaves their list and its
+ * messages are cleared for them only. The other person isn't told and keeps their copy. A newer
+ * message brings the chat back, starting from that message.
+ */
+export async function deleteChat(viewerId: string, otherId: string) {
+  const convo = await prisma.conversation.findUnique({ where: { pairKey: pairKey(viewerId, otherId) }, select: { id: true } });
+  if (!convo) return fail(404, "Chat not found.");
+  const now = new Date();
+  await prisma.conversationMember.update({
+    where: { conversationId_userId: { conversationId: convo.id, userId: viewerId } },
+    data: { hiddenAt: now, clearedAt: now, unreadCount: 0, lastReadAt: now },
+  });
+  return { ok: true as const };
+}
+
 /** The user's chats, latest first (chats with someone blocked either way are hidden). */
 export async function listConversations(viewerId: string): Promise<ConversationRow[]> {
   const hidden = await blockedIds(viewerId);
@@ -420,7 +440,7 @@ export async function listConversations(viewerId: string): Promise<ConversationR
     const other = c.members[0]?.user;
     const last = c.messages[0];
     if (!other || !last) return [];
-    // A request they deleted stays out of the list until a newer message.
+    // A request or chat they deleted stays out of the list until a newer message.
     if (hiddenAt && c.lastMessageAt <= hiddenAt) return [];
     const friend = friendIds.has(other.id);
     const request = !friend && c.requestedById === other.id;
