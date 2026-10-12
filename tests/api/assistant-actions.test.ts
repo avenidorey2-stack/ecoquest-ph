@@ -249,6 +249,16 @@ describe("EcoBot — shop and account", () => {
     expect(await prisma.order.count()).toBe(0);
   });
 
+  it("order_seedlings finds a tree whose name was misheard (voice: \"Red Lawn\")", async () => {
+    signInAs(await createUser({ name: "Juan", points: 900 }));
+    const species = await prisma.treeSpecies.create({ data: { slug: "red-lauan", name: "Red Lauan", scientificName: "Shorea negrosensis", category: "Philippine Mahogany and Timber Groups", description: "x", imageUrl: "/x.png" } });
+    const product = await prisma.seedlingProduct.create({ data: { speciesId: species.id, priceInPoints: 50, priceInPesos: 35, stockQuantity: 20 } });
+    for (const tree of ["Red Lawn", "red lawan"]) {
+      const { reply } = await act("order_seedlings", { tree, quantity: 2 }, `order 2 ${tree}`);
+      expect(reply.actions).toEqual([expect.objectContaining({ kind: "order_seedlings", product: expect.objectContaining({ id: product.id, name: "Red Lauan" }) })]);
+    }
+  });
+
   it("change_name and change_city build cards; ambiguous cities ask which", async () => {
     const me = await createUser({ name: "Juan" });
     signInAs(me);

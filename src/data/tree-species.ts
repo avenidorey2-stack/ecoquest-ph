@@ -422,3 +422,71 @@ export function matchSpeciesSlug(text: string, species: Pick<TreeSpeciesSeed, "s
   const partial = species.filter((s) => [s.name, ...(s.aliases ?? [])].some((n) => words.includes(` ${normalize(n)} `)));
   return partial.length === 1 ? partial[0].slug : null;
 }
+
+/**
+ * Spelling-free key for how a name sounds, so misheard or misspelled names still match:
+ * "Red Lawn", "red lawan" and "Red Lauan" all come out close ("redlaun" / "redlauan").
+ */
+export function soundKey(text: string) {
+  return normalize(text)
+    .replace(/[^a-z]/g, "")
+    .replace(/ph/g, "f")
+    .replace(/c(?=[eiy])/g, "s")
+    .replace(/[cq]/g, "k")
+    .replace(/v/g, "b")
+    .replace(/w/g, "u")
+    .replace(/y/g, "i")
+    .replace(/z/g, "s")
+    .replace(/ou/g, "u")
+    .replace(/(.)\1+/g, "$1");
+}
+
+function editDistance(a: string, b: string) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** How many letters a sound key of this length may be off by and still count as the same name. */
+const allowedSlips = (len: number) => (len <= 3 ? 0 : len <= 6 ? 1 : 2);
+
+/**
+ * Species a spoken or typed tree name most likely means — by name, alias or scientific name,
+ * tolerating mishearing ("Red Lawn" → red-lauan). Returns the best-matching slugs (several when
+ * the name fits more than one, e.g. "lauan"), or [] when nothing is close.
+ */
+export function speciesSlugsLike(
+  text: string,
+  species: Pick<TreeSpeciesSeed, "slug" | "name" | "scientificName" | "aliases">[] = TREE_SPECIES,
+): string[] {
+  const words = normalize(text).split(" ").filter(Boolean);
+  if (!words.length) return [];
+  const best = new Map<string, number>();
+  for (const s of species) {
+    let score = Infinity;
+    for (const phrase of [s.name, s.slug.replace(/-/g, " "), s.scientificName, ...(s.aliases ?? [])]) {
+      const target = normalize(phrase).split(" ").filter(Boolean);
+      const key = soundKey(phrase);
+      if (!key) continue;
+      if (target.join(" ") === words.join(" ")) score = Math.min(score, 0);
+      // Compare against every run of words in the text the same length as this name,
+      // so "order red lawn seedlings" still finds "red lauan".
+      for (let i = 0; i + target.length <= words.length; i++) {
+        const heard = soundKey(words.slice(i, i + target.length).join(""));
+        const slips = editDistance(heard, key);
+        if (slips <= allowedSlips(key.length)) score = Math.min(score, 1 + slips);
+      }
+      // A shorter text that is a whole word of the name ("lauan" → Red Lauan and White Lauan).
+      if (words.length < target.length && target.some((_, i) => soundKey(target.slice(i, i + words.length).join("")) === soundKey(words.join("")))) {
+        score = Math.min(score, 10);
+      }
+    }
+    if (score < Infinity) best.set(s.slug, score);
+  }
+  const top = Math.min(...best.values());
+  return [...best].filter(([, score]) => score === top).map(([slug]) => slug);
+}

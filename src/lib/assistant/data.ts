@@ -4,7 +4,7 @@ import { holdsSpot, isClaimExpired } from "@/lib/quests";
 import { levelProgress } from "@/lib/levels";
 import { getUserMissions } from "@/lib/missions";
 import { getLeaderboard } from "@/lib/leaderboard";
-import { TREE_CATEGORY_ORDER } from "@/data/tree-species";
+import { speciesSlugsLike, TREE_CATEGORY_ORDER } from "@/data/tree-species";
 
 // Read-only lookups behind the assistant's slash commands and its AI tools, so both always
 // report the same live numbers. Everything here is either public catalogue data or the
@@ -66,15 +66,24 @@ export async function openSlotsNearMe(userId: string, now = new Date()) {
   };
 }
 
+/**
+ * Prisma filter for the tree species a planter named. Names are matched by sound, so a misheard
+ * voice question ("Red Lawn") still finds Red Lauan; a name the directory data doesn't know
+ * (a species added later) falls back to plain text search.
+ */
+export function speciesNamed(q: string) {
+  const slugs = speciesSlugsLike(q);
+  if (slugs.length) return { slug: { in: slugs } };
+  return { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { scientificName: { contains: q, mode: "insensitive" as const } }] };
+}
+
 /** Seedling shop prices, optionally narrowed to species whose name matches `query`. */
 export async function seedlingPrices(query?: string) {
   const q = query?.trim();
   const rows = await prisma.seedlingProduct.findMany({
     where: {
       isActive: true,
-      ...(q
-        ? { species: { OR: [{ name: { contains: q, mode: "insensitive" } }, { scientificName: { contains: q, mode: "insensitive" } }] } }
-        : {}),
+      ...(q ? { species: speciesNamed(q) } : {}),
     },
     include: { species: { select: { name: true, category: true, sortOrder: true } } },
   });
@@ -197,7 +206,7 @@ export async function findTrees(query?: string) {
     return { matches: [], all };
   }
   const matches = await prisma.treeSpecies.findMany({
-    where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { scientificName: { contains: q, mode: "insensitive" } }, { slug: { contains: q.toLowerCase().replace(/\s+/g, "-") } }] },
+    where: speciesNamed(q),
     orderBy: { sortOrder: "asc" },
     take: 3,
     select: { name: true, scientificName: true, category: true, description: true, benefits: true, totalPlanted: true, plantingGoal: true },
