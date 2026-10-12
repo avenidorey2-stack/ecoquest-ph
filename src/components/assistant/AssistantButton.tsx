@@ -362,7 +362,8 @@ export default function AssistantButton() {
             </p>
             <p className="mt-2 text-sm text-ink-2">
               I can also help you do things — send proof (tap <GalleryIcon className="inline h-4 w-4 align-text-bottom text-emerald-300" aria-label="attach" />{" "}
-              to add a photo or video), claim a slot, claim a reward. You confirm before anything happens.
+              to add a photo or video), message friends, claim slots and rewards, order seedlings, update your profile — even
+              many at once, like &ldquo;claim all slots&rdquo;. Nothing happens until you allow it.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {QUICK_COMMANDS.map((c) => (
