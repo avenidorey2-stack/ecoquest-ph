@@ -55,7 +55,7 @@ Rewards
 - Up to ${MAX_PENDING_REDEMPTIONS} redemptions can wait for the team at once. Points are deducted on request and refunded in full if the request is declined.
 
 Social
-- Friends & Messages: send friend requests; chat with friends, or message any planter — a first message to a non-friend goes to their Message Requests until they reply or accept (photos, videos and voice stay hidden until then). Turn requests off in Settings → Privacy. Like and comment on planting photos. Planters can be blocked or reported.
+- Friends & Messages: send friend requests; chat with friends, or message any planter — a first message to a non-friend goes to their Message Requests until they reply or accept (photos, videos and voice stay hidden until then). Turn requests off in Settings → Privacy. Unsend your own messages (removed for both), or delete a whole chat with the trash button at the top of the chat (cleared for you only; the other person keeps theirs). Like and comment on planting photos. Planters can be blocked or reported.
 - Referral Hub: share your invite link; you get ${REFERRAL_BONUS_POINTS} points when an invited friend's first planting is approved.
 
 Pages: Dashboard, Leaderboard, Friends, Messages, Shop, Rewards, Transactions, Achievements, Tree Directory, Profile, Settings (privacy, notifications, password, Help), Referral Hub.

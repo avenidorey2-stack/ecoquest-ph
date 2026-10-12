@@ -332,9 +332,20 @@ describe("EcoBot — shop and account", () => {
     await POST(jsonRequest({ messages: [{ role: "user", text: "hi" }] }));
     const { messages, tools } = create.mock.calls[0][0];
     expect(messages[0].content).toMatch(/never ask for a password/);
-    expect(messages[0].content).toMatch(/Requests to DO something in the app \(e\.g\. message a friend, claim slots\) are in scope/);
+    expect(messages[0].content).toMatch(/any request to DO something in the app: never answer it with "I can only help with EcoQuest PH"/);
+    expect(messages[0].content).toMatch(/Don't ask "are you sure\?" or argue first/);
     expect(tools.map((t: { function: { name: string } }) => t.function.name)).toEqual(
-      expect.arrayContaining(["people_action", "account_action", "order_seedlings", "get_my_friends", "get_my_account"]),
+      expect.arrayContaining([
+        "people_action",
+        "account_action",
+        "order_seedlings",
+        "get_my_friends",
+        "get_my_account",
+        "get_my_chats",
+        "get_my_notifications",
+        "get_tree_stats",
+        "get_leaderboard",
+      ]),
     );
   });
 });

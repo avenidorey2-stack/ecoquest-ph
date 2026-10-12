@@ -6,6 +6,8 @@ import ProofUploadForm from "@/components/quests/ProofUploadForm";
 import OrderSeedlingForm from "@/components/shop/OrderSeedlingForm";
 import { MESSAGES_READ_EVENT } from "@/components/layout/live";
 import { sendChatMessage } from "@/components/ui/upload";
+import { signOutAction } from "@/app/actions/auth";
+import { disablePush } from "@/lib/push-client";
 import type { AssistantAction, BatchItem, PhotoRef } from "@/lib/assistant/actions";
 import { voucherAmount } from "@/lib/voucher";
 import { GalleryIcon } from "@/components/ui/icons";
@@ -18,6 +20,7 @@ import { GalleryIcon } from "@/components/ui/icons";
 export type ActionResult = { ok: boolean; text: string };
 
 const pts = (n: number) => `${n.toLocaleString("en-PH")} pts`;
+const sentOn = (iso: string) => new Date(iso).toLocaleString("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" });
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const cardClass = "rounded-2xl bg-card-2 p-3 ring-1 ring-line-strong";
 const primaryBtn =
@@ -122,6 +125,26 @@ async function perform(a: BatchItem | Exclude<AssistantAction, { kind: "batch" |
     case "read_notifications":
       await call("/api/notifications", "PATCH");
       return "All notifications marked as read.";
+    case "delete_chat":
+      await call(`/api/messages/${encodeURIComponent(a.userId)}`, "DELETE");
+      window.dispatchEvent(new Event(MESSAGES_READ_EVENT)); // the chat list drops it
+      return `Deleted your chat with ${a.name}.`;
+    case "message_request":
+      await call(`/api/messages/${encodeURIComponent(a.userId)}/request`, a.accept ? "POST" : "DELETE");
+      window.dispatchEvent(new Event(MESSAGES_READ_EVENT));
+      return a.accept ? `Accepted ${a.name}'s message request — you can chat now.` : `Deleted ${a.name}'s message request.`;
+    case "unsend_message":
+      await call(`/api/messages/${encodeURIComponent(a.userId)}/${encodeURIComponent(a.messageId)}`, "DELETE");
+      window.dispatchEvent(new Event(MESSAGES_READ_EVENT));
+      return `Unsent your message to ${a.name}.`;
+    case "delete_comment":
+      await call(`/api/comments/${encodeURIComponent(a.commentId)}`, "DELETE");
+      return a.mine ? `Deleted your comment on ${a.name}'s photo.` : `Deleted ${a.name}'s comment on your photo.`;
+    case "logout":
+      // Like the menu's Log Out: stop this phone's notifications, then sign out (it leaves the page).
+      await disablePush().catch(() => {});
+      await signOutAction();
+      return "Logged out.";
   }
 }
 
@@ -144,6 +167,13 @@ function rowLabel(a: BatchItem) {
     case "like_photo":
     case "comment_photo":
       return `${a.ownerName}'s latest photo`;
+    case "delete_chat":
+    case "message_request":
+      return a.name;
+    case "unsend_message":
+      return `To ${a.name}: ${a.preview}`;
+    case "delete_comment":
+      return `${a.mine ? `You on ${a.name}'s photo` : `${a.name} on your photo`}: ${a.body}`;
   }
 }
 
@@ -170,6 +200,14 @@ function batchTitle(items: BatchItem[]) {
       return { title: `${first.liked ? "Like" : "Unlike"} ${plural(n, "Photo")}`, button: first.liked ? "Like" : "Unlike" };
     case "comment_photo":
       return { title: `Comment on ${plural(n, "Photo")}`, button: "Post" };
+    case "delete_chat":
+      return { title: `Delete ${plural(n, "Chat")} (for you only)`, button: "Delete", danger: true };
+    case "message_request":
+      return first.accept ? { title: `Accept ${plural(n, "Message Request")}`, button: "Accept" } : { title: `Delete ${plural(n, "Message Request")}`, button: "Delete", danger: true };
+    case "unsend_message":
+      return { title: `Unsend ${plural(n, "Message")} (for both of you)`, button: "Unsend", danger: true };
+    case "delete_comment":
+      return { title: `Delete ${plural(n, "Comment")}`, button: "Delete", danger: true };
   }
 }
 
@@ -692,5 +730,32 @@ export default function ActionCard({
       );
     case "read_notifications":
       return confirm({ title: "Mark All Notifications as Read", lines: [`${plural(action.unread, "unread notification")}`], label: "Mark as Read" });
+    case "delete_chat":
+      return confirm({
+        title: `Delete Your Chat with ${action.name}`,
+        lines: [`Its messages are cleared for you only. ${action.name} keeps their copy and isn't told.`, "If they message you again, the chat comes back from that message."],
+        label: "Delete Chat",
+        danger: true,
+      });
+    case "message_request":
+      return action.accept
+        ? confirm({ title: `Accept ${action.name}'s Message Request`, lines: ["You'll be able to chat, and see any photos, videos or voice messages they sent."], label: "Accept" })
+        : confirm({ title: `Delete ${action.name}'s Message Request`, lines: [`It's hidden until they write again. ${action.name} isn't told.`], label: "Delete", danger: true });
+    case "unsend_message":
+      return confirm({
+        title: `Unsend Your Message to ${action.name}`,
+        lines: [action.preview, `Sent ${sentOn(action.sentAt)}`, "It's removed for both of you."],
+        label: "Unsend",
+        danger: true,
+      });
+    case "delete_comment":
+      return confirm({
+        title: action.mine ? `Delete Your Comment on ${action.name}'s Photo` : `Delete ${action.name}'s Comment on Your Photo`,
+        lines: [action.body],
+        label: "Delete Comment",
+        danger: true,
+      });
+    case "logout":
+      return confirm({ title: "Log Out of EcoQuest", lines: ["You'll need to sign in again on this device."], label: "Log Out" });
   }
 }

@@ -77,6 +77,49 @@ export function speciesNamed(q: string) {
   return { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { scientificName: { contains: q, mode: "insensitive" as const } }] };
 }
 
+/**
+ * How many of each tree have been planted (approved) on EcoQuest, nationwide and in the planter's
+ * home city, most planted first — for "most / least planted" and "not planted yet".
+ */
+export async function treeStats(userId: string) {
+  const { cityCode } = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { cityCode: true } });
+  const [species, local] = await Promise.all([
+    prisma.treeSpecies.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true, category: true, totalPlanted: true, plantingGoal: true } }),
+    cityCode ? prisma.plantedTree.groupBy({ by: ["speciesId"], where: { psgcCode: cityCode }, _sum: { count: true } }) : [],
+  ]);
+  const inCity = new Map(local.map((r) => [r.speciesId, r._sum.count ?? 0]));
+  const trees = species
+    .map((s) => ({
+      name: s.name,
+      category: s.category,
+      plantedNationwide: s.totalPlanted,
+      goal: s.plantingGoal,
+      ...(cityCode ? { plantedInYourCity: inCity.get(s.id) ?? 0 } : {}),
+    }))
+    .sort((a, b) => b.plantedNationwide - a.plantedNationwide);
+  return {
+    homeCity: resolveCity(cityCode)?.city ?? null,
+    totalPlantedNationwide: trees.reduce((sum, t) => sum + t.plantedNationwide, 0),
+    trees,
+    notPlantedYet: trees.filter((t) => t.plantedNationwide === 0).map((t) => t.name),
+  };
+}
+
+/** This week's top planters (points earned this week), in the planter's city or nationwide. */
+export async function leaderboardTop(userId: string, scope: "local" | "national") {
+  const { cityCode } = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { cityCode: true } });
+  if (scope === "local" && !cityCode) return { error: "Set a home city in Profile to see the local leaderboard." };
+  const board = await getLeaderboard({ scope, cityCode, viewerId: userId, limit: LIST_LIMIT });
+  return {
+    scope,
+    city: scope === "local" ? (resolveCity(cityCode)?.city ?? null) : null,
+    resetsAt: board.resetsAt,
+    rankedPlanters: board.totalRanked,
+    top: board.entries.map((e) => ({ rank: e.rank, name: e.name, city: e.city, weeklyPoints: e.weeklyPoints, ...(e.isViewer ? { you: true } : {}) })),
+    you: board.viewer,
+  };
+}
+
 /** Seedling shop prices, optionally narrowed to species whose name matches `query`. */
 export async function seedlingPrices(query?: string) {
   const q = query?.trim();

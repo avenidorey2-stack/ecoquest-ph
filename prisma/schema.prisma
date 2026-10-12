@@ -778,8 +778,10 @@ model ConversationMember {
   userId         String
   unreadCount    Int       @default(0)
   lastReadAt     DateTime?
-  // The member deleted this message request: hidden from their lists until a newer message.
+  // The member deleted this message request or chat: hidden from their lists until a newer message.
   hiddenAt       DateTime?
+  // The member deleted the chat: messages up to then no longer show for them (the other person keeps theirs).
+  clearedAt      DateTime?
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)

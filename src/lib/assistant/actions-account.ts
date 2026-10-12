@@ -7,7 +7,7 @@ import { getAppOrigin } from "@/lib/url";
 import type { ActionOutcome, SettingChange } from "./actions";
 
 // Action cards for the planter's own account: name, home city, profile picture, settings, an
-// invite code, a problem report to the team, and marking notifications read. Each card calls the
+// invite code, a problem report to the team, marking notifications read, and logging out. Each card calls the
 // same route as the Profile/Settings pages. Password changes and deleting the account stay on the
 // Settings page: passwords never go through the chat.
 
@@ -20,6 +20,7 @@ export const ACCOUNT_ACTIONS = [
   "invite_code",
   "report_problem",
   "read_notifications",
+  "logout",
 ] as const;
 export type AccountAction = (typeof ACCOUNT_ACTIONS)[number];
 
@@ -137,7 +138,18 @@ export async function accountAction(userId: string, input: AccountInput): Promis
       if (!unread) return { error: "You have no unread notifications." };
       return { action: { kind: "read_notifications", unread } };
     }
+    case "logout":
+      return { action: { kind: "logout" } };
   }
+}
+
+/** The planter's latest notifications, for "what are my notifications?". */
+export async function myNotifications(userId: string) {
+  const [rows, unread] = await Promise.all([
+    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10, select: { message: true, isRead: true, createdAt: true } }),
+    prisma.notification.count({ where: { userId, isRead: false } }),
+  ]);
+  return { unread, latest: rows.map((n) => ({ message: n.message, read: n.isRead, at: n.createdAt })) };
 }
 
 /** The planter's own settings and invite link, for the AI to answer questions about them. */
