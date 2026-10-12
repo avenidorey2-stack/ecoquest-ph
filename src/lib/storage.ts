@@ -1,23 +1,26 @@
 import path from "node:path";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { blobFolder } from "@/lib/blob-store";
-import { MEDIA_RULES, mediaRuleError } from "@/lib/media-rules";
+import { CHAT_MEDIA_RULES, MEDIA_RULES, mediaRuleError } from "@/lib/media-rules";
 
 // Uploaded photo/video storage: Supabase Storage in production, local disk in dev (see
 // blob-store.ts). Callers only depend on these function signatures.
 
-const KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp|mp4|mov)$/;
+const KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp|mp4|mov|m4a|weba|ogg)$/;
 /** How long a signed media download link stays valid. */
 const DOWNLOAD_URL_SECONDS = 60 * 60;
 
 export type StoredMedia = { key: string; url: string; type: string };
 
+type Rules = Record<string, { ext: string; maxBytes: number }>;
+
 /**
- * A store of user-uploaded photos/videos checked against the media rules: proof media, and chat
- * attachments (messages and problem reports). `urlBase` is the API route that serves a key after
- * its own access checks; `purpose` keeps upload tokens of one store from working in another.
+ * A store of user-uploaded files checked against `rules`: proof media (photos/videos), and chat
+ * attachments (messages and problem reports, which may also be voice messages). `urlBase` is the
+ * API route that serves a key after its own access checks; `purpose` keeps upload tokens of one
+ * store from working in another.
  */
-function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose: string) {
+function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose: string, rules: Rules) {
   const files = blobFolder(dir, prefix);
   const urlFor = (key: string) => `${urlBase}/${key}`;
 
@@ -37,9 +40,9 @@ function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose:
 
     /** Validates and stores an uploaded file. Throws with a user-facing message on bad input. */
     async save(file: File): Promise<StoredMedia> {
-      const problem = mediaRuleError(file);
+      const problem = mediaRuleError(file, rules);
       if (problem) throw new Error(problem);
-      const rule = MEDIA_RULES[file.type];
+      const rule = rules[file.type];
       const key = `${randomUUID()}.${rule.ext}`;
       await files.put(key, new Uint8Array(await file.arrayBuffer()), file.type);
       return { key, url: urlFor(key), type: file.type };
@@ -66,7 +69,7 @@ function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose:
      * Returns null when files are on local disk: the browser then posts the file to our API.
      */
     async createUpload(scope: string, type: string) {
-      const key = `${randomUUID()}.${MEDIA_RULES[type].ext}`;
+      const key = `${randomUUID()}.${rules[type].ext}`;
       const url = await files.signedUploadUrl(key);
       return url ? { url, key, token: uploadToken(scope, key) } : null;
     },
@@ -83,9 +86,9 @@ function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose:
       const problem =
         stat.size === 0
           ? "The uploaded file is empty. Please try again."
-          : (mediaRuleError(stat) ??
+          : (mediaRuleError(stat, rules) ??
             // The key's extension was picked from the declared type; it must match what arrived.
-            (MEDIA_RULES[stat.type].ext === key.split(".").pop() ? null : "Upload a JPG, PNG, WebP, MP4 or MOV file."));
+            (rules[stat.type].ext === key.split(".").pop() ? null : "That file doesn't match its type. Please try again."));
       if (problem) {
         await files.remove(key);
         return { error: problem };
@@ -104,10 +107,10 @@ function mediaStore(dir: () => string, prefix: string, urlBase: string, purpose:
 const mediaRoot = () => process.env.MEDIA_ROOT ?? path.join(process.cwd(), "storage", "uploads");
 
 /** Planting proof (served by /api/media/<key>). */
-const proofs = mediaStore(mediaRoot, "uploads", "/api/media", "proof-upload");
+const proofs = mediaStore(mediaRoot, "uploads", "/api/media", "proof-upload", MEDIA_RULES);
 
-/** Photos and videos sent in messages and problem reports (served by /api/chat-media/<key>). */
-export const chatMedia = mediaStore(() => path.join(mediaRoot(), "chat"), "chat", "/api/chat-media", "chat-upload");
+/** Photos, videos and voice messages sent in messages and problem reports (served by /api/chat-media/<key>). */
+export const chatMedia = mediaStore(() => path.join(mediaRoot(), "chat"), "chat", "/api/chat-media", "chat-upload", CHAT_MEDIA_RULES);
 
 export const mediaUrlForKey = proofs.urlFor;
 export const saveMedia = proofs.save;

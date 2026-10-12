@@ -1,8 +1,8 @@
 import { chatMedia, type StoredMedia } from "@/lib/storage";
-import { mediaRuleError } from "@/lib/media-rules";
+import { CHAT_MEDIA_RULES, mediaRuleError } from "@/lib/media-rules";
 import { hitRateLimit } from "@/lib/rate-limit";
 
-// Photos and videos sent in chats (messages between friends, and problem reports). Same rules
+// Photos, videos and voice messages sent in chats (messages between friends, and problem reports). Same rules
 // and upload flow as planting proof: production uploads go straight to Supabase Storage through
 // a signed URL and only the key is sent; on local disk the file is posted with the message.
 
@@ -15,7 +15,7 @@ const fail = (status: number, error: string): Fail => ({ ok: false, status, erro
 /** Text of a chat message, trimmed. It may be empty only when a photo or video goes with it. */
 export function messageText(input: unknown, hasMedia: boolean, max: number): string | Fail {
   const text = typeof input === "string" ? input.trim() : "";
-  if (!text && !hasMedia) return fail(400, "Write a message or attach a photo or video.");
+  if (!text && !hasMedia) return fail(400, "Write a message or attach a photo, video or voice message.");
   if (text.length > max) return fail(400, `Keep the message under ${max.toLocaleString("en-PH")} characters.`);
   return text;
 }
@@ -26,8 +26,8 @@ export function messageText(input: unknown, hasMedia: boolean, max: number): str
  */
 export async function startChatUpload(userId: string, scope: string, input: unknown) {
   const { type, size } = (input ?? {}) as { type?: unknown; size?: unknown };
-  if (typeof type !== "string" || !Number.isInteger(size) || (size as number) <= 0) return fail(400, "Choose a photo or video.");
-  const problem = mediaRuleError({ type, size: size as number });
+  if (typeof type !== "string" || !Number.isInteger(size) || (size as number) <= 0) return fail(400, "Choose a photo, video or voice message.");
+  const problem = mediaRuleError({ type, size: size as number }, CHAT_MEDIA_RULES);
   if (problem) return fail(400, problem);
   if (!(await hitRateLimit(`chat-upload:${userId}`, UPLOADS_PER_HOUR, 60 * 60 * 1000))) {
     return fail(429, "Too many uploads. Please try again in an hour.");

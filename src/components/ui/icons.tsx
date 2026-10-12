@@ -278,6 +278,27 @@ export const SendIcon = (p: IconProps) => (
     <path d="m12 13.5 3.5-3.5" />
   </Svg>
 );
+export const MicIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+  </Svg>
+);
+export const StopIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" />
+  </Svg>
+);
+export const PlayIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor" />
+  </Svg>
+);
+export const PauseIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.5 5.5v13M15.5 5.5v13" strokeWidth={3} />
+  </Svg>
+);
 export const TrashIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.9 12.5h9.2L17.5 7M10.5 11v5M13.5 11v5" />

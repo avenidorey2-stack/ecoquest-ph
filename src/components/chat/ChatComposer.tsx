@@ -4,10 +4,23 @@ import { useEffect, useId, useRef, useState } from "react";
 import { formatSize, mediaRuleError } from "@/lib/media-rules";
 import { prepareMedia } from "@/lib/media-prepare";
 import WebcamCapture from "@/components/quests/WebcamCapture";
-import { CameraIcon, ChatCameraIcon, CloseIcon, GalleryIcon, PlusIcon, ReplyIcon, SendIcon, VideoIcon } from "@/components/ui/icons";
+import VoicePlayer from "./VoicePlayer";
+import { clock, useVoiceRecorder } from "@/components/ui/useVoiceRecorder";
+import { CameraIcon, ChatCameraIcon, CloseIcon, GalleryIcon, MicIcon, PlusIcon, ReplyIcon, SendIcon, StopIcon, TrashIcon, VideoIcon } from "@/components/ui/icons";
 
 /** The text box grows up to this many pixels, then scrolls. */
 const MAX_INPUT_PX = 128;
+/** Longest voice message. */
+const VOICE_MAX_SECONDS = 120;
+
+/** Listen to a recorded voice message before sending it. */
+function LocalVoice({ file }: { file: File }) {
+  return (
+    <div className="w-56 max-w-[60%] shrink-0">
+      <VoicePlayer file={file} mine={false} />
+    </div>
+  );
+}
 
 /** Small preview of the chosen photo/video. The object URL is made and revoked in an effect. */
 function Thumb({ file }: { file: File }) {
@@ -41,7 +54,8 @@ const toolBtn =
 
 /**
  * Message box: camera (phones: take a photo or record a video; computers: webcam photo), photo &
- * video picker, a text box that grows as you type, and Send. Once you type, camera and gallery fold
+ * video picker, voice message (record, listen, send — or Send while recording), a text box that
+ * grows as you type, and Send. Once you type, camera and gallery fold
  * into one "+" (like Messenger) so the text box gets the room; "+" brings them back. On a computer, Enter sends and
  * Shift+Enter adds a line; on phones Enter adds a line (Send is the button). Sending keeps the
  * keyboard open, like Messenger.
@@ -81,6 +95,19 @@ export default function ChatComposer({
   const [cameraMenu, setCameraMenu] = useState(false);
   const cameraMenuRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  /** Send was tapped while recording: send the recording as soon as it's ready. */
+  const sendWhenRecorded = useRef(false);
+  const voice = useVoiceRecorder({
+    maxSeconds: VOICE_MAX_SECONDS,
+    onDone: (recorded) => {
+      if (sendWhenRecorded.current) {
+        sendWhenRecorded.current = false;
+        void send(undefined, recorded);
+      } else {
+        setFile(recorded);
+      }
+    },
+  });
 
   // Choosing Reply puts the cursor in the box (and opens the phone keyboard), like Messenger.
   const replyKey = replyingTo?.key;
@@ -127,16 +154,26 @@ export default function ChatComposer({
     e.target.value = ""; // so picking the same file again still fires `change`
   }
 
-  const canSend = !busy && (!!text.trim() || !!file);
+  const recording = voice.state !== "idle";
+  const canSend = !busy && (!!text.trim() || !!file || voice.state === "recording");
   const folded = !!text.trim() && !toolsOpen && !webcam;
 
-  async function send(e?: React.FormEvent) {
+  /** Sends the text and attachment (or `recorded`, a voice message just finished). */
+  async function send(e?: React.FormEvent, recorded?: File) {
     e?.preventDefault();
-    if (!canSend) return;
+    // Send while recording: stop, and the recording is sent as soon as it's ready.
+    if (!recorded && voice.state === "recording") {
+      sendWhenRecorded.current = true;
+      voice.stop();
+      return;
+    }
+    const attachment = recorded ?? file;
+    if (busy || (!text.trim() && !attachment)) return;
+    if (recorded) setFile(recorded);
     setBusy(true);
     setProgress(0);
     setError(null);
-    const problem = await onSend(text.trim(), file, setProgress).catch(() => "No connection. Check your internet and try again.");
+    const problem = await onSend(text.trim(), attachment, setProgress).catch(() => "No connection. Check your internet and try again.");
     setBusy(false);
     if (problem) {
       setError(problem);
@@ -171,9 +208,9 @@ export default function ChatComposer({
       )}
       {file && (
         <div className="mb-2 flex items-center gap-3 rounded-xl border border-line-strong bg-card-2 p-2">
-          <Thumb file={file} />
+          {file.type.startsWith("audio/") ? <LocalVoice file={file} /> : <Thumb file={file} />}
           <div className="min-w-0 flex-1 text-xs">
-            <p className="truncate font-semibold text-ink-2">{file.type.startsWith("video/") ? "Video" : "Photo"}</p>
+            <p className="truncate font-semibold text-ink-2">{file.type.startsWith("audio/") ? "Voice Message" : file.type.startsWith("video/") ? "Video" : "Photo"}</p>
             <p className="text-ink-3">{busy ? `Sending… ${progress}%` : formatSize(file.size)}</p>
             {busy && (
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-card-3" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
@@ -194,15 +231,44 @@ export default function ChatComposer({
       <input ref={videoCamera} type="file" accept="video/*" capture="environment" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
       <input ref={fileInput} type="file" accept="image/*,video/*" onChange={fromInput} className="sr-only" tabIndex={-1} aria-hidden />
 
-      <div className="flex items-end gap-1.5">
+      {recording && (
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={voice.cancel} aria-label="Delete recording" className={iconBtn}>
+            <TrashIcon className="h-5 w-5" />
+          </button>
+          <div className="flex min-h-11 flex-1 items-center gap-2 rounded-[22px] border border-rose-500/40 bg-rose-500/10 px-4 text-sm text-ink" aria-live="polite">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-400 motion-safe:animate-pulse" aria-hidden />
+            {voice.state === "starting" ? (
+              <span className="text-ink-2">Starting microphone…</span>
+            ) : (
+              <span>
+                Recording <span className="tabular-nums">{clock(voice.seconds)}</span>
+                <span className="text-ink-3"> / {clock(VOICE_MAX_SECONDS)}</span>
+              </span>
+            )}
+          </div>
+          <button type="button" onClick={voice.stop} disabled={voice.state !== "recording"} aria-label="Stop recording" title="Stop and listen" className={toolBtn}>
+            <StopIcon className="h-5 w-5" />
+          </button>
+          <button
+            type="submit"
+            disabled={voice.state !== "recording"}
+            aria-label="Send voice message"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
+          >
+            <SendIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+      <div className={`flex items-end gap-1.5 ${recording ? "hidden" : ""}`}>
         <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
           {folded ? (
             <button
               type="button"
               onClick={() => setToolsOpen(true)}
               disabled={busy}
-              aria-label="Show camera and photos"
-              title="Camera and Photos"
+              aria-label="Show camera, photos and voice"
+              title="Camera, Photos and Voice"
               className={toolBtn}
             >
               <PlusIcon className="h-5 w-5" />
@@ -263,6 +329,19 @@ export default function ChatComposer({
               >
                 <GalleryIcon className="h-[22px] w-[22px]" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  voice.start();
+                }}
+                disabled={busy || !!file}
+                aria-label="Record a voice message"
+                title="Voice Message"
+                className={toolBtn}
+              >
+                <MicIcon className="h-[22px] w-[22px]" />
+              </button>
             </>
           )}
         </div>
@@ -308,9 +387,9 @@ export default function ChatComposer({
           <SendIcon className="h-5 w-5 transition-transform duration-200 ease-[var(--ease-spring)] group-enabled/send:motion-safe:translate-x-px group-enabled/send:motion-safe:-rotate-12 group-enabled/send:motion-safe:scale-110" />
         </button>
       </div>
-      {error && (
+      {(error || voice.error) && (
         <p role="alert" className="mt-1.5 px-1 text-xs text-rose-300">
-          {error}
+          {error ?? voice.error}
         </p>
       )}
     </form>
