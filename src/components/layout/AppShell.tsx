@@ -24,6 +24,7 @@ import {
 import NotificationBell from "./NotificationBell";
 import ProfileMenu from "./ProfileMenu";
 import MessagesButton from "./MessagesButton";
+import AssistantButton from "@/components/assistant/AssistantButton";
 import { LiveChannel } from "./live";
 import PresenceReporter from "./PresenceReporter";
 import ChatDockProvider from "@/components/chat/ChatDock";
@@ -314,8 +315,9 @@ export default function AppShell({
               {user.points.toLocaleString("en-PH")}
               <span className="hidden text-xs font-medium text-emerald-400 sm:inline">pts</span>
             </Link>
-            {/* Messages and notifications sit side by side, like Facebook's header. */}
+            {/* EcoBot, messages and notifications sit side by side, like Facebook's header. */}
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <AssistantButton />
               <MessagesButton initialUnread={unreadMessages} since={serverNowIso} />
               <NotificationBell initialUnread={unreadNotifications} since={serverNowIso} />
             </div>
