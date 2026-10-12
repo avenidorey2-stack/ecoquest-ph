@@ -9,11 +9,14 @@ import { parseRange } from "@/lib/http-range";
 async function allowedType(key: string, user: { id: string; role: string }) {
   const dm = await prisma.directMessage.findUnique({
     where: { mediaKey: key },
-    select: { mediaType: true, conversation: { select: { members: { select: { userId: true } } } } },
+    select: { mediaType: true, senderId: true, conversation: { select: { requestedById: true, members: { select: { userId: true } } } } },
   });
   if (dm) {
     const ids = dm.conversation.members.map((m) => m.userId);
     if (!ids.includes(user.id)) return null;
+    // A message request's files stay hidden from the person it was sent to until they accept.
+    const { requestedById } = dm.conversation;
+    if (requestedById && requestedById !== user.id && dm.senderId !== user.id) return null;
     const other = ids.find((id) => id !== user.id);
     return other && (await isBlockedEitherWay(user.id, other)) ? null : dm.mediaType;
   }

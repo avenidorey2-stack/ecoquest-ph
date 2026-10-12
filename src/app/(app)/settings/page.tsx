@@ -42,7 +42,12 @@ export default async function SettingsPage() {
         </Link>
       </Card>
 
-      <PrivacyPanel initial={settings.photoVisibility} initialActive={settings.showActiveStatus} initialComments={settings.allowComments} />
+      <PrivacyPanel
+        initial={settings.photoVisibility}
+        initialActive={settings.showActiveStatus}
+        initialComments={settings.allowComments}
+        initialRequests={settings.allowMessageRequests}
+      />
       <NotificationsPanel
         initial={{ notifyFriendRequests: settings.notifyFriendRequests, notifyLikes: settings.notifyLikes, notifyComments: settings.notifyComments }}
       />

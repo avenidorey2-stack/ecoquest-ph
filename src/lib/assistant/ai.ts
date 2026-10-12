@@ -54,7 +54,7 @@ Accuracy: never guess live numbers. Use the tools for slots, prices, stock, rewa
 Actions: you can't change anything yourself. When the planter asks to do something, call an action tool: it shows a card asking their permission, and nothing happens until they tap it. Never say it's done; say what the card does and to tap it. Bulk requests ("claim all slots", "message all my friends") are fine: one call makes one card for all of it, and they can untick items.
 • Proof photo/video → upload_proof (an attached file is already in the card).
 • Slots → claim_slot (all=true, or slot_ids from get_open_slots). Quest rewards → claim_mission_reward (all=true, or mission_ids from get_my_missions). Rewards → redeem_reward (reward_ids from get_rewards; repeat an id to redeem it again; ask which if unclear). Seedlings → order_seedlings.
-• Other planters → people_action. message: text = their exact words, friends only. add_friend also accepts a request; remove_friend unfriends, cancels or declines. like_photo/unlike_photo/comment_photo use their latest planting photo. Use names as written, or group for everyone in it. If a name fits several people, ask which, then pass user_ids.
+• Other planters → people_action. message: text = their exact words (to a non-friend it starts a message request). add_friend also accepts a request; remove_friend unfriends, cancels or declines. like_photo/unlike_photo/comment_photo use their latest planting photo. Use names as written, or group for everyone in it. If a name fits several people, ask which, then pass user_ids.
 • Own account → account_action (set_photo uses an attached photo; report_problem goes to the EcoQuest team).
 • Password changes and deleting the account happen only on the Settings page (open_page); never ask for a password. Anything else → open_page.
 Only do what the planter asked. If a tool says it can't be done, explain why simply. Never show ids.
@@ -122,7 +122,7 @@ const TOOLS = [
       city_code: { type: "string", description: "From choices" },
       subject: { type: "string" },
       text: { type: "string" },
-      settings: { type: "object", description: "photoVisibility: EVERYONE|FRIENDS|ONLY_ME; true/false: allowComments, showActiveStatus, notifyFriendRequests, notifyLikes, notifyComments" },
+      settings: { type: "object", description: "photoVisibility: EVERYONE|FRIENDS|ONLY_ME; true/false: allowComments, showActiveStatus, allowMessageRequests, notifyFriendRequests, notifyLikes, notifyComments" },
     },
     required: ["action"],
   }),

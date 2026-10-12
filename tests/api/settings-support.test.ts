@@ -41,7 +41,9 @@ describe("privacy and notification settings", () => {
       notifyComments: true,
       showActiveStatus: true,
       allowComments: true,
+      allowMessageRequests: true,
     });
+    expect((await (await patchSettings(jsonRequest({ allowMessageRequests: false }, "PATCH"))).json()).settings.allowMessageRequests).toBe(false);
     expect((await patchSettings(jsonRequest({ photoVisibility: "PUBLIC" }, "PATCH"))).status).toBe(400);
     expect((await patchSettings(jsonRequest({ notifyComments: "no" }, "PATCH"))).status).toBe(400);
     expect((await patchSettings(jsonRequest({}, "PATCH"))).status).toBe(400);

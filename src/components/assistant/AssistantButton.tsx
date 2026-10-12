@@ -9,7 +9,8 @@ import type { AssistantAction } from "@/lib/assistant/actions";
 import { mediaRuleError } from "@/lib/media-rules";
 import { prepareMedia } from "@/lib/media-prepare";
 import ActionCard, { type ActionResult } from "@/components/assistant/ActionCard";
-import { AssistantIcon, CloseIcon, ComposeIcon, GalleryIcon, SendIcon } from "@/components/ui/icons";
+import { clock, useVoiceRecorder } from "@/components/ui/useVoiceRecorder";
+import { AssistantIcon, CloseIcon, ComposeIcon, GalleryIcon, MicIcon, SendIcon, TrashIcon } from "@/components/ui/icons";
 
 type AttachmentKind = "photo" | "video";
 type Msg = {
@@ -22,6 +23,8 @@ type Msg = {
   results?: Record<number, ActionResult>;
   /** A photo or video the planter attached; the file itself lives in memory only. */
   attachment?: { name: string; kind: AttachmentKind };
+  /** Asked by voice: `text` is what EcoBot heard. */
+  voice?: boolean;
   error?: boolean;
 };
 
@@ -31,6 +34,8 @@ const HISTORY_TURNS = 12;
 const PHONE = "(max-width: 639px)";
 const QUICK = ["slots", "prices", "rewards", "points", "missions", "guide"];
 const QUICK_COMMANDS = ASSISTANT_COMMANDS.filter((c) => QUICK.includes(c.name));
+/** Longest voice question (its text must fit MAX_QUESTION_LENGTH). */
+const VOICE_MAX_SECONDS = 30;
 
 let nextId = Date.now();
 
@@ -102,7 +107,10 @@ function Bubble({
             <span className="truncate">{msg.attachment.name}</span>
           </span>
         )}
-        <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-emerald-400 px-3.5 py-2 text-sm text-emerald-950">{msg.text}</p>
+        <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-emerald-400 px-3.5 py-2 text-sm text-emerald-950">
+          {msg.voice && <MicIcon className="mr-1 inline h-4 w-4 align-text-bottom" aria-label="Said by voice:" />}
+          {msg.text}
+        </p>
       </li>
     );
   }
@@ -225,8 +233,27 @@ export default function AssistantButton() {
     inputRef.current?.focus({ preventScroll: true });
   }
 
+  const [transcribing, setTranscribing] = useState(false);
+  const voice = useVoiceRecorder({ maxSeconds: VOICE_MAX_SECONDS, onDone: (recording) => askByVoice(recording) });
+  const listening = voice.state !== "idle" || transcribing;
+
+  /** Turns a voice question into text (Whisper on the server) and asks it, with any attached file. */
+  async function askByVoice(recording: File) {
+    setTranscribing(true);
+    const form = new FormData();
+    form.set("file", recording);
+    const res = await fetch("/api/assistant/transcribe", { method: "POST", body: form }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    setTranscribing(false);
+    if (!res?.ok || typeof data.text !== "string") {
+      voice.setError(res ? (data.error ?? "Couldn't understand that. Please try again.") : "Couldn't reach EcoBot. Check your connection and try again.");
+      return;
+    }
+    send(data.text, messages, attached, true);
+  }
+
   /** Sends a message; an attached file goes along as a note, and on its own asks for the proof form. */
-  async function send(raw: string, base = messages, file: File | null = attached) {
+  async function send(raw: string, base = messages, file: File | null = attached, byVoice = false) {
     const text = raw.trim() || (file ? "/upload" : "");
     if (!text || sending) return;
     changeInput("");
@@ -237,7 +264,13 @@ export default function AssistantButton() {
       setMessages([]);
       return;
     }
-    const question: Msg = { id: nextId++, role: "user", text, ...(file ? { attachment: { name: file.name, kind: kindOf(file) } } : {}) };
+    const question: Msg = {
+      id: nextId++,
+      role: "user",
+      text,
+      ...(file ? { attachment: { name: file.name, kind: kindOf(file) } } : {}),
+      ...(byVoice ? { voice: true } : {}),
+    };
     if (file) setFiles((all) => ({ ...all, [question.id]: file }));
     const history = [...base.filter((m) => !m.error), question];
     setMessages(history);
@@ -357,8 +390,9 @@ export default function AssistantButton() {
         {messages.length === 0 && (
           <li className="px-1">
             <p className="text-sm text-ink-2">
-              Hi! I&apos;m EcoBot. Ask me anything about EcoQuest PH, or type <span className="font-semibold text-emerald-300">/</span> to
-              see commands.
+              Hi! I&apos;m EcoBot. Ask me anything about EcoQuest PH — type, or tap{" "}
+              <MicIcon className="inline h-4 w-4 align-text-bottom text-emerald-300" aria-label="the mic" /> to ask by voice. Type{" "}
+              <span className="font-semibold text-emerald-300">/</span> to see commands.
             </p>
             <p className="mt-2 text-sm text-ink-2">
               I can also help you do things — send proof (tap <GalleryIcon className="inline h-4 w-4 align-text-bottom text-emerald-300" aria-label="attach" />{" "}
@@ -449,12 +483,53 @@ export default function AssistantButton() {
             )}
           </div>
         )}
+        {listening && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={voice.cancel}
+              disabled={transcribing}
+              aria-label="Delete recording"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-3 hover:bg-card-2 hover:text-ink disabled:opacity-50"
+            >
+              <TrashIcon />
+            </button>
+            <div className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 text-sm text-ink" aria-live="polite">
+              {transcribing ? (
+                <span className="truncate text-ink-2">Turning your voice into text…</span>
+              ) : (
+                <>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-400 motion-safe:animate-pulse" aria-hidden />
+                  <span className="truncate">
+                    {voice.state === "starting" ? "Starting microphone…" : "Listening"}{" "}
+                    <span className="tabular-nums">{clock(voice.seconds)}</span>
+                    <span className="text-ink-3"> / {clock(VOICE_MAX_SECONDS)}</span>
+                  </span>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={voice.stop}
+              disabled={voice.state !== "recording"}
+              aria-label="Send voice question"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
+            >
+              <SendIcon />
+            </button>
+          </div>
+        )}
+        {voice.error && !listening && (
+          <p role="alert" className="mb-2 text-xs text-rose-300">
+            {voice.error}
+          </p>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             send(input);
           }}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${listening ? "hidden" : ""}`}
         >
           <input
             ref={fileInputRef}
@@ -494,14 +569,28 @@ export default function AssistantButton() {
             aria-activedescendant={suggestions.length ? `assistant-command-${suggestions[shownActive].name}` : undefined}
             className="min-h-11 min-w-0 flex-1 rounded-full border border-line-strong bg-card-2 px-4 text-base text-ink placeholder:text-ink-4 focus:border-emerald-400/60 focus:outline-none sm:text-sm"
           />
-          <button
-            type="submit"
-            disabled={sending || (!input.trim() && !attached)}
-            aria-label="Send"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
-          >
-            <SendIcon />
-          </button>
+          {input.trim() || attached ? (
+            <button
+              type="submit"
+              disabled={sending}
+              aria-label="Send"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
+            >
+              <SendIcon />
+            </button>
+          ) : (
+            // Nothing typed: the button asks by voice instead.
+            <button
+              type="button"
+              onClick={() => voice.start()}
+              disabled={sending}
+              aria-label="Ask by voice"
+              title="Ask by voice"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950 transition hover:bg-emerald-300 disabled:opacity-50"
+            >
+              <MicIcon />
+            </button>
+          )}
         </form>
       </div>
     </section>

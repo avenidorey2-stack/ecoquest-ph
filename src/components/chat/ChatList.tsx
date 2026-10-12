@@ -30,13 +30,14 @@ function SkeletonRow() {
   );
 }
 
-type Filter = "all" | "unread";
+type Filter = "all" | "unread" | "requests";
 
 /**
- * Chats like Messenger's list: search by name, All / Unread, a row of friends to start a chat
- * with (green dot while active), and one row per chat with the friend's photo, name, last
- * message · time, and a dot when unread. Searching also finds friends you haven't chatted with.
- * `rows` null shows loading placeholders.
+ * Chats like Messenger's list: search by name, All / Unread / Requests, a row of friends to start
+ * a chat with (green dot while active), and one row per chat with the person's photo, name, last
+ * message · time, and a dot when unread. Message requests from planters who aren't friends stay
+ * under Requests until accepted; your own unanswered requests are marked "Request Sent".
+ * Searching also finds friends you haven't chatted with. `rows` null shows loading placeholders.
  */
 export default function ChatList({
   rows,
@@ -57,7 +58,12 @@ export default function ChatList({
   const [filter, setFilter] = useState<Filter>("all");
   const q = query.trim().toLowerCase();
   const matches = (name: string) => !q || name.toLowerCase().includes(q);
-  const shown = rows?.filter((c) => (filter === "all" || c.unread > 0) && matches(c.partner.name));
+  const requests = rows?.filter((c) => c.request) ?? [];
+  const shown = rows?.filter(
+    (c) => (filter === "requests" ? c.request : !c.request && (filter === "all" || c.unread > 0)) && matches(c.partner.name),
+  );
+  // The Requests tab shows while there are any (or while it's open).
+  const tabs: Filter[] = requests.length || filter === "requests" ? ["all", "unread", "requests"] : ["all", "unread"];
   const chatted = new Set(rows?.map((c) => c.partner.id));
   const newFriends = q && filter === "all" ? friends.filter((f) => !chatted.has(f.id) && matches(f.name)) : [];
 
@@ -76,7 +82,7 @@ export default function ChatList({
           />
         </label>
         <div role="tablist" aria-label="Show" className="flex gap-1">
-          {(["all", "unread"] as const).map((f) => (
+          {tabs.map((f) => (
             <button
               key={f}
               type="button"
@@ -87,7 +93,7 @@ export default function ChatList({
                 filter === f ? "bg-emerald-400/15 text-emerald-300" : "text-ink-2 hover:bg-card-2"
               }`}
             >
-              {f === "all" ? "All" : "Unread"}
+              {f === "all" ? "All" : f === "unread" ? "Unread" : `Requests (${requests.length})`}
             </button>
           ))}
         </div>
@@ -118,9 +124,12 @@ export default function ChatList({
         <div className="px-6 py-8 text-center">
           <MessagesIcon className="mx-auto h-8 w-8 text-ink-4" />
           <p className="mt-2 text-sm font-medium text-ink-2">
-            {q ? "No chats match that name" : filter === "unread" ? "You're all caught up" : "No messages yet"}
+            {q ? "No chats match that name" : filter === "unread" ? "You're all caught up" : filter === "requests" ? "No message requests" : "No messages yet"}
           </p>
-          {!q && filter === "all" && <p className="text-xs text-ink-3">Message a friend to start chatting. You can send photos and videos too.</p>}
+          {!q && filter === "all" && (
+            <p className="text-xs text-ink-3">Message a friend — or any planter from their profile — to start chatting. You can send photos, videos and voice too.</p>
+          )}
+          {!q && filter === "requests" && <p className="text-xs text-ink-3">Messages from planters who aren&apos;t your friends wait here until you reply.</p>}
         </div>
       ) : (
         <>
@@ -135,7 +144,10 @@ export default function ChatList({
               >
                 <PresenceAvatar person={c.partner} size="h-14 w-14" />
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-[15px] ${c.unread ? "font-bold text-ink" : "font-semibold text-ink"}`}>{c.partner.name}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className={`truncate text-[15px] ${c.unread ? "font-bold text-ink" : "font-semibold text-ink"}`}>{c.partner.name}</span>
+                    {c.pending && <span className="shrink-0 rounded-full bg-card-3 px-2 py-0.5 text-[11px] font-semibold text-ink-3">Request Sent</span>}
+                  </span>
                   <span className={`flex min-w-0 text-[13px] ${c.unread ? "font-semibold text-ink" : "text-ink-3"}`}>
                     <span className="truncate">{c.preview}</span>
                     <span className="shrink-0 whitespace-pre" suppressHydrationWarning>

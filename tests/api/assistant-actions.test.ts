@@ -103,15 +103,20 @@ describe("EcoBot — people", () => {
     expect(await prisma.directMessage.count()).toBe(0);
   });
 
-  it("won't offer a message card for someone who isn't a friend", async () => {
+  it("messages a non-friend as a message request, unless they only take messages from friends", async () => {
     const me = await createUser();
     const ana = await createUser({ name: "Ana Cruz" });
     await request(me.id, ana.id);
     signInAs(me);
-    const { reply, tool } = await act("people_action", { action: "message", names: ["Ana"], text: "hi" });
-    expect(tool.reason).toBe("You can only message friends, and Ana Cruz isn't your friend yet (your friend request is waiting for them).");
-    expect(reply.actions).toBeUndefined();
-    expect(reply.links).toEqual([{ label: "Open Profile", href: `/planters/${ana.id}` }]);
+    const { reply } = await act("people_action", { action: "message", names: ["Ana"], text: "hi" });
+    expect(reply.actions).toEqual([expect.objectContaining({ kind: "send_message", userId: ana.id, text: "hi", request: true })]);
+
+    await prisma.user.update({ where: { id: ana.id }, data: { allowMessageRequests: false } });
+    const closed = await act("people_action", { action: "message", names: ["Ana"], text: "hi" });
+    expect(closed.tool.reason).toBe("Ana Cruz only gets messages from friends. Add them as a friend to chat.");
+    expect(closed.reply.actions).toBeUndefined();
+    expect(closed.reply.links).toEqual([{ label: "Open Profile", href: `/planters/${ana.id}` }]);
+    expect(await prisma.directMessage.count()).toBe(0);
   });
 
   it("asks which one when a name fits several planters, then takes a user_id", async () => {

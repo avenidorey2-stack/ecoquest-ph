@@ -7,7 +7,7 @@ import { deleteAvatar } from "@/lib/avatars";
 
 const BCRYPT_COST = 12;
 const VISIBILITIES: PhotoVisibility[] = ["EVERYONE", "FRIENDS", "ONLY_ME"];
-const TOGGLES = ["notifyFriendRequests", "notifyLikes", "notifyComments", "showActiveStatus", "allowComments"] as const;
+const TOGGLES = ["notifyFriendRequests", "notifyLikes", "notifyComments", "showActiveStatus", "allowComments", "allowMessageRequests"] as const;
 
 type Fail = { ok: false; status: number; error: string };
 const fail = (status: number, error: string): Fail => ({ ok: false, status, error });
@@ -25,13 +25,14 @@ export async function getSettings(userId: string) {
       notifyComments: true,
       showActiveStatus: true,
       allowComments: true,
+      allowMessageRequests: true,
       passwordHash: true,
       accounts: { select: { provider: true } },
     },
   });
 }
 
-/** Updates photo privacy, comments, the social notification switches and/or active status. Unknown fields are ignored. */
+/** Updates photo privacy, comments, message requests, the social notification switches and/or active status. Unknown fields are ignored. */
 export async function updateSettings(userId: string, input: Record<string, unknown>) {
   const data: { photoVisibility?: PhotoVisibility } & Partial<Record<(typeof TOGGLES)[number], boolean>> = {};
   if (input.photoVisibility !== undefined) {
@@ -47,7 +48,15 @@ export async function updateSettings(userId: string, input: Record<string, unkno
   const user = await prisma.user.update({
     where: { id: userId },
     data,
-    select: { photoVisibility: true, notifyFriendRequests: true, notifyLikes: true, notifyComments: true, showActiveStatus: true, allowComments: true },
+    select: {
+      photoVisibility: true,
+      notifyFriendRequests: true,
+      notifyLikes: true,
+      notifyComments: true,
+      showActiveStatus: true,
+      allowComments: true,
+      allowMessageRequests: true,
+    },
   });
   return { ok: true as const, settings: user };
 }

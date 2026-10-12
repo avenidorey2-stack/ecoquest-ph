@@ -7,6 +7,7 @@ import { BREAK_MS, dayKey, sentLabel } from "@/lib/chat-time";
 import Floating, { rectOf, type AnchorRect } from "./Floating";
 import MediaViewer from "./MediaViewer";
 import SwipeBubble from "./SwipeBubble";
+import VoicePlayer from "./VoicePlayer";
 
 type Media = { url: string; type: string };
 
@@ -15,6 +16,8 @@ export type ChatItem = {
   mine: boolean;
   body: string;
   media: Media | null;
+  /** A file held back until a message request is accepted (shown as a note instead). */
+  hiddenMedia?: "photo" | "video" | "voice";
   createdAt: string;
   deleted: boolean;
   /** Shown above the bubble when the chat has more than two kinds of author (e.g. the team). */
@@ -35,6 +38,7 @@ const TIP_DELAY_MS = 400;
 
 function MediaBubble({ media, mine, onOpen, onLoad }: { media: Media; mine: boolean; onOpen: () => void; onLoad: () => void }) {
   const corner = mine ? "rounded-br-md" : "rounded-bl-md";
+  if (media.type.startsWith("audio/")) return <VoicePlayer src={media.url} mine={mine} onLoad={onLoad} />;
   if (media.type.startsWith("video/")) {
     return (
       <video
@@ -372,6 +376,11 @@ export default function MessageList({
                         <>
                           {m.media && (
                             <MediaBubble media={m.media} mine={m.mine} onOpen={() => setPhoto(m.media!.url)} onLoad={() => atBottom.current && toBottom()} />
+                          )}
+                          {m.hiddenMedia && (
+                            <p className="rounded-2xl rounded-bl-md border border-dashed border-line-strong px-3.5 py-2 text-sm italic text-ink-3">
+                              {{ photo: "Photo", video: "Video", voice: "Voice message" }[m.hiddenMedia]} hidden — accept the request to see it
+                            </p>
                           )}
                           {m.body && (
                             <p

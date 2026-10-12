@@ -145,6 +145,8 @@ model User {
   showActiveStatus       Boolean         @default(true)
   // Privacy: whether others can comment on this planter's planting photos.
   allowComments          Boolean         @default(true)
+  // Privacy: whether planters who aren't friends can message this planter (as message requests).
+  allowMessageRequests   Boolean         @default(true)
   // Moderation (set from a report): no sign-in until suspendedUntil passes, or ever while bannedAt
   // is set (until an admin lifts it). moderationReason is the admin's note, shown at sign-in.
   suspendedUntil         DateTime?
@@ -763,6 +765,9 @@ model Conversation {
   pairKey       String   @unique
   createdAt     DateTime @default(now())
   lastMessageAt DateTime @default(now())
+  // Set while this is a message request: a planter who isn't a friend wrote first. The other
+  // person sees it under Message Requests until they reply or accept (then it's cleared).
+  requestedById String?
 
   members  ConversationMember[]
   messages DirectMessage[]
@@ -773,6 +778,8 @@ model ConversationMember {
   userId         String
   unreadCount    Int       @default(0)
   lastReadAt     DateTime?
+  // The member deleted this message request: hidden from their lists until a newer message.
+  hiddenAt       DateTime?
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)

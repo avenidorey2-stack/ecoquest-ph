@@ -2,6 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { POST as startUpload } from "@/app/api/quests/[id]/verifications/upload/route";
 import { POST as submitProof } from "@/app/api/quests/[id]/verifications/route";
 import { GET as getMedia } from "@/app/api/media/[key]/route";
+import { POST as startChatUpload } from "@/app/api/messages/[userId]/upload/route";
+import { POST as sendMessage } from "@/app/api/messages/[userId]/route";
+import { pairKey } from "@/lib/friends";
 import { prisma } from "@/lib/prisma";
 import { createSlot, createUser, ctx, jpeg, jsonRequest, resetDb, signInAs, uploadRequest } from "../helpers";
 
@@ -217,6 +220,59 @@ describe("direct uploads to Supabase Storage", () => {
     for (const plantCount of [0, 501, 1.5, "abc"]) {
       expect((await finalize(quest.id, { key: upload.key, token: upload.token, plantCount })).status).toBe(400);
     }
+  });
+});
+
+describe("voice messages through Supabase Storage", () => {
+  beforeAll(() => {
+    vi.stubEnv("SUPABASE_URL", SUPABASE_URL);
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
+    vi.stubEnv("AUTH_SECRET", "test-secret");
+    vi.stubGlobal("fetch", vi.fn(fakeStorage));
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+  beforeEach(async () => {
+    await resetDb();
+    objects.clear();
+  });
+
+  async function pals() {
+    const a = await createUser({ name: "Ana" });
+    const b = await createUser({ name: "Ben" });
+    await prisma.friendship.create({ data: { pairKey: pairKey(a.id, b.id), requesterId: a.id, addresseeId: b.id, status: "ACCEPTED", acceptedAt: new Date() } });
+    signInAs(a);
+    return b;
+  }
+
+  it("sends a recorded voice message uploaded straight to storage", async () => {
+    const b = await pals();
+    const res = await startChatUpload(jsonRequest({ type: "audio/mp4", size: 40_000 }), ctx({ userId: b.id }));
+    expect(res.status).toBe(200);
+    const { upload } = await res.json();
+    expect(upload.key).toMatch(/\.m4a$/);
+    objects.set(`chat/${upload.key}`, { type: "audio/mp4", size: 40_000 });
+    const sent = await sendMessage(jsonRequest({ body: "", key: upload.key, token: upload.token }), ctx({ userId: b.id }));
+    expect(sent.status).toBe(201);
+    expect((await sent.json()).message.media.type).toBe("audio/mp4");
+  });
+
+  it("rejects a stored file whose real type doesn't match the voice message it claimed to be", async () => {
+    const b = await pals();
+    const { upload } = await (await startChatUpload(jsonRequest({ type: "audio/mp4", size: 40_000 }), ctx({ userId: b.id }))).json();
+    objects.set(`chat/${upload.key}`, { type: "audio/webm", size: 40_000 });
+    const sent = await sendMessage(jsonRequest({ body: "", key: upload.key, token: upload.token }), ctx({ userId: b.id }));
+    expect(sent.status).toBe(400);
+    expect(objects.has(`chat/${upload.key}`)).toBe(false);
+    expect(await prisma.directMessage.count()).toBe(0);
+  });
+
+  it("won't sign a proof upload for audio", async () => {
+    const { quest } = await setup();
+    const res = await start(quest.id, { type: "audio/mp4", size: 40_000 });
+    expect(res.status).toBe(400);
   });
 });
 

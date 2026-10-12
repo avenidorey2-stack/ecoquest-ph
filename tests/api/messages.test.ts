@@ -70,11 +70,15 @@ describe("messages between friends", () => {
     expect(mine.seenAt).not.toBeNull();
   });
 
-  it("only friends can message; blocked planters can't even open the chat", async () => {
+  it("anyone can write (non-friends start a message request) unless they turned requests off; blocked planters can't even open the chat", async () => {
     const { a, b } = await friends();
     const stranger = await createUser({ name: "Cy" });
+    const closed = await createUser({ name: "Di", allowMessageRequests: false });
     signInAs(a);
-    expect((await say(stranger.id, "hello")).status).toBe(403);
+    expect((await say(stranger.id, "hello")).status).toBe(201);
+    const res = await say(closed.id, "hello");
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe("Di only gets messages from friends. Add them as a friend to chat.");
     expect((await say(a.id, "me")).status).toBe(404);
     expect((await say(b.id, "   ")).status).toBe(400);
     expect((await say(b.id, "x".repeat(2001))).status).toBe(400);
@@ -89,15 +93,16 @@ describe("messages between friends", () => {
     expect((await say(b.id, "still there?")).status).toBe(404);
   });
 
-  it("keeps the history readable after unfriending, but sending stops", async () => {
+  it("keeps a chat open after unfriending, even if they turn message requests off", async () => {
     const { a, b } = await friends();
     signInAs(a);
     await say(b.id, "hi");
     await prisma.friendship.deleteMany();
+    await prisma.user.update({ where: { id: b.id }, data: { allowMessageRequests: false } });
     const data = await (await thread(req(), ctx({ userId: b.id }))).json();
-    expect(data.partner.canSend).toBe(false);
+    expect(data.partner).toMatchObject({ canSend: true, friends: false, request: null });
     expect(data.messages).toHaveLength(1);
-    expect((await say(b.id, "hi again")).status).toBe(403);
+    expect((await say(b.id, "hi again")).status).toBe(201);
   });
 
   it("sends a photo that only the two of them can open", async () => {
@@ -225,10 +230,12 @@ describe("replies and reactions", () => {
     const removed = await (await unreact(req(), ctx({ userId: b.id, messageId: photoMsg.id }))).json();
     expect(removed.reactions).toEqual([{ emoji: "😆", mine: false }]);
 
-    // Unfriended: no more reacting. Unsent messages lose their reactions.
-    await prisma.friendship.deleteMany();
+    // Blocked: no more reacting. Unsent messages lose their reactions.
+    await prisma.block.create({ data: { blockerId: a.id, blockedId: b.id } });
     signInAs(b);
-    expect((await reactTo(a.id, photoMsg.id, "❤️")).status).toBe(403);
+    expect((await reactTo(a.id, photoMsg.id, "❤️")).status).toBe(404);
+    await prisma.block.deleteMany();
+    await prisma.friendship.deleteMany();
     await prisma.friendship.create({ data: { pairKey: pairKey(a.id, b.id), requesterId: a.id, addresseeId: b.id, status: "ACCEPTED" } });
     signInAs(a);
     await unsend(req(), ctx({ userId: b.id, messageId: photoMsg.id }));

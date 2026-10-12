@@ -40,6 +40,7 @@ const SWITCHES: Record<string, string> = {
   notifyFriendRequests: "Friend Request Notifications",
   notifyLikes: "Like Notifications",
   notifyComments: "Comment & Reply Notifications",
+  allowMessageRequests: "Message Requests from Non-Friends",
 };
 export const SETTING_FIELDS = ["photoVisibility", ...Object.keys(SWITCHES)];
 
@@ -51,7 +52,19 @@ export async function accountAction(userId: string, input: AccountInput): Promis
   if (!ACCOUNT_ACTIONS.includes(action)) return { error: `Unknown action. Use one of: ${ACCOUNT_ACTIONS.join(", ")}.` };
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, cityCode: true, avatarUrl: true, image: true, photoVisibility: true, allowComments: true, showActiveStatus: true, notifyFriendRequests: true, notifyLikes: true, notifyComments: true },
+    select: {
+      name: true,
+      cityCode: true,
+      avatarUrl: true,
+      image: true,
+      photoVisibility: true,
+      allowComments: true,
+      showActiveStatus: true,
+      allowMessageRequests: true,
+      notifyFriendRequests: true,
+      notifyLikes: true,
+      notifyComments: true,
+    },
   });
   if (!user) return { error: "I couldn't find your account." };
 
@@ -132,7 +145,20 @@ export async function myAccount(userId: string) {
   const [user, referrals, unread, origin] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { name: true, email: true, cityCode: true, referralCode: true, avatarUrl: true, photoVisibility: true, allowComments: true, showActiveStatus: true, notifyFriendRequests: true, notifyLikes: true, notifyComments: true },
+      select: {
+        name: true,
+        email: true,
+        cityCode: true,
+        referralCode: true,
+        avatarUrl: true,
+        photoVisibility: true,
+        allowComments: true,
+        showActiveStatus: true,
+        allowMessageRequests: true,
+        notifyFriendRequests: true,
+        notifyLikes: true,
+        notifyComments: true,
+      },
     }),
     getReferralSummary(userId),
     prisma.notification.count({ where: { userId, isRead: false } }),
