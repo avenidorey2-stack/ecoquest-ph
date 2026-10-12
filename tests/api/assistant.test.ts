@@ -245,6 +245,35 @@ describe("POST /api/assistant — AI questions", () => {
     expect(rows).toEqual([expect.objectContaining({ name: "Narra", points: 60, pesos: 45 })]);
   });
 
+  it("retries when the model ends its turn with an empty reply", async () => {
+    signInAs(await createUser());
+    create.mockResolvedValueOnce(textReply("")).mockResolvedValueOnce(textReply("Salingbobog is described as a small tree."));
+    const { body } = await ask("Which tree is the smallest?");
+    expect(body.reply.text).toBe("Salingbobog is described as a small tree.");
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives up politely after repeated empty replies", async () => {
+    signInAs(await createUser());
+    create.mockResolvedValue(textReply(""));
+    const { body } = await ask("Which tree is the smallest?");
+    expect(body.reply.text).toMatch(/couldn't come up with an answer/);
+    expect(create).toHaveBeenCalledTimes(3);
+  });
+
+  it("gives the model the whole directory with descriptions to compare trees", async () => {
+    signInAs(await createUser());
+    await createSpecies("Narra");
+    await createSpecies("Salingbobog", "Food and Fruit Trees");
+    create.mockResolvedValueOnce(toolReply("find_trees")).mockResolvedValueOnce(textReply("Salingbobog."));
+    await ask("Which tree is the smallest?");
+    const { all } = JSON.parse(create.mock.calls[1][0].messages.at(-1).content);
+    expect(all).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "Salingbobog", description: "Salingbobog is a native tree.", scientificName: "Salingbobogus testus" })]),
+    );
+    expect(all).toHaveLength(2);
+  });
+
   it("reports a failed lookup to the model instead of crashing", async () => {
     signInAs(await createUser());
     create.mockResolvedValueOnce(toolReply("delete_everything")).mockResolvedValueOnce(textReply("Sorry, I couldn't look that up."));
