@@ -32,8 +32,8 @@ Getting started
 
 Slots and quests
 - A slot is a planting site an admin placed on the map. Each slot has a required tree species, points per plant, plants needed per quest, and a limit on how many planters can work it at once.
-- Claim a slot from the Dashboard map. A claim lasts ${CLAIM_DAYS} days; planters get a reminder when less than a day is left. Expired claims stop accepting proof and free the spot.
-- Submit proof from the quest on the Dashboard: a photo (JPG, PNG, WebP up to 10 MB) or video (MP4, MOV up to 50 MB), with how many plants it shows (up to ${MAX_PLANTS_PER_SUBMISSION} per proof). Phones can use the camera directly.
+- Claim a slot from the Dashboard map: tap a pin, then press "Claim Slot". A claim lasts ${CLAIM_DAYS} days; planters get a reminder when less than a day is left. Expired claims stop accepting proof and free the spot.
+- Submit proof on the Dashboard in the Quests card → Planting tab: open the quest, add a "Photo or Video Proof", set "Plants in This Proof", then press "Submit Proof". The proof is a photo (JPG, PNG, WebP up to 10 MB) or video (MP4, MOV up to 50 MB), with how many plants it shows (up to ${MAX_PLANTS_PER_SUBMISSION} per proof). Phones can use the camera directly.
 - Admins approve or reject proof. Each approved plant earns the slot's points per plant and ${XP_PER_PLANT} XP. A quest completes when its plant goal is approved.
 - Slot status: OPEN (claimable), FULL (no spots left), CLOSED (no longer accepts proof).
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ASSISTANT_COMMANDS, parseCommand, suggestCommands } from "@/lib/assistant/command-list";
-import { liveContent } from "@/lib/assistant/ai";
-import type Anthropic from "@anthropic-ai/sdk";
+import { plainText } from "@/lib/assistant/ai";
 
 const names = (input: string) => suggestCommands(input).map((c) => c.name);
 
@@ -34,19 +33,10 @@ describe("parseCommand", () => {
   });
 });
 
-describe("liveContent", () => {
-  const block = (b: Record<string, unknown>) => b as unknown as Anthropic.Beta.BetaContentBlock;
-
-  it("keeps everything when no fallback happened", () => {
-    const content = [block({ type: "text", text: "hi" }), block({ type: "tool_use", id: "1", name: "get_rewards", input: {} })];
-    expect(liveContent(content)).toEqual({ echo: content, after: content });
-  });
-
-  it("drops the declined attempt's thinking and tool calls before a fallback", () => {
-    const text = block({ type: "text", text: "partial" });
-    const fallback = block({ type: "fallback", from: { model: "a" }, to: { model: "b" } });
-    const tool = block({ type: "tool_use", id: "2", name: "get_rewards", input: {} });
-    const content = [block({ type: "thinking", thinking: "", signature: "x" }), block({ type: "tool_use", id: "1", name: "x", input: {} }), text, fallback, tool];
-    expect(liveContent(content)).toEqual({ echo: [text, fallback, tool], after: [tool] });
+describe("plainText", () => {
+  it("removes Markdown bold and headings but keeps the words", () => {
+    expect(plainText("## Steps\n1. **Pumunta sa Dashboard** → __Planting__\n• 5 × 2 = 10 pts ")).toBe(
+      "Steps\n1. Pumunta sa Dashboard → Planting\n• 5 × 2 = 10 pts",
+    );
   });
 });
