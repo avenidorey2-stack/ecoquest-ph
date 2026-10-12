@@ -168,11 +168,17 @@ export async function myOrders(userId: string) {
   }));
 }
 
-/** Tree directory lookup by common or scientific name; no query lists every species briefly. */
+/**
+ * Tree directory lookup by common or scientific name. No query returns every species with its
+ * description, so questions like "which is the smallest?" can be answered from the directory.
+ */
 export async function findTrees(query?: string) {
   const q = query?.trim();
   if (!q) {
-    const all = await prisma.treeSpecies.findMany({ select: { name: true, category: true }, orderBy: [{ category: "asc" }, { sortOrder: "asc" }] });
+    const all = await prisma.treeSpecies.findMany({
+      select: { name: true, scientificName: true, category: true, description: true },
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
+    });
     return { matches: [], all };
   }
   const matches = await prisma.treeSpecies.findMany({

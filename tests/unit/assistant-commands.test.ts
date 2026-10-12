@@ -34,6 +34,10 @@ describe("parseCommand", () => {
 });
 
 describe("plainText", () => {
+  it("removes code backticks", () => {
+    expect(plainText("Try `/prices` or `/slots`.")).toBe("Try /prices or /slots.");
+  });
+
   it("removes Markdown bold and headings but keeps the words", () => {
     expect(plainText("## Steps\n1. **Pumunta sa Dashboard** → __Planting__\n• 5 × 2 = 10 pts ")).toBe(
       "Steps\n1. Pumunta sa Dashboard → Planting\n• 5 × 2 = 10 pts",
