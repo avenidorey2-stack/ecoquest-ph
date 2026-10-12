@@ -82,6 +82,8 @@ export async function acceptFriend(userId: string, otherId: string): Promise<Res
     if (count && other?.notifyFriendRequests) {
       await notify(tx, otherId, `${me?.name ?? "A planter"} accepted your friend request.`, `/planters/${userId}`);
     }
+    // Friends now: a message request between them becomes a normal chat (pair keys match).
+    if (count) await tx.conversation.updateMany({ where: { pairKey: key, requestedById: { not: null } }, data: { requestedById: null } });
     return count > 0;
   });
   if (!accepted) return { ok: false, status: 404, error: "No friend request to accept." };

@@ -569,6 +569,7 @@ export default function ActionCard({
       return confirm(
         {
           title: `Message ${action.name}`,
+          lines: action.request ? [`${action.name} isn't your friend, so this goes to their Message Requests until they reply.`] : [],
           label: "Send Message",
           ready: !!text.trim() || (!!file && withFile),
           children: (

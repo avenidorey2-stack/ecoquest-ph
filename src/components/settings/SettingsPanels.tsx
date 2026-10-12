@@ -76,9 +76,19 @@ function SwitchRow({ label, hint, on, onFlip }: { label: string; hint: string; o
   );
 }
 
-export function PrivacyPanel({ initial, initialActive, initialComments }: { initial: Visibility; initialActive: boolean; initialComments: boolean }) {
+export function PrivacyPanel({
+  initial,
+  initialActive,
+  initialComments,
+  initialRequests,
+}: {
+  initial: Visibility;
+  initialActive: boolean;
+  initialComments: boolean;
+  initialRequests: boolean;
+}) {
   const [value, setValue] = useState(initial);
-  const [switches, setSwitches] = useState({ showActiveStatus: initialActive, allowComments: initialComments });
+  const [switches, setSwitches] = useState({ showActiveStatus: initialActive, allowComments: initialComments, allowMessageRequests: initialRequests });
   const [status, setStatus] = useState<Status>(null);
   async function flip(key: keyof typeof switches) {
     const next = !switches[key];
@@ -139,6 +149,16 @@ export function PrivacyPanel({ initial, initialActive, initialComments }: { init
           hint="Friends see “Active Now” while you're on, and “Active 1m ago” counting up once you leave."
           on={switches.showActiveStatus}
           onFlip={() => flip("showActiveStatus")}
+        />
+        <SwitchRow
+          label="Message Requests"
+          hint={
+            switches.allowMessageRequests
+              ? "Planters who aren't your friends can message you. Their messages wait under Requests until you reply or accept."
+              : "Only friends can message you. Chats you already accepted stay open."
+          }
+          on={switches.allowMessageRequests}
+          onFlip={() => flip("allowMessageRequests")}
         />
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

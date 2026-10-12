@@ -3,7 +3,7 @@ import { displayAvatar } from "@/lib/avatar-url";
 import { blockedIds, isBlockedEitherWay, listBlocked } from "@/lib/blocks";
 import { canSeePhotos, friendState, listFriends, nameMatchRank, searchPlanters, type FriendState } from "@/lib/friends";
 import { REPORT_REASONS } from "@/lib/moderation";
-import { MESSAGE_MAX } from "@/lib/messages";
+import { chatPartner, MESSAGE_MAX } from "@/lib/messages";
 import { COMMENT_MAX } from "@/lib/photo-social";
 import { bundle, type ActionOutcome, type AssistantAction, type BatchItem, type PersonRef, type PhotoRef } from "./actions";
 
@@ -158,11 +158,14 @@ export async function personAction(viewerId: string, input: PersonInput): Promis
 async function cardFor(viewerId: string, action: PersonAction, person: Found, input: PersonInput): Promise<BatchItem | ReportCard | string> {
   const ref = strip(person);
   switch (action) {
-    case "message":
-      if (person.state !== "FRIENDS") {
-        return `You can only message friends, and ${person.name} isn't your friend yet${person.state === "REQUESTED" ? " (your friend request is waiting for them)" : person.state === "INCOMING" ? " (they sent you a friend request you can accept)" : ""}.`;
-      }
-      return { kind: "send_message", text: (input.text ?? "").slice(0, MESSAGE_MAX), ...ref };
+    case "message": {
+      // Friends, an open chat, or a message request (if they take requests) — as in Messages.
+      const partner = await chatPartner(viewerId, person.userId);
+      if (!partner) return `I couldn't find ${person.name}.`;
+      if (!partner.canSend) return partner.reason ?? `You can't message ${person.name}.`;
+      const request = !partner.friends && (!partner.hasChat || partner.request === "outgoing");
+      return { kind: "send_message", text: (input.text ?? "").slice(0, MESSAGE_MAX), ...(request ? { request: true } : {}), ...ref };
+    }
     case "add_friend":
       if (person.state === "FRIENDS") return `You and ${person.name} are already friends.`;
       if (person.state === "REQUESTED") return `You already sent ${person.name} a friend request. It's waiting for them.`;

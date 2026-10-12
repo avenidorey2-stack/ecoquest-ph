@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePageUserId } from "@/lib/authz";
 import { getPublicProfile, PROOF_PAGE_SIZE } from "@/lib/public-profile";
+import { chatPartner } from "@/lib/messages";
 import { formatDate } from "@/lib/format";
 import AchievementShowcase from "@/components/profile/AchievementShowcase";
 import ProofGallery from "@/components/profile/ProofGallery";
@@ -22,6 +23,8 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
   const profile = await getPublicProfile(id, viewerId, { proofLimit: PROOF_PAGE_SIZE });
   if (!profile) notFound();
   const isMe = profile.id === viewerId;
+  // Message: friends, an open chat, or a message request (unless they turned requests off).
+  const canMessage = !isMe && !!(await chatPartner(viewerId, profile.id))?.canSend;
 
   const stats = [
     { label: "Trees Planted", short: "Trees", value: profile.totalPlants.toLocaleString("en-PH"), Icon: TreeIcon },
@@ -67,7 +70,7 @@ export default async function PlanterProfilePage({ params, searchParams }: PageP
             <div className="flex basis-full flex-col gap-1.5 sm:basis-auto sm:items-end">
               <div className="flex w-full gap-2 sm:w-auto">
                 <FriendButton userId={profile.id} initial={profile.friendState} size="lg" stretch />
-                {profile.friendState === "FRIENDS" && (
+                {canMessage && (
                   <Link
                     href={`/messages/${profile.id}`}
                     className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-white/10 px-4 text-sm font-semibold ring-1 ring-white/20 hover:bg-white/20 sm:flex-none"

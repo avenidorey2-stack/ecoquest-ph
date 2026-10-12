@@ -6,11 +6,16 @@ import { messageText } from "@/lib/chat-attachments";
 import { chatMedia, type StoredMedia } from "@/lib/storage";
 import { visiblePresence, type Presence } from "@/lib/active-status";
 import { queuePush } from "@/lib/push";
+import { hitRateLimit } from "@/lib/rate-limit";
 import { isReaction } from "@/lib/reactions";
+import { mediaKind } from "@/lib/media-rules";
 
-// Messages between friends: one conversation per pair of planters, text and/or a photo or video.
-// Only friends can send; the history stays readable after unfriending, and disappears for both
-// while either has blocked the other. Senders can unsend (the text and file are wiped for both).
+// Messages between planters: one conversation per pair, text and/or a photo, video or voice
+// message. Friends chat freely. Anyone else can write too (unless the person turned message
+// requests off): the first message makes a message request, which the other person sees under
+// Requests — with photos, videos and voice hidden — until they reply or accept, like Messenger.
+// Deleting a request hides it for them until a newer message. Chats disappear for both while
+// either has blocked the other. Senders can unsend (the text and file are wiped for both).
 // A message can reply to an earlier one, and friends can react to any message with an emoji.
 // New messages and reactions ping both members' live channel from the database (migrations
 // 20261007090000_direct_messages, 20261008090000_chat_reactions_push); apps without the live
@@ -20,6 +25,8 @@ export const MESSAGE_MAX = 2000;
 /** Messages per page of a chat (older ones load on demand). */
 export const THREAD_PAGE = 50;
 export const SENDS_PER_MINUTE = 30;
+/** New message requests (chats with planters who aren't friends) one planter can start per day. */
+export const NEW_REQUESTS_PER_DAY = 20;
 export const REACTS_PER_MINUTE = 60;
 /** While online, lastActiveAt is written at most this often per user (the app checks in every 30 s). */
 const ACTIVE_WRITE_MS = 20_000;
@@ -49,23 +56,55 @@ export async function markAway(userId: string, now = new Date()) {
   await prisma.user.updateMany({ where: { id: userId, isOnline: true }, data: { lastActiveAt: now, isOnline: false } });
 }
 
-export type ChatPartner = { id: string; name: string; image: string | null; canSend: boolean } & Presence;
+export type ChatPartner = {
+  id: string;
+  name: string;
+  image: string | null;
+  canSend: boolean;
+  /** Why the viewer can't send (when `canSend` is false). */
+  reason: string | null;
+  friends: boolean;
+  /** They have a conversation already (a chat, or a request either way). */
+  hasChat: boolean;
+  /** A message request between them: "incoming" (they wrote first) or "outgoing" (the viewer did). */
+  request: "incoming" | "outgoing" | null;
+} & Presence;
 
 /**
  * The planter `viewerId` would chat with, or null if there is no such planter or either has
- * blocked the other. `canSend`: only friends can send messages.
+ * blocked the other. They can send when they're friends, when it's an existing chat or a request
+ * the other person started (replying accepts it), or when the other person takes message requests.
  */
 export async function chatPartner(viewerId: string, otherId: string): Promise<ChatPartner | null> {
   if (viewerId === otherId) return null;
-  const other = await prisma.user.findFirst({ where: { id: otherId, role: "USER" }, select: personSelect });
+  const other = await prisma.user.findFirst({ where: { id: otherId, role: "USER" }, select: { ...personSelect, allowMessageRequests: true } });
   if (!other || (await isBlockedEitherWay(viewerId, otherId))) return null;
-  const friends = await areFriends(viewerId, otherId);
-  return { id: other.id, name: other.name ?? "Anonymous Planter", image: displayAvatar(other), ...visiblePresence(other, friends), canSend: friends };
+  const [friends, convo] = await Promise.all([
+    areFriends(viewerId, otherId),
+    prisma.conversation.findUnique({ where: { pairKey: pairKey(viewerId, otherId) }, select: { requestedById: true } }),
+  ]);
+  const name = other.name ?? "Anonymous Planter";
+  const request = friends || !convo?.requestedById ? null : convo.requestedById === viewerId ? "outgoing" : "incoming";
+  // A chat already accepted, or their request (replying accepts it), stays open either way.
+  const canSend = friends || (!!convo && convo.requestedById !== viewerId) || other.allowMessageRequests;
+  return {
+    id: other.id,
+    name,
+    image: displayAvatar(other),
+    ...visiblePresence(other, friends),
+    canSend,
+    reason: canSend ? null : `${name} only gets messages from friends. Add them as a friend to chat.`,
+    friends,
+    hasChat: !!convo,
+    request,
+  };
 }
 
 type Media = { url: string; type: string };
 /** The message a reply quotes: whose it is and a one-line preview (or that it was unsent). */
 export type QuotedMessage = { id: string; mine: boolean; preview: string; deleted: boolean; media: Media | null };
+/** A photo, video or voice message held back until a message request is accepted. */
+export type HiddenMedia = "photo" | "video" | "voice";
 export type ReactionView = { emoji: string; mine: boolean };
 
 export type ChatMessage = {
@@ -73,6 +112,8 @@ export type ChatMessage = {
   mine: boolean;
   body: string;
   media: Media | null;
+  /** Set instead of `media` in a message request the viewer hasn't accepted yet. */
+  hiddenMedia?: HiddenMedia;
   createdAt: string;
   deleted: boolean;
   replyTo: QuotedMessage | null;
@@ -95,17 +136,21 @@ type MessageRow = Row & {
   reactions: { userId: string; emoji: string }[];
 };
 
-function toChat(viewerId: string) {
+/** `hideFrom`: in a request the viewer hasn't accepted, that planter's files stay hidden. */
+function toChat(viewerId: string, hideFrom: string | null = null) {
+  const visible = (m: Row) => (hideFrom && m.senderId === hideFrom ? null : mediaOf(m));
   return (m: MessageRow): ChatMessage => {
     const q = m.deletedAt ? null : m.replyTo; // an unsent message no longer shows what it replied to
+    const hidden = hideFrom && m.senderId === hideFrom && m.mediaType ? mediaKind(m.mediaType) : null;
     return {
       id: m.id,
       mine: m.senderId === viewerId,
       body: m.body,
-      media: mediaOf(m),
+      media: visible(m),
+      ...(hidden ? { hiddenMedia: hidden } : {}),
       createdAt: m.createdAt.toISOString(),
       deleted: !!m.deletedAt,
-      replyTo: q && { id: q.id, mine: q.senderId === viewerId, preview: previewText(q, false), deleted: !!q.deletedAt, media: mediaOf(q) },
+      replyTo: q && { id: q.id, mine: q.senderId === viewerId, preview: previewText(q, false), deleted: !!q.deletedAt, media: visible(q) },
       reactions: m.deletedAt ? [] : m.reactions.map((r) => ({ emoji: r.emoji, mine: r.userId === viewerId })),
     };
   };
@@ -123,6 +168,7 @@ export async function getThread(viewerId: string, otherId: string, { before }: {
     select: { id: true, members: { where: { userId: otherId }, select: { lastReadAt: true } } },
   });
   if (!convo) return { partner, messages: [] as ChatMessage[], hasMore: false, seenAt: null };
+  const incoming = partner.request === "incoming";
 
   const rows = await prisma.directMessage.findMany({
     where: { conversationId: convo.id },
@@ -139,33 +185,42 @@ export async function getThread(viewerId: string, otherId: string, { before }: {
   }
   return {
     partner,
-    messages: rows.slice(0, THREAD_PAGE).reverse().map(toChat(viewerId)),
+    messages: rows.slice(0, THREAD_PAGE).reverse().map(toChat(viewerId, incoming ? otherId : null)),
     hasMore: rows.length > THREAD_PAGE,
-    seenAt: convo.members[0]?.lastReadAt?.toISOString() ?? null,
+    // A request isn't marked "Seen" for the sender until it's accepted.
+    seenAt: partner.request === "outgoing" ? null : (convo.members[0]?.lastReadAt?.toISOString() ?? null),
   };
 }
 
 export type Thread = NonNullable<Awaited<ReturnType<typeof getThread>>>;
 
-/** Whether `senderId` may message `otherId` right now: friends, and no block either way. */
+/** Whether `senderId` may message `otherId` right now (see chatPartner), and no block either way. */
 export async function canMessage(senderId: string, otherId: string): Promise<Fail | null> {
   const partner = await chatPartner(senderId, otherId);
   if (!partner) return fail(404, "Planter not found.");
-  if (!partner.canSend) return fail(403, "You can only message friends.");
+  if (!partner.canSend) return fail(403, partner.reason ?? "You can't message this planter.");
   return null;
 }
 
 /**
- * Sends a message (text and/or an already stored photo/video), optionally replying to an
- * earlier message in the same chat. Checks `canMessage` first. The friend also gets a push.
+ * Sends a message (text and/or an already stored photo/video/voice), optionally replying to an
+ * earlier message in the same chat. Checks chatPartner first. A first message to someone who
+ * isn't a friend starts a message request; the other person replying accepts it. The other
+ * person gets a push (for a request, only for its first message).
  */
 export async function sendDirectMessage(senderId: string, otherId: string, rawBody: unknown, media: StoredMedia | null, rawReplyTo?: unknown) {
   const body = messageText(rawBody, !!media, MESSAGE_MAX);
   if (typeof body !== "string") return body;
-  const denied = await canMessage(senderId, otherId);
-  if (denied) return denied;
+  const partner = await chatPartner(senderId, otherId);
+  if (!partner) return fail(404, "Planter not found.");
+  if (!partner.canSend) return fail(403, partner.reason ?? "You can't message this planter.");
 
   const key = pairKey(senderId, otherId);
+  const existing = await prisma.conversation.findUnique({ where: { pairKey: key }, select: { id: true } });
+  // Starting a chat with someone who isn't a friend: capped per day, against spam.
+  if (!existing && !partner.friends && !(await hitRateLimit(`dm-request:${senderId}`, NEW_REQUESTS_PER_DAY, 24 * 60 * 60 * 1000))) {
+    return fail(429, "You've started a lot of new chats today. Please try again tomorrow, or message your friends.");
+  }
   let replyToId: string | null = null;
   if (rawReplyTo != null && rawReplyTo !== "") {
     if (typeof rawReplyTo !== "string") return fail(400, "Invalid reply.");
@@ -179,10 +234,19 @@ export async function sendDirectMessage(senderId: string, otherId: string, rawBo
       const now = new Date();
       const convo = await tx.conversation.upsert({
         where: { pairKey: key },
-        create: { pairKey: key, lastMessageAt: now, members: { create: [{ userId: senderId, lastReadAt: now }, { userId: otherId }] } },
+        create: {
+          pairKey: key,
+          lastMessageAt: now,
+          requestedById: partner.friends ? null : senderId,
+          members: { create: [{ userId: senderId, lastReadAt: now }, { userId: otherId }] },
+        },
         update: { lastMessageAt: now },
-        select: { id: true },
+        select: { id: true, requestedById: true },
       });
+      // Replying to their request accepts it.
+      if (convo.requestedById && (convo.requestedById !== senderId || partner.friends)) {
+        await tx.conversation.update({ where: { id: convo.id }, data: { requestedById: null } });
+      }
       // Members first: the database's live ping (on the message insert) goes to them.
       await tx.conversationMember.update({
         where: { conversationId_userId: { conversationId: convo.id, userId: otherId } },
@@ -190,7 +254,7 @@ export async function sendDirectMessage(senderId: string, otherId: string, rawBo
       });
       await tx.conversationMember.update({
         where: { conversationId_userId: { conversationId: convo.id, userId: senderId } },
-        data: { unreadCount: 0, lastReadAt: now },
+        data: { unreadCount: 0, lastReadAt: now, hiddenAt: null },
       });
       return tx.directMessage.create({
         data: { conversationId: convo.id, senderId, body, mediaKey: media?.key, mediaType: media?.type, replyToId },
@@ -209,7 +273,13 @@ export async function sendDirectMessage(senderId: string, otherId: string, rawBo
   }
   await touchActive(senderId);
   const sender = await prisma.user.findUnique({ where: { id: senderId }, select: { name: true } });
-  queuePush(otherId, { title: sender?.name ?? "A planter", body: previewText(message, false), url: chatPath(senderId), tag: `dm:${senderId}` });
+  const title = sender?.name ?? "A planter";
+  if (!existing && !partner.friends) {
+    // A new request: one quiet heads-up, and no preview of a stranger's message.
+    queuePush(otherId, { title, body: "Sent you a message request", url: chatPath(senderId), tag: `dm:${senderId}` });
+  } else if (partner.request !== "outgoing") {
+    queuePush(otherId, { title, body: previewText(message, false), url: chatPath(senderId), tag: `dm:${senderId}` });
+  }
   return { ok: true as const, message: toChat(senderId)(message) };
 }
 
@@ -237,7 +307,7 @@ export async function reactToMessage(viewerId: string, otherId: string, messageI
     await prisma.messageReaction.upsert({ where, create: { messageId, userId: viewerId, emoji: emoji as string }, update: { emoji: emoji as string } });
     if (msg.senderId !== viewerId && before?.emoji !== emoji) {
       const me = await prisma.user.findUnique({ where: { id: viewerId }, select: { name: true } });
-      const what = msg.body ? `: “${msg.body.length > 60 ? `${msg.body.slice(0, 57)}…` : msg.body}”` : msg.mediaType?.startsWith("video/") ? " (video)" : " (photo)";
+      const what = msg.body ? `: “${msg.body.length > 60 ? `${msg.body.slice(0, 57)}…` : msg.body}”` : ` (${{ photo: "photo", video: "video", voice: "voice message" }[mediaKind(msg.mediaType ?? "")]})`;
       queuePush(msg.senderId, { title: me?.name ?? "A planter", body: `Reacted ${emoji} to your message${what}`, url: chatPath(viewerId), tag: `dm:${viewerId}` });
     }
   }
@@ -279,7 +349,7 @@ export async function unsendDirectMessage(viewerId: string, messageId: string) {
 /** One-line preview of a message for the chat list and pop-ups. */
 export function previewText(m: { body: string; mediaType: string | null; deletedAt: Date | null }, mine: boolean) {
   if (m.deletedAt) return mine ? "You unsent a message" : "Message unsent";
-  const text = m.body || (m.mediaType?.startsWith("video/") ? "Sent a video" : m.mediaType ? "Sent a photo" : "");
+  const text = m.body || (m.mediaType ? `Sent a ${{ photo: "photo", video: "video", voice: "voice message" }[mediaKind(m.mediaType)]}` : "");
   return mine ? `You: ${text}` : text;
 }
 
@@ -288,7 +358,35 @@ export type ConversationRow = {
   preview: string;
   lastMessageAt: string;
   unread: number;
+  /** A message request to the viewer (shown under Requests, not Chats). */
+  request?: boolean;
+  /** The viewer's own request, not accepted yet. */
+  pending?: boolean;
 };
+
+/** The viewer accepts `otherId`'s message request: it becomes a normal chat. */
+export async function acceptRequest(viewerId: string, otherId: string) {
+  if (await isBlockedEitherWay(viewerId, otherId)) return fail(404, "Message request not found.");
+  const { count } = await prisma.conversation.updateMany({ where: { pairKey: pairKey(viewerId, otherId), requestedById: otherId }, data: { requestedById: null } });
+  if (!count) return fail(404, "Message request not found.");
+  await prisma.conversationMember.updateMany({ where: { conversation: { pairKey: pairKey(viewerId, otherId) }, userId: viewerId }, data: { hiddenAt: null } });
+  return { ok: true as const };
+}
+
+/**
+ * The viewer deletes `otherId`'s message request: it leaves their lists (the sender isn't told)
+ * until a newer message comes. Block them to stop that.
+ */
+export async function deleteRequest(viewerId: string, otherId: string) {
+  const convo = await prisma.conversation.findFirst({ where: { pairKey: pairKey(viewerId, otherId), requestedById: otherId }, select: { id: true } });
+  if (!convo) return fail(404, "Message request not found.");
+  const now = new Date();
+  await prisma.conversationMember.update({
+    where: { conversationId_userId: { conversationId: convo.id, userId: viewerId } },
+    data: { hiddenAt: now, unreadCount: 0, lastReadAt: now },
+  });
+  return { ok: true as const };
+}
 
 /** The user's chats, latest first (chats with someone blocked either way are hidden). */
 export async function listConversations(viewerId: string): Promise<ConversationRow[]> {
@@ -300,9 +398,11 @@ export async function listConversations(viewerId: string): Promise<ConversationR
       take: 100,
       select: {
         unreadCount: true,
+        hiddenAt: true,
         conversation: {
           select: {
             lastMessageAt: true,
+            requestedById: true,
             members: { where: { userId: { not: viewerId } }, select: { user: { select: personSelect } } },
             messages: { orderBy: { createdAt: "desc" }, take: 1, select: { senderId: true, body: true, mediaType: true, deletedAt: true } },
           },
@@ -316,16 +416,24 @@ export async function listConversations(viewerId: string): Promise<ConversationR
   ]);
   const friendIds = new Set(friendRows.map((f) => (f.requesterId === viewerId ? f.addresseeId : f.requesterId)));
 
-  return rows.flatMap(({ unreadCount, conversation: c }) => {
+  return rows.flatMap(({ unreadCount, hiddenAt, conversation: c }) => {
     const other = c.members[0]?.user;
     const last = c.messages[0];
     if (!other || !last) return [];
+    // A request they deleted stays out of the list until a newer message.
+    if (hiddenAt && c.lastMessageAt <= hiddenAt) return [];
+    const friend = friendIds.has(other.id);
+    const request = !friend && c.requestedById === other.id;
+    const pending = !friend && c.requestedById === viewerId;
     return [
       {
-        partner: { id: other.id, name: other.name ?? "Anonymous Planter", image: displayAvatar(other), ...visiblePresence(other, friendIds.has(other.id)) },
+        partner: { id: other.id, name: other.name ?? "Anonymous Planter", image: displayAvatar(other), ...visiblePresence(other, friend) },
+        // A request shows no photo/video/voice preview of a stranger's file, only that there is one.
         preview: previewText(last, last.senderId === viewerId),
         lastMessageAt: c.lastMessageAt.toISOString(),
         unread: unreadCount,
+        ...(request ? { request: true } : {}),
+        ...(pending ? { pending: true } : {}),
       },
     ];
   });
@@ -339,18 +447,22 @@ export async function chatFriends(viewerId: string) {
 
 /**
  * For the header's Messages badge: how many chats have unread messages, and the newest unread
- * message (for the pop-up). Also records that the user is active.
+ * message (for the pop-up). Message requests don't count there (like Messenger): `requests` is
+ * how many have something new. Also records that the user is active.
  */
 export async function unreadSummary(viewerId: string) {
   const hidden = await blockedIds(viewerId);
   const visible = { members: { none: { userId: { in: hidden } } } };
-  const [unread, latest] = await Promise.all([
-    prisma.conversationMember.count({ where: { userId: viewerId, unreadCount: { gt: 0 }, conversation: visible } }),
+  // A chat, or the viewer's own request — not someone else's request to them.
+  const notRequest = { OR: [{ requestedById: null }, { requestedById: viewerId }] };
+  const [unread, requests, latest] = await Promise.all([
+    prisma.conversationMember.count({ where: { userId: viewerId, unreadCount: { gt: 0 }, conversation: { ...visible, ...notRequest } } }),
+    prisma.conversationMember.count({ where: { userId: viewerId, unreadCount: { gt: 0 }, conversation: { ...visible, requestedById: { notIn: [viewerId] } } } }),
     prisma.directMessage.findFirst({
       where: {
         senderId: { notIn: [viewerId, ...hidden] },
         deletedAt: null,
-        conversation: { members: { some: { userId: viewerId, unreadCount: { gt: 0 } } } },
+        conversation: { members: { some: { userId: viewerId, unreadCount: { gt: 0 } } }, ...notRequest },
       },
       orderBy: { createdAt: "desc" },
       select: { id: true, body: true, mediaType: true, deletedAt: true, createdAt: true, sender: { select: { id: true, name: true } } },
@@ -359,6 +471,7 @@ export async function unreadSummary(viewerId: string) {
   ]);
   return {
     unread,
+    requests,
     latest: latest && {
       id: latest.id,
       fromId: latest.sender.id,

@@ -40,7 +40,8 @@ export type AssistantAction =
       currency: "POINTS" | "PESOS";
     }
   // People (src/lib/assistant/actions-people.ts)
-  | ({ kind: "send_message"; text: string } & PersonRef)
+  /** `request`: they aren't friends, so this goes to the person's Message Requests. */
+  | ({ kind: "send_message"; text: string; request?: boolean } & PersonRef)
   | ({ kind: "add_friend"; accept: boolean } & PersonRef)
   | ({ kind: "remove_friend"; state: "FRIENDS" | "REQUESTED" | "INCOMING" } & PersonRef)
   | ({ kind: "block_user"; block: boolean } & PersonRef)
