@@ -3,17 +3,15 @@ import { POST } from "@/app/api/assistant/route";
 import { prisma } from "@/lib/prisma";
 import { CODES, createSlot, createUser, jsonRequest, resetDb, signInAs } from "../helpers";
 
-// Claude is faked: each test scripts what the model "returns".
-const create = vi.hoisted(() => vi.fn());
-vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@anthropic-ai/sdk")>();
-  class FakeAnthropic extends actual.default {
-    constructor(opts: ConstructorParameters<typeof actual.default>[0]) {
-      super({ ...opts, apiKey: "test-key" });
-      Object.assign(this, { beta: { messages: { create } } });
-    }
-  }
-  return { ...actual, default: FakeAnthropic };
+// Groq is faked: each test scripts what the model "returns" (request body in, response JSON out).
+const create = vi.fn();
+const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+  const reply = await create(JSON.parse(init.body as string));
+  return reply instanceof Response ? reply : Response.json(reply);
+});
+const textReply = (text: string) => ({ choices: [{ finish_reason: "stop", message: { role: "assistant", content: text } }] });
+const toolReply = (name: string, id = "t1", args = "{}") => ({
+  choices: [{ finish_reason: "tool_calls", message: { role: "assistant", content: null, tool_calls: [{ id, type: "function", function: { name, arguments: args } }] } }],
 });
 
 type Turn = { role: "user" | "assistant"; text: string };
@@ -39,10 +37,14 @@ async function createSpecies(name: string, category = "National and Cultural Tre
 beforeEach(async () => {
   await resetDb();
   create.mockReset();
-  process.env.ANTHROPIC_API_KEY = "test-key";
+  fetchMock.mockClear();
+  vi.stubGlobal("fetch", fetchMock);
+  process.env.GROQ_API_KEY = "test-key";
 });
 afterEach(() => {
-  delete process.env.ANTHROPIC_API_KEY;
+  vi.unstubAllGlobals();
+  delete process.env.GROQ_API_KEY;
+  delete process.env.GROQ_MODEL;
 });
 
 describe("POST /api/assistant — validation", () => {
@@ -176,14 +178,12 @@ describe("POST /api/assistant — commands", () => {
     expect((await ask("/slot")).body.reply.text).toBe("I don't know /slot. Did you mean /slots? Type /help to see every command.");
     expect((await ask("/xyzzy")).body.reply.text).toBe("I don't know /xyzzy. Type /help to see every command.");
     expect((await ask("/help")).body.reply.text).toContain("/slots — Open planting slots in your city");
-    expect(create).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
 describe("POST /api/assistant — AI questions", () => {
-  const textReply = (text: string) => ({ stop_reason: "end_turn", content: [{ type: "text", text }] });
-
-  it("answers through Claude with the conversation so far", async () => {
+  it("answers through Groq with the conversation so far", async () => {
     signInAs(await createUser());
     create.mockResolvedValueOnce(textReply("Narra is the national tree."));
     const { status, body } = await ask([
@@ -194,65 +194,113 @@ describe("POST /api/assistant — AI questions", () => {
     ]);
     expect(status).toBe(200);
     expect(body.reply).toEqual({ text: "Narra is the national tree." });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer test-key");
     const request = create.mock.calls[0][0];
-    expect(request.model).toBe("claude-opus-5-5");
-    expect(request.messages).toEqual([
+    expect(request).toMatchObject({ model: "openai/gpt-oss-120b", tool_choice: "auto", reasoning_effort: "low", include_reasoning: false });
+    expect(request.messages[0]).toMatchObject({ role: "system" });
+    expect(request.messages.slice(1)).toEqual([
       { role: "user", content: "/rewards" },
       { role: "assistant", content: "Rewards you can redeem: …" },
       { role: "user", content: "What is the national tree?" },
     ]);
   });
 
+  it("uses GROQ_MODEL when set (and only sends gpt-oss options to gpt-oss)", async () => {
+    signInAs(await createUser());
+    process.env.GROQ_MODEL = "llama-3.3-70b-versatile";
+    create.mockResolvedValueOnce(textReply("Hi"));
+    await ask("Hello");
+    const request = create.mock.calls[0][0];
+    expect(request.model).toBe("llama-3.3-70b-versatile");
+    expect(request).not.toHaveProperty("reasoning_effort");
+  });
+
   it("runs lookups for the asking planter only and feeds the results back", async () => {
     const user = await createUser({ points: 777 });
     await createUser({ points: 99_999 });
     signInAs(user);
-    create
-      .mockResolvedValueOnce({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "t1", name: "get_my_stats", input: {} }] })
-      .mockResolvedValueOnce(textReply("You have 777 pts."));
+    create.mockResolvedValueOnce(toolReply("get_my_stats")).mockResolvedValueOnce(textReply("You have 777 pts."));
     const { body } = await ask("How many points do I have?");
     expect(body.reply.text).toBe("You have 777 pts.");
 
     const followUp = create.mock.calls[1][0].messages;
-    const result = followUp.at(-1).content[0];
-    expect(result).toMatchObject({ type: "tool_result", tool_use_id: "t1" });
+    expect(followUp.at(-2)).toMatchObject({ role: "assistant", tool_calls: [{ id: "t1" }] });
+    const result = followUp.at(-1);
+    expect(result).toMatchObject({ role: "tool", tool_call_id: "t1" });
     expect(JSON.parse(result.content)).toMatchObject({ points: 777, homeCity: "Quezon City, Metro Manila" });
+  });
+
+  it("passes the model's tool arguments through", async () => {
+    signInAs(await createUser());
+    const narra = await createSpecies("Narra");
+    const molave = await createSpecies("Molave");
+    await prisma.seedlingProduct.create({ data: { speciesId: narra.id, priceInPoints: 60, priceInPesos: 45, stockQuantity: 10 } });
+    await prisma.seedlingProduct.create({ data: { speciesId: molave.id, priceInPoints: 50, stockQuantity: 10 } });
+    create.mockResolvedValueOnce(toolReply("get_seedling_prices", "t1", JSON.stringify({ tree: "narra" }))).mockResolvedValueOnce(textReply("60 pts"));
+    await ask("How much is narra?");
+    const rows = JSON.parse(create.mock.calls[1][0].messages.at(-1).content);
+    expect(rows).toEqual([expect.objectContaining({ name: "Narra", points: 60, pesos: 45 })]);
   });
 
   it("reports a failed lookup to the model instead of crashing", async () => {
     signInAs(await createUser());
-    create
-      .mockResolvedValueOnce({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "t1", name: "delete_everything", input: {} }] })
-      .mockResolvedValueOnce(textReply("Sorry, I couldn't look that up."));
+    create.mockResolvedValueOnce(toolReply("delete_everything")).mockResolvedValueOnce(textReply("Sorry, I couldn't look that up."));
     vi.spyOn(console, "error").mockImplementation(() => {});
     const { status } = await ask("Do something");
     expect(status).toBe(200);
-    expect(create.mock.calls[1][0].messages.at(-1).content[0]).toMatchObject({ is_error: true });
+    expect(create.mock.calls[1][0].messages.at(-1).content).toMatch(/^Error: this lookup failed/);
   });
 
   it("stops after a few lookup rounds", async () => {
     signInAs(await createUser());
-    create.mockResolvedValue({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "t", name: "get_rewards", input: {} }] });
+    create.mockResolvedValue(toolReply("get_rewards"));
     const { body } = await ask("Loop forever");
     expect(create).toHaveBeenCalledTimes(5);
     expect(body.reply.text).toMatch(/too many steps/);
   });
 
-  it("gives a polite answer when the model declines", async () => {
+  it("is unavailable (503) when Groq errors, while commands keep working", async () => {
     signInAs(await createUser());
-    create.mockResolvedValueOnce({ stop_reason: "refusal", content: [] });
-    expect((await ask("Something off-limits")).body.reply.text).toMatch(/can't help with that/);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    create.mockResolvedValueOnce(new Response("server error", { status: 500 }));
+    const failed = await ask("What is EcoQuest?");
+    expect(failed.status).toBe(503);
+    expect(failed.body.error).toMatch(/can't answer questions right now/);
+    fetchMock.mockRejectedValueOnce(new Error("network down"));
+    expect((await ask("What is EcoQuest?")).status).toBe(503);
+    expect((await ask("/help")).status).toBe(200);
   });
 
-  it("is unavailable (503) without an API key, while commands keep working", async () => {
+  it("waits out a short Groq rate limit, then answers", async () => {
     signInAs(await createUser());
-    delete process.env.ANTHROPIC_API_KEY;
+    create.mockResolvedValueOnce(new Response("slow down", { status: 429, headers: { "retry-after": "0" } })).mockResolvedValueOnce(textReply("Here you go."));
+    const { status, body } = await ask("Hi");
+    expect(status).toBe(200);
+    expect(body.reply.text).toBe("Here you go.");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("says EcoBot is busy when the rate limit wait is too long", async () => {
+    signInAs(await createUser());
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    create.mockResolvedValueOnce(new Response("slow down", { status: 429, headers: { "retry-after": "60" } }));
+    const { status, body } = await ask("Hi");
+    expect(status).toBe(503);
+    expect(body.error).toMatch(/EcoBot is busy right now/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("is unavailable (503) without an API key", async () => {
+    signInAs(await createUser());
+    delete process.env.GROQ_API_KEY;
     vi.spyOn(console, "error").mockImplementation(() => {});
     const { status, body } = await ask("What is EcoQuest?");
     expect(status).toBe(503);
     expect(body.error).toMatch(/Commands like \/slots/);
-    expect((await ask("/help")).status).toBe(200);
-    expect(create).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("limits AI questions per planter", async () => {
@@ -262,6 +310,6 @@ describe("POST /api/assistant — AI questions", () => {
     const { status, body } = await ask("One more?");
     expect(status).toBe(429);
     expect(body.error).toMatch(/this hour/);
-    expect(create).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

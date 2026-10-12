@@ -3,9 +3,9 @@ import { getCurrentUser } from "@/lib/authz";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { runCommand } from "@/lib/assistant/commands";
 import { MAX_QUESTION_LENGTH } from "@/lib/assistant/command-list";
-import { AssistantUnavailable, askAssistant, type ChatTurn } from "@/lib/assistant/ai";
+import { AssistantBusy, AssistantUnavailable, askAssistant, type ChatTurn } from "@/lib/assistant/ai";
 
-// Claude can take a while when it looks things up (a few tool rounds).
+// The AI can take a while when it looks things up (a few tool rounds).
 export const maxDuration = 60;
 
 /** Earlier turns sent along for context; older ones are dropped. */
@@ -29,7 +29,7 @@ function parseHistory(body: unknown): ChatTurn[] | null {
     // Earlier replies only add context, so long ones are trimmed rather than rejected.
     turns.push({ role, text: role === "assistant" ? text.slice(0, MAX_REPLY_LENGTH) : text.trim() });
   }
-  // The conversation sent to Claude must start with the planter.
+  // The conversation sent to the AI must start with the planter.
   while (turns.length && turns[0].role === "assistant") turns.shift();
   const last = turns.at(-1);
   if (!last || last.role !== "user") return null;
@@ -72,7 +72,12 @@ export async function POST(req: Request) {
     if (!(err instanceof AssistantUnavailable)) throw err;
     console.error("assistant unavailable:", err.message);
     return NextResponse.json(
-      { error: "I can't answer questions right now. Commands like /slots and /prices still work — type /help." },
+      {
+        error:
+          err instanceof AssistantBusy
+            ? "EcoBot is busy right now — try again in a minute. Commands like /slots and /prices still work."
+            : "I can't answer questions right now. Commands like /slots and /prices still work — type /help.",
+      },
       { status: 503 },
     );
   }
