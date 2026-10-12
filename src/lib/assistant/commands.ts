@@ -25,7 +25,7 @@ function help(): AssistantReply {
       ...lines,
       "",
       "Or just ask me anything about EcoQuest PH, its trees, prices and rewards.",
-      'I can also help you do things, like "claim the Narra slot", "claim my daily reward" or "redeem GCash ₱50". Nothing happens until you confirm.',
+      'I can also do things for you, like "claim all open slots", "message all my friends: see you Saturday", "accept all friend requests", "order 5 Narra seedlings" or "change my name". Nothing happens until you allow it.',
     ].join("\n"),
   };
 }

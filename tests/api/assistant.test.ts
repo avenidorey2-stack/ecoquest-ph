@@ -397,7 +397,7 @@ describe("POST /api/assistant — actions", () => {
     const user = await createUser();
     signInAs(user);
     const slot = await createSlot({ requiredPlantType: "Narra", pointsPerPlant: 30 });
-    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_id: slot.id }))).mockResolvedValueOnce(textReply("Tap Claim Slot below."));
+    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_ids: [slot.id] }))).mockResolvedValueOnce(textReply("Tap Claim Slot below."));
     const { body } = await ask("Claim the narra slot");
     expect(body.reply.actions).toEqual([
       { kind: "claim_slot", slotId: slot.id, plant: "Narra", barangay: null, pointsPerPlant: 30, plantsPerQuest: 1, spotsLeft: 20 },
@@ -409,9 +409,9 @@ describe("POST /api/assistant — actions", () => {
   it("claim_slot refuses slots outside the planter's city, with the reason for the model", async () => {
     signInAs(await createUser());
     const makati = await createSlot({ city: "City of Makati", cityCode: CODES.makati });
-    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_id: makati.id }))).mockResolvedValueOnce(textReply("That slot isn't in your city."));
+    create.mockResolvedValueOnce(toolReply("claim_slot", "t1", JSON.stringify({ slot_ids: [makati.id] }))).mockResolvedValueOnce(textReply("That slot isn't in your city."));
     const { body } = await ask("Claim that slot");
-    expect(toolResult()).toEqual({ shown: false, reason: expect.stringMatching(/couldn't find that slot in your city/) });
+    expect(toolResult()).toEqual({ shown: false, reason: "A slot isn't in your city or is no longer open." });
     expect(body.reply.actions).toBeUndefined();
     expect(body.reply.links).toEqual([{ label: "Open Slot Map", href: "/dashboard" }]);
   });
@@ -422,7 +422,7 @@ describe("POST /api/assistant — actions", () => {
     const mission = await prisma.mission.create({
       data: { kind: "DAILY", title: "Daily proof", objective: "SUBMIT_PROOF", target: 1, rewardPoints: 20, rewardXp: 10, startsAt: new Date("2026-01-01T00:00:00Z") },
     });
-    const call = toolReply("claim_mission_reward", "t1", JSON.stringify({ mission_id: mission.id }));
+    const call = toolReply("claim_mission_reward", "t1", JSON.stringify({ mission_ids: [mission.id] }));
     create.mockResolvedValueOnce(call).mockResolvedValueOnce(textReply("Not yet."));
     await ask("Claim my daily reward");
     expect(toolResult()).toEqual({ shown: false, reason: '"Daily proof" isn\'t done yet (0/1).' });
@@ -446,12 +446,12 @@ describe("POST /api/assistant — actions", () => {
     const grab = await prisma.reward.create({ data: { rewardType: "VOUCHER", brand: "Grab", costPoints: 500, valuePesos: 50 } });
     await prisma.redemptionHistory.create({ data: { userId: user.id, rewardId: gcash.id, pointsSpent: 1000, eWalletNumber: "09171234567" } });
 
-    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_id: gcash.id }))).mockResolvedValueOnce(textReply("Not enough."));
+    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_ids: [gcash.id] }))).mockResolvedValueOnce(textReply("Not enough."));
     await ask("Redeem GCash 100");
-    expect(toolResult()).toEqual({ shown: false, reason: "You need 400 more pts for that reward." });
+    expect(toolResult()).toEqual({ shown: false, reason: "GCash ₱100: you need 400 more pts." });
 
     create.mockReset();
-    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_id: grab.id }))).mockResolvedValueOnce(textReply("Confirm below."));
+    create.mockResolvedValueOnce(toolReply("redeem_reward", "t1", JSON.stringify({ reward_ids: [grab.id] }))).mockResolvedValueOnce(textReply("Confirm below."));
     const { body } = await ask("Redeem Grab 50");
     expect(body.reply.actions).toEqual([
       { kind: "redeem_reward", rewardId: grab.id, brand: "Grab", valuePesos: 50, costPoints: 500, isCash: false, balance: 600, lastNumber: "09171234567" },

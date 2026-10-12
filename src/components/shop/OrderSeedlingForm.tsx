@@ -155,6 +155,8 @@ export default function OrderSeedlingForm({
   maxQuantity,
   deliveryDefaults = {},
   cooldownUntil = 0,
+  initialQuantity = 1,
+  initialCurrency = "POINTS",
   onPlaced,
 }: {
   product: { id: string; name: string; priceInPoints: number; priceInPesos: number; stockQuantity: number };
@@ -163,14 +165,17 @@ export default function OrderSeedlingForm({
   deliveryDefaults?: DeliveryDefaults;
   /** Epoch ms until which ordering is paused after the last order. */
   cooldownUntil?: number;
+  /** Starting quantity and payment (e.g. what the planter asked EcoBot for). */
+  initialQuantity?: number;
+  initialCurrency?: Currency;
   /** Called once an order is placed (the shop closes the sheet and shows a banner). */
   onPlaced?: (order: PlacedOrder) => void;
 }) {
   const router = useRouter();
   const pesosAvailable = product.priceInPesos > 0;
   const limit = Math.max(0, Math.min(maxQuantity, product.stockQuantity));
-  const [currency, setCurrency] = useState<Currency>("POINTS");
-  const [quantity, setQuantity] = useState(limit > 0 ? 1 : 0);
+  const [currency, setCurrency] = useState<Currency>(initialCurrency === "PESOS" && pesosAvailable ? "PESOS" : "POINTS");
+  const [quantity, setQuantity] = useState(limit > 0 ? Math.min(Math.max(1, Math.trunc(initialQuantity)), limit) : 0);
   const [delivery, setDelivery] = useState<DeliveryForm>(() => ({
     recipientName: deliveryDefaults.recipientName ?? "",
     contactNumber: deliveryDefaults.contactNumber ?? "",
